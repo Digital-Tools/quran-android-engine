@@ -1,0 +1,34 @@
+plugins { id("quranengine.compose.library") }
+
+android { namespace = "com.quranengine.features.appstructure" }
+
+dependencies {
+    implementation(project(":ui:theme"))
+    implementation(project(":ui:components"))
+    implementation(project(":features:home"))
+    implementation(project(":features:quran-view"))
+    implementation(project(":features:bookmarks"))
+    implementation(project(":features:search"))
+    implementation(project(":features:settings"))
+    implementation(project(":features:reciter-list"))
+    implementation(project(":features:translations"))
+    implementation(project(":features:audio-banner"))
+    implementation(project(":features:advanced-audio"))
+    implementation(project(":core:audio-player"))
+    implementation(project(":core:localization"))
+    implementation(project(":model:quran-kit"))
+    implementation(project(":model:quran-annotations"))
+    implementation(project(":model:quran-text"))
+    implementation(project(":ui:audio-banner"))
+    implementation(platform(libs.compose.bom))
+    implementation(libs.compose.ui)
+    implementation(libs.compose.material3)
+    implementation(libs.compose.material.icons.extended)
+    implementation(libs.compose.foundation)
+    implementation(libs.compose.runtime)
+    implementation(libs.navigation.compose)
+    implementation(libs.lifecycle.runtime.compose)
+    implementation(libs.coroutines.core)
+    implementation(libs.timber)
+    implementation(libs.hilt.navigation.compose)
+}

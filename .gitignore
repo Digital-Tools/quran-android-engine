@@ -1,0 +1,26 @@
+# Gradle / Kotlin
+.gradle/
+.kotlin/
+build/
+**/build/
+
+# Android SDK / local machine config
+local.properties
+keystore.properties
+*.jks
+*.keystore
+
+# IDEs
+.idea/
+*.iml
+
+# Android generated outputs
+captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+*.aab
+
+# OS / misc
+.DS_Store
+*.log

@@ -1,0 +1,38 @@
+[
+  {
+    "category": "arabic",
+    "url": "https://download.quranicaudio.com/quran/abdulbaset_mujawwad/",
+    "id": 23,
+    "databaseName": "abdul_basit_mujawwad",
+    "path": "abdulbaset_mujawwad",
+    "name": "qari_abdulbaset_mujawwad_gapless",
+    "hasGaplessAlternative": false
+  },
+  {
+    "category": "arabic",
+    "url": "https://download.quranicaudio.com/quran/mishaari_raashid_al_3afaasee/",
+    "id": 41,
+    "databaseName": "mishari_alafasy",
+    "path": "mishari_alafasy",
+    "name": "qari_afasy_gapless",
+    "hasGaplessAlternative": false
+  },
+  {
+    "category": "arabic",
+    "url": "https://mirrors.quranicaudio.com/everyayah/Minshawy_Mujawwad_192kbps/",
+    "id": 16,
+    "databaseName": "",
+    "path": "13",
+    "name": "qari_minshawi_mujawwad",
+    "hasGaplessAlternative": false
+  },
+  {
+    "category": "arabic",
+    "url": "https://download.quranicaudio.com/quran/abu_bakr_ash-shaatree/",
+    "id": 78,
+    "databaseName": "shatri",
+    "path": "abu_bakr_ash-shaatree",
+    "name": "qari_shatri_gapless",
+    "hasGaplessAlternative": false
+  }
+]

@@ -1,0 +1,36 @@
+QuranEngine for Android - Notice and Attribution
+===============================================
+
+This repository is a standalone Android port derived from work developed in the
+QuranEngine iOS repository:
+
+  https://github.com/quran/quran-ios
+
+Repository-level licensing
+--------------------------
+
+- The repository-level license for QuranEngine for Android is Apache License 2.0.
+- See `LICENSE` for the Apache-2.0 text.
+
+Data and content attribution
+----------------------------
+
+- Madani page images are sourced from the Quran.com images project:
+  https://github.com/quran/quran.com-images
+- Translation, tafsir, and Arabic text sources are attributed to Tanzil and
+  King Saud University:
+  - http://tanzil.net
+  - https://quran.ksu.edu.sa
+
+Third-party dependencies
+------------------------
+
+Build-time and runtime dependencies pulled through Gradle remain available under
+their own licenses. Redistributors are responsible for preserving the notices
+and terms that apply to those dependencies in their own distributions.
+
+Trademarks
+----------
+
+This repository does not grant trademark rights in the names, logos, or marks
+of Quran.com or any other third party.
