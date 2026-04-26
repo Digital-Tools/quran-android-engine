@@ -42,6 +42,8 @@ import com.quranengine.features.settings.SettingsViewModel
 import com.quranengine.features.translations.TranslationsListScreen
 import com.quranengine.features.translations.TranslationsListViewModel
 import com.quranengine.ui.theme.QuranTheme
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collectLatest
 
 /**
  * Main app scaffold with bottom navigation and navigation host.
@@ -52,8 +54,22 @@ import com.quranengine.ui.theme.QuranTheme
 @Composable
 fun AppStructureScreen(
     navController: NavHostController = rememberNavController(),
+    deepLinkHandler: DeepLinkHandler? = null,
+    initialDeepLinkUri: String? = null,
+    incomingDeepLinks: Flow<String>? = null,
 ) {
     val audioBannerViewModel: AudioBannerViewModel = hiltViewModel()
+
+    LaunchedEffect(deepLinkHandler, initialDeepLinkUri) {
+        if (deepLinkHandler == null || initialDeepLinkUri == null) return@LaunchedEffect
+        navController.navigateFromDeepLink(deepLinkHandler, initialDeepLinkUri)
+    }
+    LaunchedEffect(deepLinkHandler, incomingDeepLinks) {
+        if (deepLinkHandler == null || incomingDeepLinks == null) return@LaunchedEffect
+        incomingDeepLinks.collectLatest { uriString ->
+            navController.navigateFromDeepLink(deepLinkHandler, uriString)
+        }
+    }
 
     Scaffold(
         containerColor = QuranTheme.colors.background,
@@ -102,10 +118,21 @@ fun AppStructureScreen(
                 )
             }
 
-            composable(AppRoute.Search.route) {
+            composable(
+                route = AppRoute.Search.ROUTE_PATTERN,
+                arguments = listOf(
+                    navArgument(AppRoute.Search.QUERY_ARG) {
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    },
+                ),
+            ) { backStackEntry ->
                 val viewModel: SearchViewModel = hiltViewModel()
+                val initialQuery = backStackEntry.arguments?.getString(AppRoute.Search.QUERY_ARG)
                 SearchScreen(
                     viewModel = viewModel,
+                    initialQuery = initialQuery,
                     onNavigateToAyah = { ayah ->
                         navController.navigateToAyah(ayah)
                     },
@@ -213,7 +240,7 @@ private fun AppBottomBar(navController: NavHostController) {
 
     // Only show bottom bar on tab destinations
     val isTabDestination = AppTab.entries.any { tab ->
-        currentDestination?.hierarchy?.any { it.route == tab.route } == true
+        currentDestination.matchesTabRoute(tab.route)
     }
     if (!isTabDestination && currentDestination != null) return
 
@@ -222,7 +249,7 @@ private fun AppBottomBar(navController: NavHostController) {
         contentColor = QuranTheme.colors.text,
     ) {
         AppTab.entries.forEach { tab ->
-            val selected = currentDestination?.hierarchy?.any { it.route == tab.route } == true
+            val selected = currentDestination.matchesTabRoute(tab.route)
             NavigationBarItem(
                 selected = selected,
                 onClick = {
@@ -244,6 +271,13 @@ private fun AppBottomBar(navController: NavHostController) {
             )
         }
     }
+}
+
+private fun androidx.navigation.NavDestination?.matchesTabRoute(route: String): Boolean {
+    return this?.hierarchy?.any { destination ->
+        val destinationRoute = destination.route ?: return@any false
+        destinationRoute == route || destinationRoute.substringBefore("?") == route
+    } == true
 }
 
 @Composable

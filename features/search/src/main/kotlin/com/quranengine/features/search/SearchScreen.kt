@@ -26,6 +26,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -49,12 +50,20 @@ import com.quranengine.ui.theme.QuranTheme
 @Composable
 fun SearchScreen(
     viewModel: SearchViewModel,
+    initialQuery: String? = null,
     onNavigateToAyah: (AyahNumber) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val searchTerm by viewModel.searchTerm.collectAsState()
     val uiState by viewModel.uiState.collectAsState()
     val autocompletions by viewModel.autocompletions.collectAsState()
+
+    LaunchedEffect(initialQuery) {
+        initialQuery
+            ?.trim()
+            ?.takeIf { it.isNotEmpty() }
+            ?.let(viewModel::search)
+    }
 
     Column(modifier = modifier.fillMaxSize()) {
         SearchBar(

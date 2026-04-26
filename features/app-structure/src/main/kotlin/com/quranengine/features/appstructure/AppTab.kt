@@ -23,7 +23,7 @@ enum class AppTab(
         icon = Icons.Default.Bookmark,
     ),
     SEARCH(
-        route = AppRoute.Search.route,
+        route = AppRoute.Search().route,
         title = "Search",
         icon = Icons.Default.Search,
     ),

@@ -150,6 +150,22 @@ Five built-in themes with light and dark mode support, built on Material 3:
 
 The project can be built and tested directly from the `quran-android-engine/` root without requiring Swift or Xcode tooling.
 
+## 🔗 Deep links
+
+The app exposes a `quranengine://` scheme for launching common destinations directly into the standalone reader app:
+
+```text
+quranengine://page/2
+quranengine://sura/2
+quranengine://search?q=mercy
+quranengine://bookmarks
+quranengine://settings
+quranengine://translations
+quranengine://reciters
+```
+
+Page and sura links open the native reader, while search/settings/bookmarks-style links route into the existing tab or management screens.
+
 ## 📦 Module Convention Plugins
 
 Convention plugins in `buildSrc/` standardize module configuration:

@@ -31,4 +31,6 @@ dependencies {
     implementation(libs.coroutines.core)
     implementation(libs.timber)
     implementation(libs.hilt.navigation.compose)
+    testImplementation(libs.junit)
+    testImplementation(libs.truth)
 }

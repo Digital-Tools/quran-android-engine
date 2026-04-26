@@ -32,7 +32,7 @@ fun NavController.navigateToQuarter(quarter: Quarter) {
 }
 
 fun NavController.navigateToSearch() {
-    navigate(AppRoute.Search.route)
+    navigate(AppRoute.Search().route)
 }
 
 fun NavController.navigateToBookmarks() {
@@ -81,6 +81,18 @@ fun NavController.navigateToTab(route: String) {
  */
 fun NavController.navigateFromDeepLink(handler: DeepLinkHandler, uriString: String): Boolean {
     val route = handler.handle(uriString) ?: return false
-    navigate(route.route)
+    when (route) {
+        AppRoute.Home -> navigateToTab(route.route)
+        AppRoute.Bookmarks -> navigateToTab(route.route)
+        is AppRoute.Search -> navigate(route.route) {
+            popUpTo(graph.findStartDestination().id) {
+                saveState = true
+            }
+            launchSingleTop = true
+            restoreState = true
+        }
+        AppRoute.Settings -> navigateToTab(route.route)
+        else -> navigate(route.route)
+    }
     return true
 }
