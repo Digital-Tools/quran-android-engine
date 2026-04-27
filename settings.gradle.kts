@@ -86,5 +86,8 @@ include(":features:settings")
 include(":features:advanced-audio")
 include(":features:word-pointer")
 
+// Embedded host
+include(":embedded-host")
+
 // App
 include(":app")

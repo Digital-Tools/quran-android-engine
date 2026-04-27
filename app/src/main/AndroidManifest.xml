@@ -16,7 +16,7 @@
         android:theme="@style/Theme.QuranEngine">
 
         <activity
-            android:name=".MainActivity"
+            android:name="com.quranengine.embeddedhost.QuranHostActivity"
             android:exported="true"
             android:theme="@style/Theme.QuranEngine">
             <intent-filter>
