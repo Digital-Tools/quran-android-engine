@@ -1,10 +1,10 @@
 name: Android CI
 
 on:
-  push:
-    branches:
-      - main
-  pull_request:
+  # Automatic triggers disabled — CI does not yet account for the Flutter
+  # composite-build setup (mizan-app includes this repo as an includeBuild).
+  # Re-enable push/pull_request once the standalone build is wired for CI.
+  # Also bump java-version to 21 when re-enabling (toolchain was bumped from 17→21).
   workflow_dispatch:
 
 permissions:
