@@ -25,6 +25,6 @@ fun QuranArabicText(
             textAlign = TextAlign.Center,
             textDirection = TextDirection.Rtl,
         ),
-        color = QuranTheme.colors.text,
+        color = QuranTheme.colors.arabicText,
     )
 }

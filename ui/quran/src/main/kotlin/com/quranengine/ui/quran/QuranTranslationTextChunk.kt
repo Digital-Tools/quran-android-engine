@@ -44,7 +44,7 @@ fun QuranTranslationTextChunk(
         Text(
             text = text,
             style = textStyle,
-            color = QuranTheme.colors.text,
+            color = if (isArabic) QuranTheme.colors.arabicText else QuranTheme.colors.text,
             maxLines = effectiveMaxLines,
             overflow = if (showReadMore && !expanded) TextOverflow.Ellipsis else TextOverflow.Clip,
         )

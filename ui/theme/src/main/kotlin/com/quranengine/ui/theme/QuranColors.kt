@@ -20,6 +20,7 @@ object QuranColors {
 
 data class ThemeColors(
     val text: Color,
+    val arabicText: Color,
     val background: Color,
     val secondaryText: Color,
     val secondaryBackground: Color,
@@ -111,6 +112,11 @@ fun ThemeStyle.colors(isDark: Boolean): ThemeColors {
     }
     return ThemeColors(
         text = text,
+        arabicText = if (isDark) {
+            Color(0.949f, 0.949f, 0.941f)
+        } else {
+            text
+        },
         background = bg,
         secondaryText = text.secondaryLabelVariant(),
         secondaryBackground = bg.secondaryBackgroundVariant(),

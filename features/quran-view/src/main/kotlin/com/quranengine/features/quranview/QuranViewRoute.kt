@@ -13,6 +13,7 @@ import com.quranengine.features.quranpages.PagingStrategy
 import com.quranengine.features.quranpages.QuranPaginationView
 import com.quranengine.features.qurantranslation.ContentTranslationView
 import com.quranengine.model.qurankit.AyahNumber
+import com.quranengine.model.qurankit.lastayahfinder.JuzBasedLastAyahFinder
 import com.quranengine.model.qurantext.QuranMode
 import com.quranengine.ui.components.DataUnavailableView
 
@@ -32,10 +33,10 @@ fun QuranViewRoute(
     val currentAyah by audioBannerViewModel.currentAyah.collectAsState()
     val currentPlaybackRange by audioBannerViewModel.playbackRange.collectAsState()
     val pages = remember(state.totalPages) { (1..state.totalPages).toList() }
-    val pagePlaybackRange = state.firstVerse?.let { from ->
-        state.lastVerse?.let { to -> from to to }
+    val defaultPlaybackRange = state.firstVerse?.let { from ->
+        from to JuzBasedLastAyahFinder().findLastAyah(from)
     }
-    val advancedAudioRange = currentPlaybackRange ?: pagePlaybackRange
+    val advancedAudioRange = currentPlaybackRange ?: defaultPlaybackRange
 
     LaunchedEffect(currentAyah) {
         viewModel.setReadingAyah(currentAyah)
@@ -54,7 +55,7 @@ fun QuranViewRoute(
         onToggleMode = viewModel::toggleQuranMode,
         onToggleBookmark = viewModel::toggleCurrentPageBookmark,
         onAudioPlayPause = {
-            pagePlaybackRange?.let { (from, to) ->
+            defaultPlaybackRange?.let { (from, to) ->
                 audioBannerViewModel.togglePlayPause(from, to)
             }
         },

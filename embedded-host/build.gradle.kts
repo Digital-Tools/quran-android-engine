@@ -9,6 +9,12 @@ version = "0.1.0"
 
 android {
     namespace = "com.quranengine.embeddedhost"
+
+    sourceSets {
+        getByName("main") {
+            assets.srcDir("../app/src/main/assets")
+        }
+    }
 }
 
 hilt {
