@@ -11,6 +11,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.graphics.ColorFilter
+import com.quranengine.ui.theme.QuranTheme
 
 enum class QuranImageRenderMode {
     TINTED,
@@ -35,11 +37,18 @@ fun QuranThemedImage(
         }
     }
 
+    val colorFilter = if (renderMode == QuranImageRenderMode.TINTED) {
+        ColorFilter.tint(QuranTheme.colors.arabicText)
+    } else {
+        null
+    }
+
     Image(
         painter = BitmapPainter(processedBitmap.asImageBitmap()),
         contentDescription = contentDescription,
         modifier = modifier,
         contentScale = contentScale,
+        colorFilter = colorFilter,
     )
 }
 
