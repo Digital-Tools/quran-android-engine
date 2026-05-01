@@ -30,6 +30,7 @@ fun QuranViewRoute(
     val translationContentStates by viewModel.translationContentStates.collectAsState()
     val userMessage by viewModel.userMessage.collectAsState()
     val audioBannerState by audioBannerViewModel.audioBannerState.collectAsState()
+    val playbackRate by audioBannerViewModel.playbackRate.collectAsState()
     val currentAyah by audioBannerViewModel.currentAyah.collectAsState()
     val currentPlaybackRange by audioBannerViewModel.playbackRange.collectAsState()
     val pages = remember(state.totalPages) { (1..state.totalPages).toList() }
@@ -43,7 +44,7 @@ fun QuranViewRoute(
     }
 
     QuranViewScreen(
-        state = state.copy(audioBannerState = audioBannerState),
+        state = state.copy(audioBannerState = audioBannerState.copy(playbackRate = playbackRate)),
         modifier = modifier,
         transientMessage = userMessage,
         onTransientMessageShown = viewModel::clearUserMessage,
@@ -62,6 +63,7 @@ fun QuranViewRoute(
         onAudioForward = audioBannerViewModel::stepForward,
         onAudioBackward = audioBannerViewModel::stepBackward,
         onAudioStop = audioBannerViewModel::stop,
+        onSetPlaybackRate = audioBannerViewModel::setPlaybackRate,
         onAudioBannerTap = {
             advancedAudioRange?.let { (from, to) ->
                 onNavigateToAdvancedAudio(from, to)

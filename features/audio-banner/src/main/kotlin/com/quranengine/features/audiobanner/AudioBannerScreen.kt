@@ -29,5 +29,6 @@ fun AudioBannerScreen(
         onBackward = viewModel::stepBackward,
         onStop = viewModel::stop,
         onBannerTap = onNavigateToAdvancedAudio,
+        onSetPlaybackRate = viewModel::setPlaybackRate,
     )
 }

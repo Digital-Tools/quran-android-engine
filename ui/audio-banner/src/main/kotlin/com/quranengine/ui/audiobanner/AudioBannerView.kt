@@ -9,6 +9,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -25,6 +29,7 @@ fun AudioBannerView(
     onBackward: () -> Unit = {},
     onStop: () -> Unit = {},
     onBannerTap: () -> Unit = {},
+    onSetPlaybackRate: (Float) -> Unit = {},
 ) {
     AnimatedVisibility(
         visible = state.isVisible,
@@ -76,6 +81,11 @@ fun AudioBannerView(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
+                    PlaybackSpeedMenu(
+                        playbackRate = state.playbackRate,
+                        onSetPlaybackRate = onSetPlaybackRate,
+                    )
+
                     IconButton(
                         onClick = onBackward,
                         enabled = state.canGoBackward,
@@ -126,5 +136,54 @@ fun AudioBannerView(
                 }
             }
         }
+    }
+}
+
+private val playbackSpeedValues = listOf(0.5f, 0.75f, 1f, 1.25f, 1.5f, 1.75f, 2f)
+
+@Composable
+private fun PlaybackSpeedMenu(
+    playbackRate: Float,
+    onSetPlaybackRate: (Float) -> Unit,
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Box {
+        TextButton(
+            onClick = { expanded = true },
+            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+            modifier = Modifier.height(32.dp),
+            colors = ButtonDefaults.textButtonColors(
+                contentColor = QuranTheme.colors.text,
+            ),
+        ) {
+            Text(
+                text = formatPlaybackSpeed(playbackRate),
+                style = MaterialTheme.typography.labelMedium,
+            )
+        }
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+        ) {
+            playbackSpeedValues.forEach { rate ->
+                DropdownMenuItem(
+                    text = { Text(formatPlaybackSpeed(rate)) },
+                    onClick = {
+                        expanded = false
+                        onSetPlaybackRate(rate)
+                    },
+                )
+            }
+        }
+    }
+}
+
+private fun formatPlaybackSpeed(rate: Float): String {
+    val rounded = kotlin.math.round(rate * 100f) / 100f
+    return if (rounded % 1f == 0f) {
+        "${rounded.toInt()}x"
+    } else {
+        "${rounded}x"
     }
 }

@@ -131,6 +131,7 @@ class AudioBannerViewModel @Inject constructor(
     fun setPlaybackRate(rate: Float) {
         audioPreferences.playbackRate = rate
         _playbackRate.value = rate
+        _audioBannerState.update { it.copy(playbackRate = rate) }
         audioPlayer.setRate(rate)
     }
 
@@ -171,19 +172,23 @@ class AudioBannerViewModel @Inject constructor(
                 is PlaybackState.Stopped -> current.copy(
                     isVisible = false,
                     isPlaying = false,
+                    playbackRate = _playbackRate.value,
                     progress = 0f,
                 )
                 is PlaybackState.Playing -> current.copy(
                     isVisible = true,
                     isPlaying = true,
+                    playbackRate = _playbackRate.value,
                 )
                 is PlaybackState.Paused -> current.copy(
                     isVisible = true,
                     isPlaying = false,
+                    playbackRate = _playbackRate.value,
                 )
                 is PlaybackState.Downloading -> current.copy(
                     isVisible = true,
                     isPlaying = false,
+                    playbackRate = _playbackRate.value,
                     progress = state.progress,
                 )
             }

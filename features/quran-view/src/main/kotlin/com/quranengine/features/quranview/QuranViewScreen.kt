@@ -41,6 +41,7 @@ fun QuranViewScreen(
     onAudioForward: () -> Unit = {},
     onAudioBackward: () -> Unit = {},
     onAudioStop: () -> Unit = {},
+    onSetPlaybackRate: (Float) -> Unit = {},
     onAudioBannerTap: () -> Unit = {},
     pageContent: @Composable () -> Unit = {},
 ) {
@@ -183,6 +184,7 @@ fun QuranViewScreen(
                 onBackward = onAudioBackward,
                 onStop = onAudioStop,
                 onBannerTap = onAudioBannerTap,
+                onSetPlaybackRate = onSetPlaybackRate,
             )
         }
     }
