@@ -46,6 +46,10 @@ class NoteService(
         persistence.setNote(note, persistenceVerses, color.value)
     }
 
+    suspend fun setNote(note: String, verses: Set<AyahNumber>) {
+        setNote(note = note, verses = verses, color = lastUsedHighlightColor)
+    }
+
     suspend fun removeNotes(verses: List<AyahNumber>) {
         analytics.logEvent("Unhighlight", verses.size.toString())
         val persistenceVerses = verses.map { it.toVersePersistenceModel() }

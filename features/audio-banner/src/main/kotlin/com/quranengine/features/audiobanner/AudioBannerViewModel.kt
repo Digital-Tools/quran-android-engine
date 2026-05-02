@@ -20,6 +20,11 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
+data class AyahPlaybackProgress(
+    val ayah: AyahNumber,
+    val progress: Float?,
+)
+
 @HiltViewModel
 class AudioBannerViewModel @Inject constructor(
     private val audioPlayer: QuranAudioPlayer,
@@ -40,6 +45,9 @@ class AudioBannerViewModel @Inject constructor(
     private val _currentAyah = MutableStateFlow<AyahNumber?>(null)
     val currentAyah: StateFlow<AyahNumber?> = _currentAyah.asStateFlow()
 
+    private val _currentAyahProgress = MutableStateFlow<AyahPlaybackProgress?>(null)
+    val currentAyahProgress: StateFlow<AyahPlaybackProgress?> = _currentAyahProgress.asStateFlow()
+
     private val _playbackRange = MutableStateFlow<Pair<AyahNumber, AyahNumber>?>(null)
     val playbackRange: StateFlow<Pair<AyahNumber, AyahNumber>?> = _playbackRange.asStateFlow()
 
@@ -51,7 +59,7 @@ class AudioBannerViewModel @Inject constructor(
             playbackEnded = { onPlaybackEnded() },
             playbackPaused = { onPlaybackPaused() },
             playbackResumed = { onPlaybackResumed() },
-            playing = { ayah -> onPlayingAyah(ayah) },
+            playing = { ayah, progress -> onPlayingAyah(ayah, progress) },
         )
     }
 
@@ -153,8 +161,9 @@ class AudioBannerViewModel @Inject constructor(
         updatePlaybackState(PlaybackState.Playing)
     }
 
-    private fun onPlayingAyah(ayah: AyahNumber) {
+    private fun onPlayingAyah(ayah: AyahNumber, progress: Float?) {
         _currentAyah.value = ayah
+        _currentAyahProgress.value = AyahPlaybackProgress(ayah, progress)
         _audioBannerState.update { state ->
             state.copy(
                 title = "Ayah ${ayah.ayah}",
@@ -195,6 +204,7 @@ class AudioBannerViewModel @Inject constructor(
         }
         if (state is PlaybackState.Stopped) {
             _currentAyah.value = null
+            _currentAyahProgress.value = null
             _playbackRange.value = null
         }
     }

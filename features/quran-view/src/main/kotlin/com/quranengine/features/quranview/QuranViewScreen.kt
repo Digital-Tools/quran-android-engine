@@ -31,6 +31,7 @@ fun QuranViewScreen(
     modifier: Modifier = Modifier,
     selectedAyah: AyahNumber? = null,
     ayahMenuActions: AyahMenuActions = AyahMenuActions(),
+    noteEditorAyah: AyahNumber? = null,
     transientMessage: String? = null,
     onTransientMessageShown: () -> Unit = {},
     onToggleBars: () -> Unit = {},
@@ -43,9 +44,16 @@ fun QuranViewScreen(
     onAudioStop: () -> Unit = {},
     onSetPlaybackRate: (Float) -> Unit = {},
     onAudioBannerTap: () -> Unit = {},
+    onDismissNoteEditor: () -> Unit = {},
+    onSaveNote: (AyahNumber, String) -> Unit = { _, _ -> },
     pageContent: @Composable () -> Unit = {},
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
+    var menuAyah by remember { mutableStateOf(selectedAyah) }
+
+    LaunchedEffect(selectedAyah) {
+        menuAyah = selectedAyah
+    }
 
     LaunchedEffect(transientMessage) {
         transientMessage?.let { message ->
@@ -138,7 +146,7 @@ fun QuranViewScreen(
                             },
                         )
                     }
-                    IconButton(onClick = { /* menu */ }) {
+                    IconButton(onClick = { menuAyah = state.firstVerse }) {
                         Icon(
                             imageVector = Icons.Default.MoreVert,
                             contentDescription = "More",
@@ -154,11 +162,26 @@ fun QuranViewScreen(
             )
         }
 
-        // Ayah long-press context menu
-        if (selectedAyah != null) {
+        // Ayah context menu
+        val currentMenuAyah = menuAyah
+        if (currentMenuAyah != null) {
             AyahMenuSheet(
-                ayah = selectedAyah,
-                actions = ayahMenuActions,
+                ayah = currentMenuAyah,
+                actions = ayahMenuActions.copy(
+                    onDismiss = {
+                        menuAyah = null
+                        ayahMenuActions.onDismiss()
+                    },
+                ),
+            )
+        }
+
+        val currentNoteEditorAyah = noteEditorAyah
+        if (currentNoteEditorAyah != null) {
+            NoteEditorSheet(
+                ayah = currentNoteEditorAyah,
+                onDismiss = onDismissNoteEditor,
+                onSave = { note -> onSaveNote(currentNoteEditorAyah, note) },
             )
         }
 

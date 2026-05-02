@@ -16,7 +16,7 @@ data class QuranAudioPlayerActions(
     val playbackEnded: () -> Unit,
     val playbackPaused: () -> Unit,
     val playbackResumed: () -> Unit,
-    val playing: (AyahNumber) -> Unit,
+    val playing: (AyahNumber, Float?) -> Unit,
 )
 
 /**
@@ -119,7 +119,7 @@ class QuranAudioPlayer(
         nowPlaying.updateElapsedTime(exoPlayer.currentPosition / 1_000.0, exoPlayer.playbackParameters.speed)
 
         val ayah = audioRequest.getAyahNumberFrom(fileIndex, frameIndex)
-        actions?.playing?.invoke(ayah)
+        actions?.playing?.invoke(ayah, playbackProgress(audioRequest.getRequest(), fileIndex, frameIndex, exoPlayer.currentPosition))
     }
 
     private fun willPlay(request: com.quranengine.core.audioplayer.AudioRequest) {
@@ -141,4 +141,22 @@ class QuranAudioPlayer(
                 audioFrameChanged(fileIndex, frameIndex, exoPlayer)
             },
         )
+
+    private fun playbackProgress(
+        request: com.quranengine.core.audioplayer.AudioRequest,
+        fileIndex: Int,
+        frameIndex: Int,
+        currentPositionMs: Long,
+    ): Float? {
+        val frame = request.files.getOrNull(fileIndex)?.frames?.getOrNull(frameIndex) ?: return null
+        val startTime = frame.startTime
+        val endTime = frame.endTime ?: request.files[fileIndex].frames.getOrNull(frameIndex + 1)?.startTime
+            ?: request.endTime
+            ?: return null
+        val duration = endTime - startTime
+        if (duration <= 0.0) return null
+
+        val currentTime = currentPositionMs / 1_000.0
+        return ((currentTime - startTime) / duration).toFloat().coerceIn(0f, 1f)
+    }
 }

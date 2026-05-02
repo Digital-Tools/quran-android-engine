@@ -8,6 +8,7 @@ dependencies {
     implementation(project(":features:home"))
     implementation(project(":features:quran-view"))
     implementation(project(":features:bookmarks"))
+    implementation(project(":features:notes"))
     implementation(project(":features:search"))
     implementation(project(":features:settings"))
     implementation(project(":features:reciter-list"))

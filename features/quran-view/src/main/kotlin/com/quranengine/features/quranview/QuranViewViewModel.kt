@@ -10,8 +10,10 @@ import com.quranengine.data.sqlite.ReadOnlyDatabase
 import com.quranengine.data.wordframe.SqliteWordFramePersistence
 import com.quranengine.domain.annotationservice.LastPageService
 import com.quranengine.domain.annotationservice.LastPageUpdater
+import com.quranengine.domain.annotationservice.NoteService
 import com.quranengine.domain.annotationservice.PageBookmarkService
 import com.quranengine.domain.imageservice.ImageDataService
+import com.quranengine.domain.qurantextkit.AyahShareUseCase
 import com.quranengine.domain.qurantextkit.englishName
 import com.quranengine.domain.qurantextkit.QuranContentStatePreferences
 import com.quranengine.domain.qurantextkit.QuranTextDataService
@@ -24,6 +26,7 @@ import com.quranengine.domain.readingservice.localPath
 import com.quranengine.features.qurancontent.ContentState
 import com.quranengine.features.quranimage.ContentImageState
 import com.quranengine.features.qurantranslation.TranslationItem
+import com.quranengine.features.audiobanner.AyahPlaybackProgress
 import com.quranengine.model.qurangeometry.WordFrameCollection
 import com.quranengine.model.qurankit.AyahNumber
 import com.quranengine.model.qurankit.Page
@@ -62,8 +65,10 @@ class QuranViewViewModel @Inject constructor(
     private val readingPreferences: ReadingPreferences,
     private val quranContentStatePreferences: QuranContentStatePreferences,
     private val quranTextDataService: QuranTextDataService,
+    private val ayahShareUseCase: AyahShareUseCase,
     private val selectedTranslationsPreferences: SelectedTranslationsPreferences,
     private val pageBookmarkService: PageBookmarkService,
+    private val noteService: NoteService,
     private val lastPageService: LastPageService,
     private val lastPageUpdater: LastPageUpdater,
     private val readingAssetsInstaller: ReadingAssetsInstaller,
@@ -99,7 +104,7 @@ class QuranViewViewModel @Inject constructor(
 
     private val basePageContents = mutableMapOf<Int, PageImageContent>()
     private var bookmarkedPageNumbers: Set<Int> = emptySet()
-    private var highlightedAyah: AyahNumber? = null
+    private var highlightedAyahProgress: AyahPlaybackProgress? = null
     private var bookmarkObservationJob: Job? = null
     private var lastPageUpdaterConfigured = false
 
@@ -115,8 +120,8 @@ class QuranViewViewModel @Inject constructor(
         }
     }
 
-    fun setReadingAyah(ayah: AyahNumber?) {
-        highlightedAyah = ayah
+    fun setReadingAyah(progress: AyahPlaybackProgress?) {
+        highlightedAyahProgress = progress
         refreshArabicHighlights()
     }
 
@@ -139,6 +144,44 @@ class QuranViewViewModel @Inject constructor(
             pageNumber = ayah.page.pageNumber,
             toggle = false,
         )
+    }
+
+    fun shareAyah(ayah: AyahNumber) {
+        viewModelScope.launch {
+            try {
+                ayahShareUseCase.share(ayah)
+            } catch (error: Exception) {
+                _userMessage.value = error.localizedMessage ?: "Unable to share ayah."
+            }
+        }
+    }
+
+    fun copyAyah(ayah: AyahNumber, copyText: (String) -> Unit) {
+        viewModelScope.launch {
+            try {
+                copyText(ayahShareUseCase.clipboardText(ayah))
+                _userMessage.value = "Copied ayah ${ayah.sura.suraNumber}:${ayah.ayah}."
+            } catch (error: Exception) {
+                _userMessage.value = error.localizedMessage ?: "Unable to copy ayah."
+            }
+        }
+    }
+
+    fun saveNote(ayah: AyahNumber, note: String) {
+        val trimmedNote = note.trim()
+        if (trimmedNote.isEmpty()) {
+            _userMessage.value = "Enter a note before saving."
+            return
+        }
+
+        viewModelScope.launch {
+            try {
+                noteService.setNote(note = trimmedNote, verses = setOf(ayah))
+                _userMessage.value = "Saved note for ${ayah.sura.suraNumber}:${ayah.ayah}."
+            } catch (error: Exception) {
+                _userMessage.value = error.localizedMessage ?: "Unable to save note."
+            }
+        }
     }
 
     fun clearUserMessage() {
@@ -310,7 +353,7 @@ class QuranViewViewModel @Inject constructor(
                 val content = loadImageState(reading, page)
                 basePageContents[page.pageNumber] = content
                 ContentState.Loaded(
-                    content.state.withReadingHighlight(highlightedAyah, content.verseHighlightRectsByAyah)
+                    content.state.withReadingHighlight(highlightedAyahProgress, content.wordFramesByAyah)
                 )
             } catch (error: Exception) {
                 ContentState.Error(error)
@@ -339,7 +382,7 @@ class QuranViewViewModel @Inject constructor(
             current.mapValues { (pageNumber, state) ->
                 val baseContent = basePageContents[pageNumber] ?: return@mapValues state
                 ContentState.Loaded(
-                    baseContent.state.withReadingHighlight(highlightedAyah, baseContent.verseHighlightRectsByAyah)
+                    baseContent.state.withReadingHighlight(highlightedAyahProgress, baseContent.wordFramesByAyah)
                 )
             }
         }
@@ -442,14 +485,8 @@ class QuranViewViewModel @Inject constructor(
                 )
                 val imagePage = imageService.imageForPage(page)
                 val rawWordFrames = WordFrameCollection(persistence.wordFrameCollectionForPage(page))
-                val verseHighlightRectsByAyah = page.firstVerse.arrayTo(page.lastVerse)
-                    .mapNotNull { ayah ->
-                        rawWordFrames.wordFramesForVerse(ayah)
-                            .map { RectF(it.rect) }
-                            .takeIf { it.isNotEmpty() }
-                            ?.let { ayah to it }
-                    }
-                    .toMap()
+                val wordFramesByAyah = page.firstVerse.arrayTo(page.lastVerse)
+                    .associateWith { ayah -> rawWordFrames.wordFramesForVerse(ayah) }
 
                 PageImageContent(
                     state = ContentImageState(
@@ -465,7 +502,7 @@ class QuranViewViewModel @Inject constructor(
                         pageNumber = page.pageNumber.toString(),
                         isLoading = false,
                     ),
-                    verseHighlightRectsByAyah = verseHighlightRectsByAyah,
+                    wordFramesByAyah = wordFramesByAyah,
                 )
             } finally {
                 database.close()
@@ -475,7 +512,7 @@ class QuranViewViewModel @Inject constructor(
 
 private data class PageImageContent(
     val state: ContentImageState,
-    val verseHighlightRectsByAyah: Map<AyahNumber, List<RectF>>,
+    val wordFramesByAyah: Map<AyahNumber, List<com.quranengine.model.qurangeometry.WordFrame>>,
 )
 
 private class MissingReadingResourcesException(
@@ -552,16 +589,25 @@ private fun com.quranengine.model.qurantext.VerseText.fullArabicText(): String =
         .joinToString(separator = " ")
 
 private fun ContentImageState.withReadingHighlight(
-    ayah: AyahNumber?,
-    verseHighlightRectsByAyah: Map<AyahNumber, List<RectF>>,
+    progress: AyahPlaybackProgress?,
+    wordFramesByAyah: Map<AyahNumber, List<com.quranengine.model.qurangeometry.WordFrame>>,
 ): ContentImageState {
-    val wordHighlights = ayah?.let { currentAyah ->
-        verseHighlightRectsByAyah[currentAyah]?.map { bounds ->
-            WordHighlight(rect = RectF(bounds))
-        }
+    val wordHighlights = progress?.let { current ->
+        val frames = wordFramesByAyah[current.ayah].orEmpty()
+        val frame = frames.wordFrameForProgress(current.progress)
+        frame?.let { listOf(WordHighlight(rect = RectF(it.rect))) }
     }.orEmpty()
 
     return copy(
         decorations = decorations.copy(wordHighlights = wordHighlights),
     )
+}
+
+private fun List<com.quranengine.model.qurangeometry.WordFrame>.wordFrameForProgress(
+    progress: Float?,
+): com.quranengine.model.qurangeometry.WordFrame? {
+    if (isEmpty()) return null
+    val clampedProgress = progress?.coerceIn(0f, 1f) ?: 0f
+    val index = (clampedProgress * size).toInt().coerceIn(0, lastIndex)
+    return sortedBy { it.word.wordNumber }[index]
 }
