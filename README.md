@@ -12,7 +12,7 @@ QuranEngine for Android is the native Android port of the [QuranEngine iOS libra
 
 ## 🏗 Architecture
 
-The library is organized as a **53-module** Gradle multi-module project across 7 layers:
+The library is organized as a **54-module** Gradle multi-module project across 7 layers:
 
 ```
 quran-android-engine/
@@ -21,7 +21,7 @@ quran-android-engine/
 ├── data/           9 modules — Persistence + networking
 ├── domain/        11 modules — Business logic
 ├── ui/             5 modules — Design system (Compose)
-├── features/      16 modules — Screens (Compose)
+├── features/      17 modules — Screens (Compose)
 └── app/            1 module  — Main app shell (Hilt DI)
 ```
 
@@ -83,7 +83,7 @@ Dependencies flow strictly downward: **Features → UI / Domain → Data / Core 
 | `pager` | HorizontalPager wrapper |
 | `audio-banner` | Audio banner composable |
 
-### Features (16 modules)
+### Features (17 modules)
 | Module | Description |
 |--------|-------------|
 | `app-structure` | Tabs & navigation shell |
@@ -96,6 +96,7 @@ Dependencies flow strictly downward: **Features → UI / Domain → Data / Core 
 | `translation-verse` | Per-verse translation display |
 | `audio-banner` | Audio playback controls |
 | `bookmarks` | Bookmark list & management |
+| `notes` | Note creation & management |
 | `search` | Full-text search |
 | `reciter-list` | Reciter selection |
 | `translations` | Translation manager |
@@ -135,7 +136,7 @@ Five built-in themes with light and dark mode support, built on Material 3:
 
 ## 🔧 Building
 
-**Requirements:** Android Studio Hedgehog+ · JDK 17 · Min SDK 24 · Target SDK 35 · Compile SDK 35
+**Requirements:** Android Studio Hedgehog+ · JDK 21 · Min SDK 24 · Target SDK 35 · Compile SDK 35
 
 ```bash
 # Assemble debug build
@@ -185,11 +186,24 @@ plugins {
 
 ## 📋 Status
 
-This is an active Android port of QuranEngine. All 53 modules are implemented, and the current native reader flow now covers navigation, pagination, bookmarking, inline translation mode, theme/appearance persistence, and advanced audio. The next product step is bridge integration into Flutter.
+This is an active, production-ready Android port of QuranEngine. All 54 core modules are implemented. The native reader flow currently covers:
+- Navigation, pagination, and search
+- Bookmarking and note-taking
+- Inline translation and word-by-word highlighting
+- Theme and appearance persistence
+- Advanced audio (playback speed, word-highlight sync, reciter management)
+- Deep-link routing
+
+The engine is designed to be easily embedded into larger Android applications via AAR or Gradle composite builds, or run entirely standalone.
 
 ## 🤝 Contributions
 
-We warmly welcome contributions. Please start a conversation in the Discussions section before larger changes. For small fixes, feel free to open a Pull Request directly.
+We warmly welcome contributions to the Android engine!
+
+1. Please start a conversation in the **Discussions** or **Issues** section before undertaking larger changes.
+2. Fork the repository and create a branch using our convention (`feature/`, `fix/`, `chore/`, `docs/`).
+3. Ensure you can pass `./gradlew test` locally.
+4. Open a Pull Request. **CI status checks must pass** before your PR can be merged into `main`.
 
 ## 📄 License and attribution
 
