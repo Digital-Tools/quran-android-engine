@@ -24,3 +24,6 @@ captures/
 # OS / misc
 .DS_Store
 *.log
+
+# Copilot Config
+.github/copilot-instructions.md
