@@ -19,6 +19,15 @@
   },
   {
     "category": "arabic",
+    "url": "https://download.quranicaudio.com/quran/mishaari_california/",
+    "id": 42,
+    "databaseName": "",
+    "path": "mishari_cali",
+    "name": "qari_afasy_cali_gapless",
+    "hasGaplessAlternative": false
+  },
+  {
+    "category": "arabic",
     "url": "https://mirrors.quranicaudio.com/everyayah/Minshawy_Mujawwad_192kbps/",
     "id": 16,
     "databaseName": "",
