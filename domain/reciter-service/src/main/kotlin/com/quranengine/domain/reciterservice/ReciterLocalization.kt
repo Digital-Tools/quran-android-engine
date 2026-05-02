@@ -28,6 +28,7 @@ private fun Reciter.humanizedName(): String =
 
 private val ENGLISH_RECITER_NAMES = mapOf(
     "qari_abdulbaset_mujawwad_gapless" to "Abd Al-Basit Mujawwad",
+    "qari_afasy_cali_gapless" to "Mishari Al-Afasy (California)",
     "qari_afasy_gapless" to "Mishary Al-Afasy",
     "qari_minshawi_mujawwad" to "Minshawy Mujawwad (gapped)",
     "qari_shatri_gapless" to "Abu Bakr Ash-Shatri",
