@@ -1,10 +1,10 @@
 name: Android CI
 
 on:
-  # Automatic triggers disabled — CI does not yet account for the Flutter
-  # composite-build setup (mizan-app includes this repo as an includeBuild).
-  # Re-enable push/pull_request once the standalone build is wired for CI.
-  # Also bump java-version to 21 when re-enabling (toolchain was bumped from 17→21).
+  push:
+    branches:
+      - main
+  pull_request:
   workflow_dispatch:
 
 permissions:
@@ -18,11 +18,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up JDK 17
+      - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: "17"
+          java-version: "21"
           cache: gradle
 
       - name: Set up Android SDK

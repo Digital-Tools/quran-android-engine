@@ -1,11 +1,16 @@
 package com.quranengine.features.quranview
 
+import android.content.ClipData
+import android.content.ClipboardManager
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import com.quranengine.features.audiobanner.AudioBannerViewModel
 import com.quranengine.features.qurancontent.ContentPageView
 import com.quranengine.features.quranimage.ContentImageView
@@ -31,16 +36,21 @@ fun QuranViewRoute(
     val userMessage by viewModel.userMessage.collectAsState()
     val audioBannerState by audioBannerViewModel.audioBannerState.collectAsState()
     val playbackRate by audioBannerViewModel.playbackRate.collectAsState()
-    val currentAyah by audioBannerViewModel.currentAyah.collectAsState()
+    val currentAyahProgress by audioBannerViewModel.currentAyahProgress.collectAsState()
     val currentPlaybackRange by audioBannerViewModel.playbackRange.collectAsState()
+    val context = LocalContext.current
+    val clipboardManager = remember(context) {
+        context.getSystemService(ClipboardManager::class.java)
+    }
+    var noteEditorAyah by remember { mutableStateOf<AyahNumber?>(null) }
     val pages = remember(state.totalPages) { (1..state.totalPages).toList() }
     val defaultPlaybackRange = state.firstVerse?.let { from ->
         from to JuzBasedLastAyahFinder().findLastAyah(from)
     }
     val advancedAudioRange = currentPlaybackRange ?: defaultPlaybackRange
 
-    LaunchedEffect(currentAyah) {
-        viewModel.setReadingAyah(currentAyah)
+    LaunchedEffect(currentAyahProgress) {
+        viewModel.setReadingAyah(currentAyahProgress)
     }
 
     QuranViewScreen(
@@ -50,7 +60,25 @@ fun QuranViewRoute(
         onTransientMessageShown = viewModel::clearUserMessage,
         ayahMenuActions = AyahMenuActions(
             onBookmarkPage = viewModel::addBookmarkForAyah,
+            onPlayFromHere = { ayah ->
+                audioBannerViewModel.play(ayah, JuzBasedLastAyahFinder().findLastAyah(ayah))
+            },
+            onShare = viewModel::shareAyah,
+            onCopy = { ayah ->
+                viewModel.copyAyah(ayah) { text ->
+                    clipboardManager.setPrimaryClip(ClipData.newPlainText("Quran ayah", text))
+                }
+            },
+            onAddNote = { ayah ->
+                noteEditorAyah = ayah
+            },
         ),
+        noteEditorAyah = noteEditorAyah,
+        onDismissNoteEditor = { noteEditorAyah = null },
+        onSaveNote = { ayah, note ->
+            viewModel.saveNote(ayah, note)
+            noteEditorAyah = null
+        },
         onBack = onBack,
         onToggleBars = viewModel::toggleBars,
         onToggleMode = viewModel::toggleQuranMode,

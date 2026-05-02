@@ -11,6 +11,7 @@ dependencies {
     implementation(project(":core:preferences"))
     implementation(project(":core:utilities"))
     implementation(project(":core:localization"))
+    implementation(libs.core.ktx)
     implementation(libs.coroutines.core)
     implementation(libs.timber)
 }

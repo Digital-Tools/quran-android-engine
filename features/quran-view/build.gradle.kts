@@ -26,6 +26,7 @@ dependencies {
     implementation(project(":domain:image-service"))
     implementation(project(":domain:reading-service"))
     implementation(project(":domain:translation-service"))
+    implementation(project(":core:audio-player"))
     implementation(project(":core:preferences"))
     implementation(project(":data:sqlite-persistence"))
     implementation(project(":data:word-frame-persistence"))

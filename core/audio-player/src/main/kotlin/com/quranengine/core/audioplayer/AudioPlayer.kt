@@ -31,6 +31,7 @@ internal class AudioPlayer(
 
     private val handler = Handler(Looper.getMainLooper())
     private var pendingFrameEnd: Runnable? = null
+    private var pendingProgressUpdate: Runnable? = null
 
     // ---- Public controls ----
 
@@ -41,15 +42,18 @@ internal class AudioPlayer(
     fun resume() {
         player?.play(rate) ?: return
         waitUntilFrameEnds()
+        scheduleProgressUpdates()
     }
 
     fun pause() {
         cancelFrameTimer()
+        cancelProgressUpdates()
         player?.pause()
     }
 
     fun stop() {
         cancelFrameTimer()
+        cancelProgressUpdates()
         player?.stop()
         player = null
     }
@@ -104,6 +108,7 @@ internal class AudioPlayer(
      */
     private fun play(fileIndex: Int, frameIndex: Int, forceSeek: Boolean) {
         cancelFrameTimer()
+        cancelProgressUpdates()
 
         val previousFileIndex = playing.fileIndex
         playing.setPlaying(fileIndex, frameIndex)
@@ -129,6 +134,7 @@ internal class AudioPlayer(
         actions?.audioFrameChanged?.invoke(fileIndex, frameIndex, player!!.rawPlayer)
 
         waitUntilFrameEnds()
+        scheduleProgressUpdates()
     }
 
     /**
@@ -202,5 +208,27 @@ internal class AudioPlayer(
     private fun cancelFrameTimer() {
         pendingFrameEnd?.let { handler.removeCallbacks(it) }
         pendingFrameEnd = null
+    }
+
+    private fun scheduleProgressUpdates() {
+        val runnable = object : Runnable {
+            override fun run() {
+                val currentPlayer = player ?: return
+                actions?.audioFrameChanged?.invoke(playing.fileIndex, playing.frameIndex, currentPlayer.rawPlayer)
+                pendingProgressUpdate = this
+                handler.postDelayed(this, PROGRESS_UPDATE_INTERVAL_MS)
+            }
+        }
+        pendingProgressUpdate = runnable
+        handler.postDelayed(runnable, PROGRESS_UPDATE_INTERVAL_MS)
+    }
+
+    private fun cancelProgressUpdates() {
+        pendingProgressUpdate?.let { handler.removeCallbacks(it) }
+        pendingProgressUpdate = null
+    }
+
+    private companion object {
+        const val PROGRESS_UPDATE_INTERVAL_MS = 150L
     }
 }

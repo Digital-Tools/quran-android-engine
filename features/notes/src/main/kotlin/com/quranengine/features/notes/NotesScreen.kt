@@ -1,4 +1,4 @@
-package com.quranengine.features.bookmarks
+package com.quranengine.features.notes
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
@@ -11,7 +11,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.BookmarkBorder
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.outlined.StickyNote2
@@ -37,7 +37,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.quranengine.model.quranannotations.PageBookmark
+import com.quranengine.domain.qurantextkit.englishName
+import com.quranengine.model.quranannotations.Note
+import com.quranengine.model.qurankit.AyahNumber
 import com.quranengine.ui.components.DataUnavailableView
 import com.quranengine.ui.components.NoorAccessory
 import com.quranengine.ui.components.NoorListItem
@@ -49,12 +51,12 @@ import java.time.format.FormatStyle
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BookmarksScreen(
-    viewModel: BookmarksViewModel,
-    onNavigateToPage: (PageBookmark) -> Unit,
-    onNavigateToNotes: () -> Unit = {},
+fun NotesScreen(
+    viewModel: NotesViewModel,
+    onBack: () -> Unit,
+    onNavigateToAyah: (AyahNumber) -> Unit,
 ) {
-    val bookmarks by viewModel.bookmarks.collectAsState()
+    val notes by viewModel.notes.collectAsState()
     val error by viewModel.error.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -71,23 +73,25 @@ fun BookmarksScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = "Bookmarks",
+                        text = "Notes",
                         color = QuranTheme.colors.text,
                     )
                 },
-                actions = {
-                    IconButton(onClick = onNavigateToNotes) {
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
                         Icon(
-                            imageVector = Icons.Outlined.StickyNote2,
-                            contentDescription = "Notes",
-                            tint = QuranTheme.colors.secondaryText,
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back",
+                            tint = QuranTheme.colors.text,
                         )
                     }
-                    if (bookmarks.isNotEmpty()) {
-                        IconButton(onClick = { viewModel.deleteAllBookmarks() }) {
+                },
+                actions = {
+                    if (notes.isNotEmpty()) {
+                        IconButton(onClick = { viewModel.deleteAllNotes() }) {
                             Icon(
                                 imageVector = Icons.Default.DeleteSweep,
-                                contentDescription = "Delete all bookmarks",
+                                contentDescription = "Delete all notes",
                                 tint = QuranTheme.colors.secondaryText,
                             )
                         }
@@ -100,14 +104,14 @@ fun BookmarksScreen(
         },
         containerColor = QuranTheme.colors.background,
     ) { padding ->
-        if (bookmarks.isEmpty()) {
+        if (notes.isEmpty()) {
             DataUnavailableView(
-                title = "No Bookmarks",
-                message = "Pages you bookmark will appear here.",
+                title = "No Notes",
+                message = "Notes you add to ayahs will appear here.",
                 modifier = Modifier.padding(padding),
                 image = {
                     Icon(
-                        imageVector = Icons.Default.BookmarkBorder,
+                        imageVector = Icons.Outlined.StickyNote2,
                         contentDescription = null,
                         tint = QuranTheme.colors.secondaryText,
                         modifier = Modifier.size(64.dp),
@@ -122,13 +126,13 @@ fun BookmarksScreen(
                     .verticalScroll(rememberScrollState()),
             ) {
                 NoorSection(
-                    items = bookmarks,
-                    title = "Saved Pages",
-                ) { bookmark ->
-                    SwipeToDeleteBookmarkItem(
-                        bookmark = bookmark,
-                        onDelete = { viewModel.deleteBookmark(bookmark) },
-                        onClick = { onNavigateToPage(bookmark) },
+                    items = notes,
+                    title = "Saved Notes",
+                ) { note ->
+                    SwipeToDeleteNoteItem(
+                        note = note,
+                        onDelete = { viewModel.deleteNote(note) },
+                        onClick = { onNavigateToAyah(note.firstVerse) },
                     )
                 }
             }
@@ -138,8 +142,8 @@ fun BookmarksScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun SwipeToDeleteBookmarkItem(
-    bookmark: PageBookmark,
+private fun SwipeToDeleteNoteItem(
+    note: Note,
     onDelete: () -> Unit,
     onClick: () -> Unit,
 ) {
@@ -189,11 +193,24 @@ private fun SwipeToDeleteBookmarkItem(
         }
 
         NoorListItem(
-            title = "Page ${bookmark.page.pageNumber}",
-            subtitle = bookmark.page.startSura.let { "Sura ${it.suraNumber}" },
-            rightSubtitle = dateFormatter.format(bookmark.creationDate),
+            title = note.note.orEmpty(),
+            subtitle = note.firstVerse.referenceLabel(),
+            rightSubtitle = dateFormatter.format(note.modifiedDate),
+            leadingEdgeColor = note.color.uiColor(),
             accessory = NoorAccessory.DisclosureIndicator,
             onClick = onClick,
         )
     }
 }
+
+private fun AyahNumber.referenceLabel(): String =
+    "${sura.englishName()} ${sura.suraNumber}:$ayah"
+
+private fun Note.Color.uiColor(): Color =
+    when (this) {
+        Note.Color.RED -> Color(0xFFE57373)
+        Note.Color.GREEN -> Color(0xFF81C784)
+        Note.Color.BLUE -> Color(0xFF64B5F6)
+        Note.Color.YELLOW -> Color(0xFFFFC107)
+        Note.Color.PURPLE -> Color(0xFFBA68C8)
+    }

@@ -1,5 +1,6 @@
 package com.quranengine.app.di
 
+import android.content.Context
 import androidx.media3.session.MediaSession
 import com.quranengine.core.audioplayer.NowPlayingUpdater
 import com.quranengine.core.audioplayer.QueuePlayer
@@ -21,7 +22,9 @@ import com.quranengine.data.versetext.SqliteVerseTextPersistence
 import com.quranengine.data.versetext.VerseTextPersistence
 import com.quranengine.domain.annotationservice.LastPageService
 import com.quranengine.domain.annotationservice.LastPageUpdater
+import com.quranengine.domain.annotationservice.NoteService
 import com.quranengine.domain.annotationservice.PageBookmarkService
+import com.quranengine.data.annotation.persistence.NotePersistence
 import com.quranengine.domain.quranaudiokit.AudioPreferences
 import com.quranengine.domain.quranaudiokit.GaplessAudioRequestBuilder
 import com.quranengine.domain.quranaudiokit.GappedAudioRequestBuilder
@@ -31,6 +34,7 @@ import com.quranengine.domain.quranaudiokit.QuranAudioPlayer
 import com.quranengine.domain.quranaudiokit.QuranAudioRequestBuilder
 import com.quranengine.domain.quranaudiokit.QueuingPlayer
 import com.quranengine.domain.audiotimingservice.ReciterTimingRetriever
+import com.quranengine.domain.qurantextkit.AyahShareUseCase
 import com.quranengine.domain.qurantextkit.CompositeSearcher
 import com.quranengine.domain.qurantextkit.FontSizePreferences
 import com.quranengine.domain.qurantextkit.QuranTextDataService
@@ -65,6 +69,7 @@ import com.quranengine.ui.theme.ThemePreferences
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import java.io.File
 import javax.inject.Named
@@ -162,8 +167,21 @@ object DomainModule {
     fun provideLastPageUpdater(service: LastPageService, scope: CoroutineScope): LastPageUpdater =
         LastPageUpdater(service, scope)
 
-    // TODO: NoteService requires an AnalyticsLibrary instance. Wire this up once
-    //  the analytics abstraction is finalized and a concrete implementation is available.
+    @Provides
+    @Singleton
+    fun provideAnnotationAnalytics(): com.quranengine.domain.annotationservice.AnalyticsLibrary =
+        object : com.quranengine.domain.annotationservice.AnalyticsLibrary {
+            override fun logEvent(name: String, value: String) = Unit
+        }
+
+    @Provides
+    @Singleton
+    fun provideNoteService(
+        persistence: NotePersistence,
+        analytics: com.quranengine.domain.annotationservice.AnalyticsLibrary,
+        preferences: Preferences,
+    ): NoteService =
+        NoteService(persistence, analytics, preferences)
 
     // -- Translation services -------------------------------------------------
 
@@ -401,6 +419,21 @@ object DomainModule {
                     fileName = translation.fileName,
                 )
             },
+            selectedTranslationsPreferences = selectedTranslationsPreferences,
+            localizer = localizer,
+        )
+
+    @Provides
+    @Singleton
+    fun provideAyahShareUseCase(
+        @ApplicationContext context: Context,
+        quranTextDataService: QuranTextDataService,
+        selectedTranslationsPreferences: SelectedTranslationsPreferences,
+        localizer: Localizer,
+    ): AyahShareUseCase =
+        AyahShareUseCase(
+            context = context,
+            quranTextDataService = quranTextDataService,
             selectedTranslationsPreferences = selectedTranslationsPreferences,
             localizer = localizer,
         )

@@ -31,6 +31,8 @@ import com.quranengine.features.bookmarks.BookmarksScreen
 import com.quranengine.features.bookmarks.BookmarksViewModel
 import com.quranengine.features.home.HomeScreen
 import com.quranengine.features.home.HomeViewModel
+import com.quranengine.features.notes.NotesScreen
+import com.quranengine.features.notes.NotesViewModel
 import com.quranengine.features.quranview.QuranViewRoute
 import com.quranengine.features.quranview.QuranViewViewModel
 import com.quranengine.features.reciterlist.ReciterListViewModel
@@ -114,6 +116,20 @@ fun AppStructureScreen(
                     viewModel = viewModel,
                     onNavigateToPage = { bookmark ->
                         navController.navigate(AppRoute.QuranView(bookmark.page.pageNumber).route)
+                    },
+                    onNavigateToNotes = {
+                        navController.navigate(AppRoute.Notes.route)
+                    },
+                )
+            }
+
+            composable(AppRoute.Notes.route) {
+                val viewModel: NotesViewModel = hiltViewModel()
+                NotesScreen(
+                    viewModel = viewModel,
+                    onBack = { navController.popBackStack() },
+                    onNavigateToAyah = { ayah ->
+                        navController.navigateToAyah(ayah)
                     },
                 )
             }

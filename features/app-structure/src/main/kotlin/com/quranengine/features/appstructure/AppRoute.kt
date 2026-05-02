@@ -6,6 +6,7 @@ import java.nio.charset.StandardCharsets
 sealed class AppRoute(val route: String) {
     data object Home : AppRoute("home")
     data object Bookmarks : AppRoute("bookmarks")
+    data object Notes : AppRoute("bookmarks/notes")
     data class Search(val query: String? = null) : AppRoute(
         if (query.isNullOrBlank()) {
             BASE_ROUTE

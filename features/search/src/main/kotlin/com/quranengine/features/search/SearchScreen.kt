@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -20,6 +21,8 @@ import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -38,13 +41,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import com.quranengine.domain.qurantextkit.englishName
 import com.quranengine.model.qurankit.AyahNumber
+import com.quranengine.model.qurankit.Sura
 import com.quranengine.model.qurantext.SearchResult
 import com.quranengine.model.qurantext.SearchResults
 import com.quranengine.ui.components.LoadingView
 import com.quranengine.ui.components.NoorBasicSection
 import com.quranengine.ui.components.NoorListItem
 import com.quranengine.ui.components.NoorSection
+import com.quranengine.ui.theme.QuranColors
 import com.quranengine.ui.theme.QuranTheme
 
 @Composable
@@ -73,6 +79,15 @@ fun SearchScreen(
             onClear = { viewModel.clearSearch() },
         )
 
+        val currentState = uiState
+        if (searchTerm.isBlank() && currentState is SearchUiState.Entry && currentState.recents.isNotEmpty()) {
+            SearchHistoryChips(
+                recents = currentState.recents,
+                onTermClick = { viewModel.selectRecent(it) },
+                onClearRecents = { viewModel.clearRecents() },
+            )
+        }
+
         if (searchTerm.isNotEmpty() && autocompletions.isNotEmpty() && uiState !is SearchUiState.Results) {
             AutocompleteDropdown(
                 suggestions = autocompletions,
@@ -80,19 +95,27 @@ fun SearchScreen(
             )
         }
 
-        when (val state = uiState) {
+        when (val state = currentState) {
             is SearchUiState.Entry -> EntryContent(
-                recents = state.recents,
                 populars = state.populars,
                 onTermClick = { viewModel.selectRecent(it) },
-                onClearRecents = { viewModel.clearRecents() },
             )
             is SearchUiState.Searching -> LoadingView()
             is SearchUiState.Results -> ResultsContent(
                 results = state.results,
+                suras = viewModel.suras,
+                availableSuraNumbers = state.availableSuraNumbers,
+                selectedSuraNumber = state.selectedSuraNumber,
+                onSuraSelected = viewModel::setSuraFilter,
                 onResultClick = onNavigateToAyah,
             )
-            is SearchUiState.NoResults -> NoResultsContent(term = state.term)
+            is SearchUiState.NoResults -> NoResultsContent(
+                term = state.term,
+                suras = viewModel.suras,
+                availableSuraNumbers = state.availableSuraNumbers,
+                selectedSuraNumber = state.selectedSuraNumber,
+                onSuraSelected = viewModel::setSuraFilter,
+            )
         }
     }
 }
@@ -154,6 +177,34 @@ private fun SearchBar(
 }
 
 @Composable
+private fun SearchHistoryChips(
+    recents: List<String>,
+    onTermClick: (String) -> Unit,
+    onClearRecents: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    LazyRow(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+    ) {
+        items(recents) { term ->
+            AssistChip(
+                onClick = { onTermClick(term) },
+                label = { Text(term) },
+                modifier = Modifier.padding(end = 8.dp),
+            )
+        }
+        item {
+            AssistChip(
+                onClick = onClearRecents,
+                label = { Text("Clear") },
+            )
+        }
+    }
+}
+
+@Composable
 private fun AutocompleteDropdown(
     suggestions: List<String>,
     onSuggestionClick: (String) -> Unit,
@@ -196,38 +247,11 @@ private fun AutocompleteDropdown(
 
 @Composable
 private fun EntryContent(
-    recents: List<String>,
     populars: List<String>,
     onTermClick: (String) -> Unit,
-    onClearRecents: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(modifier = modifier.fillMaxSize()) {
-        if (recents.isNotEmpty()) {
-            item {
-                Spacer(modifier = Modifier.height(12.dp))
-                NoorSection(
-                    items = recents,
-                    title = "Recent Searches",
-                ) { term ->
-                    NoorListItem(
-                        title = term,
-                        onClick = { onTermClick(term) },
-                    )
-                }
-            }
-            item {
-                Text(
-                    text = "Clear",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = QuranTheme.appIdentity,
-                    modifier = Modifier
-                        .clickable { onClearRecents() }
-                        .padding(horizontal = 32.dp, vertical = 8.dp),
-                )
-            }
-        }
-
         item {
             Spacer(modifier = Modifier.height(12.dp))
             NoorSection(
@@ -248,10 +272,22 @@ private fun EntryContent(
 @Composable
 private fun ResultsContent(
     results: List<SearchResults>,
+    suras: List<Sura>,
+    availableSuraNumbers: List<Int>,
+    selectedSuraNumber: Int?,
+    onSuraSelected: (Int?) -> Unit,
     onResultClick: (AyahNumber) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(modifier = modifier.fillMaxSize()) {
+        item {
+            SuraFilterChips(
+                suras = suras,
+                availableSuraNumbers = availableSuraNumbers,
+                selectedSuraNumber = selectedSuraNumber,
+                onSuraSelected = onSuraSelected,
+            )
+        }
         results.forEach { group ->
             item {
                 Spacer(modifier = Modifier.height(12.dp))
@@ -276,6 +312,44 @@ private fun ResultsContent(
 }
 
 @Composable
+private fun SuraFilterChips(
+    suras: List<Sura>,
+    availableSuraNumbers: List<Int>,
+    selectedSuraNumber: Int?,
+    onSuraSelected: (Int?) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    if (availableSuraNumbers.isEmpty()) return
+
+    val availableSuras = availableSuraNumbers.mapNotNull { number ->
+        suras.getOrNull(number - 1)
+    }
+
+    LazyRow(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+    ) {
+        item {
+            FilterChip(
+                selected = selectedSuraNumber == null,
+                onClick = { onSuraSelected(null) },
+                label = { Text("All") },
+                modifier = Modifier.padding(end = 8.dp),
+            )
+        }
+        items(availableSuras) { sura ->
+            FilterChip(
+                selected = selectedSuraNumber == sura.suraNumber,
+                onClick = { onSuraSelected(sura.suraNumber) },
+                label = { Text("${sura.suraNumber}. ${sura.englishName()}") },
+                modifier = Modifier.padding(end = 8.dp),
+            )
+        }
+    }
+}
+
+@Composable
 private fun SearchResultItem(
     result: SearchResult,
     onClick: () -> Unit,
@@ -288,7 +362,13 @@ private fun SearchResultItem(
             if (cursor < range.first) {
                 append(result.text.substring(cursor, range.first))
             }
-            withStyle(SpanStyle(color = highlightColor, fontWeight = FontWeight.Bold)) {
+            withStyle(
+                SpanStyle(
+                    color = highlightColor,
+                    fontWeight = FontWeight.Bold,
+                    background = QuranColors.searchHighlight,
+                )
+            ) {
                 append(result.text.substring(range.first, range.last + 1))
             }
             cursor = range.last + 1
@@ -321,16 +401,32 @@ private fun SearchResultItem(
 @Composable
 private fun NoResultsContent(
     term: String,
+    suras: List<Sura>,
+    availableSuraNumbers: List<Int>,
+    selectedSuraNumber: Int?,
+    onSuraSelected: (Int?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Box(
-        modifier = modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            text = "No results found for \"$term\"",
-            style = MaterialTheme.typography.bodyLarge,
-            color = QuranTheme.colors.secondaryText,
+    Column(modifier = modifier.fillMaxSize()) {
+        SuraFilterChips(
+            suras = suras,
+            availableSuraNumbers = availableSuraNumbers,
+            selectedSuraNumber = selectedSuraNumber,
+            onSuraSelected = onSuraSelected,
         )
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = if (selectedSuraNumber == null) {
+                    "No results found for \"$term\""
+                } else {
+                    "No results found for \"$term\" in the selected Surah"
+                },
+                style = MaterialTheme.typography.bodyLarge,
+                color = QuranTheme.colors.secondaryText,
+            )
+        }
     }
 }
