@@ -35,9 +35,10 @@ fun AudioBannerView(
         visible = state.isVisible,
         enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
         exit = slideOutVertically(targetOffsetY = { it }) + fadeOut(),
+        modifier = modifier
     ) {
         Box(
-            modifier = modifier
+            modifier = Modifier
                 .fillMaxWidth()
                 .navigationBarsPadding()
                 .padding(horizontal = 16.dp, vertical = 16.dp)
@@ -46,26 +47,25 @@ fun AudioBannerView(
                 modifier = Modifier
                     .fillMaxWidth()
                     .shadow(
-                        elevation = 16.dp,
-                        shape = RoundedCornerShape(32.dp),
-                        spotColor = QuranTheme.appIdentity.copy(alpha = 0.5f)
+                        elevation = 8.dp,
+                        shape = RoundedCornerShape(24.dp),
                     )
-                    .clip(RoundedCornerShape(32.dp))
-                    .background(QuranTheme.colors.secondaryBackground.copy(alpha = 0.95f))
+                    .clip(RoundedCornerShape(24.dp))
+                    .background(QuranTheme.colors.secondaryBackground)
                     .clickable(onClick = onBannerTap)
             ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(start = 20.dp, end = 12.dp, top = 12.dp, bottom = 12.dp),
+                        .padding(start = 24.dp, end = 16.dp, top = 16.dp, bottom = 16.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     // Info
                     Column(
                         modifier = Modifier
                             .weight(1f)
-                            .padding(end = 10.dp),
-                        verticalArrangement = Arrangement.spacedBy(2.dp),
+                            .padding(end = 12.dp),
+                        verticalArrangement = Arrangement.Center,
                     ) {
                         Text(
                             text = state.title,
@@ -81,6 +81,16 @@ fun AudioBannerView(
                                 maxLines = 1,
                             )
                         }
+                        Spacer(modifier = Modifier.height(6.dp))
+                        LinearProgressIndicator(
+                            progress = { state.progress },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(3.dp),
+                            color = QuranTheme.appIdentity,
+                            trackColor = QuranTheme.colors.text.copy(alpha = 0.1f),
+                            strokeCap = androidx.compose.ui.graphics.StrokeCap.Round,
+                        )
                     }
 
                     // Controls
@@ -147,14 +157,6 @@ fun AudioBannerView(
                         }
                     }
                 }
-
-                // Progress bar at the bottom edge of the pill
-                LinearProgressIndicator(
-                    progress = { state.progress },
-                    modifier = Modifier.fillMaxWidth().height(4.dp),
-                    color = QuranTheme.appIdentity,
-                    trackColor = QuranTheme.colors.secondaryBackground.copy(alpha = 0f),
-                )
             }
         }
     }

@@ -201,21 +201,15 @@ fun QuranViewScreen(
         )
 
         // Audio banner at bottom
-        AnimatedVisibility(
-            visible = state.barsVisible,
-            enter = slideInVertically(initialOffsetY = { it }),
-            exit = slideOutVertically(targetOffsetY = { it }),
+        AudioBannerView(
+            state = state.audioBannerState.copy(isVisible = state.barsVisible && state.audioBannerState.isVisible),
             modifier = Modifier.align(Alignment.BottomCenter),
-        ) {
-            AudioBannerView(
-                state = state.audioBannerState,
-                onPlayPause = onAudioPlayPause,
-                onForward = onAudioForward,
-                onBackward = onAudioBackward,
-                onStop = onAudioStop,
-                onBannerTap = onAudioBannerTap,
-                onSetPlaybackRate = onSetPlaybackRate,
-            )
-        }
+            onPlayPause = onAudioPlayPause,
+            onForward = onAudioForward,
+            onBackward = onAudioBackward,
+            onStop = onAudioStop,
+            onBannerTap = onAudioBannerTap,
+            onSetPlaybackRate = onSetPlaybackRate,
+        )
     }
 }
