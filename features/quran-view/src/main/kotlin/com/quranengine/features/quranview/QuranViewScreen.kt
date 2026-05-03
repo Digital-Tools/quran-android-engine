@@ -73,7 +73,14 @@ fun QuranViewScreen(
             ),
     ) {
         // Page content (pager)
-        Box(modifier = Modifier.fillMaxSize()) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(
+                    top = if (state.barsVisible) 64.dp else 0.dp,
+                    bottom = if (state.barsVisible) 112.dp else 0.dp,
+                ),
+        ) {
             pageContent()
         }
 

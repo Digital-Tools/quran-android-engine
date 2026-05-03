@@ -37,13 +37,9 @@
 -keep class dagger.hilt.** { *; }
 -keep class * extends dagger.hilt.internal.GeneratedComponent { *; }
 -keepclasseswithmembers class * {
-    @dagger.hilt.* <*>;
-}
--keepclasseswithmembers class * {
-    @dagger.* <*>;
-}
--keepclasseswithmembers class * {
-    @javax.inject.* <*>;
+    @javax.inject.Inject <fields>;
+    @javax.inject.Inject <methods>;
+    @javax.inject.Inject <init>(...);
 }
 
 # Keep @HiltAndroidApp, @AndroidEntryPoint, @HiltViewModel annotated classes

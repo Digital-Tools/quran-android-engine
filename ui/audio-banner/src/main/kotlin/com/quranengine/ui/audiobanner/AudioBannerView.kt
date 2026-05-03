@@ -39,15 +39,16 @@ fun AudioBannerView(
         Column(
             modifier = modifier
                 .fillMaxWidth()
-                .shadow(8.dp, RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
-                .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
+                .shadow(10.dp, RoundedCornerShape(topStart = 22.dp, topEnd = 22.dp))
+                .clip(RoundedCornerShape(topStart = 22.dp, topEnd = 22.dp))
                 .background(QuranTheme.colors.secondaryBackground)
-                .clickable(onClick = onBannerTap),
+                .clickable(onClick = onBannerTap)
+                .navigationBarsPadding(),
         ) {
             // Progress bar
             LinearProgressIndicator(
                 progress = { state.progress },
-                modifier = Modifier.fillMaxWidth().height(2.dp),
+                modifier = Modifier.fillMaxWidth().height(3.dp),
                 color = QuranTheme.appIdentity,
                 trackColor = QuranTheme.colors.secondaryBackground,
             )
@@ -55,11 +56,17 @@ fun AudioBannerView(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                    .heightIn(min = 92.dp)
+                    .padding(horizontal = 18.dp, vertical = 14.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 // Info
-                Column(modifier = Modifier.weight(1f)) {
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(end = 10.dp),
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                ) {
                     Text(
                         text = state.title,
                         style = MaterialTheme.typography.bodyMedium,
@@ -74,12 +81,35 @@ fun AudioBannerView(
                             maxLines = 1,
                         )
                     }
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.MoreHoriz,
+                            contentDescription = null,
+                            tint = QuranTheme.appIdentity,
+                            modifier = Modifier.size(16.dp),
+                        )
+                        Text(
+                            text = state.actionHint,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = QuranTheme.appIdentity,
+                            maxLines = 1,
+                        )
+                    }
                 }
 
                 // Controls
                 Row(
+                    modifier = Modifier
+                        .align(Alignment.CenterVertically)
+                        .height(56.dp),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(
+                        space = 4.dp,
+                        alignment = Alignment.CenterHorizontally,
+                    ),
                 ) {
                     PlaybackSpeedMenu(
                         playbackRate = state.playbackRate,
@@ -152,7 +182,9 @@ private fun PlaybackSpeedMenu(
         TextButton(
             onClick = { expanded = true },
             contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
-            modifier = Modifier.height(32.dp),
+            modifier = Modifier
+                .height(40.dp)
+                .align(Alignment.Center),
             colors = ButtonDefaults.textButtonColors(
                 contentColor = QuranTheme.colors.text,
             ),

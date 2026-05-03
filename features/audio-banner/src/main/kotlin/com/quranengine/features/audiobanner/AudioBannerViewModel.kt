@@ -3,12 +3,14 @@ package com.quranengine.features.audiobanner
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.quranengine.core.audioplayer.Runs
+import com.quranengine.core.localization.Localizer
 import com.quranengine.domain.quranaudiokit.AudioPreferences
 import com.quranengine.domain.quranaudiokit.QuranAudioDownloader
 import com.quranengine.domain.quranaudiokit.QuranAudioPlayer
 import com.quranengine.domain.quranaudiokit.QuranAudioPlayerActions
 import com.quranengine.domain.reciterservice.ReciterDataRetriever
 import com.quranengine.domain.reciterservice.ReciterPreferences
+import com.quranengine.domain.reciterservice.localizedName
 import com.quranengine.model.qurankit.AyahNumber
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -32,6 +34,7 @@ class AudioBannerViewModel @Inject constructor(
     private val reciterPreferences: ReciterPreferences,
     private val audioDownloader: QuranAudioDownloader,
     private val reciterDataRetriever: ReciterDataRetriever,
+    private val localizer: Localizer,
 ) : ViewModel() {
 
     private val _playbackState = MutableStateFlow<PlaybackState>(PlaybackState.Stopped)
@@ -54,6 +57,8 @@ class AudioBannerViewModel @Inject constructor(
     private val _error = MutableStateFlow<Throwable?>(null)
     val error: StateFlow<Throwable?> = _error.asStateFlow()
 
+    private var currentReciterName: String? = null
+
     init {
         audioPlayer.actions = QuranAudioPlayerActions(
             playbackEnded = { onPlaybackEnded() },
@@ -74,6 +79,7 @@ class AudioBannerViewModel @Inject constructor(
             try {
                 val reciterId = reciterPreferences.lastSelectedReciterId
                 val reciter = resolveReciterById(reciterId) ?: return@launch
+                currentReciterName = reciter.localizedName(localizer)
 
                 val alreadyDownloaded = audioDownloader.downloaded(reciter, from, to)
                 if (!alreadyDownloaded) {
@@ -167,7 +173,10 @@ class AudioBannerViewModel @Inject constructor(
         _audioBannerState.update { state ->
             state.copy(
                 title = "Ayah ${ayah.ayah}",
-                subtitle = "Surah ${ayah.sura.suraNumber}",
+                subtitle = listOfNotNull(
+                    "Surah ${ayah.sura.suraNumber}",
+                    currentReciterName,
+                ).joinToString(" • "),
             )
         }
     }

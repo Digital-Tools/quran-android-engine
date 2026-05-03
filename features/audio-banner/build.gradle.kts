@@ -14,6 +14,7 @@ dependencies {
     implementation(project(":domain:quran-audio-kit"))
     implementation(project(":domain:reciter-service"))
     implementation(project(":core:audio-player"))
+    implementation(project(":core:localization"))
     implementation(project(":data:batch-downloader"))
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui)

@@ -1,7 +1,11 @@
 package com.quranengine.ui.quran
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
@@ -26,23 +30,30 @@ fun AdaptiveImageScrollView(
     var containerSize by remember { mutableStateOf(IntSize.Zero) }
     val scrollState = rememberScrollState()
 
-    Column(
+    BoxWithConstraints(
         modifier = modifier
             .fillMaxSize()
-            .onSizeChanged { containerSize = it }
-            .verticalScroll(scrollState),
-        horizontalAlignment = Alignment.CenterHorizontally,
+            .onSizeChanged { containerSize = it },
     ) {
-        if (header != null) {
-            header()
-        }
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = maxHeight)
+                .verticalScroll(scrollState),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+        ) {
+            if (header != null) {
+                header()
+            }
 
-        if (containerSize != IntSize.Zero) {
-            content(containerSize.toSize())
-        }
+            if (containerSize != IntSize.Zero) {
+                content(containerSize.toSize())
+            }
 
-        if (footer != null) {
-            footer()
+            if (footer != null) {
+                footer()
+            }
         }
     }
 }
