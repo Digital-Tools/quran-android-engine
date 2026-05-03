@@ -10,18 +10,18 @@ enum class QuranFontSize {
 
     fun scaledSize(mediumSize: Float): Float {
         val factor = when (this) {
-            X_SMALL -> 0.7f * 0.7f * 0.7f
-            SMALL -> 0.7f * 0.7f
-            MEDIUM -> 0.7f
+            X_SMALL -> 0.65f
+            SMALL -> 0.8f
+            MEDIUM -> 0.9f
             LARGE -> 1f
-            X_LARGE -> 1f / 0.8f
-            XX_LARGE -> 1f / 0.8f / 0.8f
-            XXX_LARGE -> 1f / 0.8f / 0.8f / 0.8f
-            ACCESSIBILITY1 -> 1f / 0.8f / 0.8f / 0.8f / 0.8f
-            ACCESSIBILITY2 -> 1f / 0.8f / 0.8f / 0.8f / 0.8f / 0.8f
-            ACCESSIBILITY3 -> 1f / 0.8f / 0.8f / 0.8f / 0.8f / 0.8f / 0.8f
-            ACCESSIBILITY4 -> 1f / 0.8f / 0.8f / 0.8f / 0.8f / 0.8f / 0.8f / 0.8f
-            ACCESSIBILITY5 -> 1f / 0.8f / 0.8f / 0.8f / 0.8f / 0.8f / 0.8f / 0.8f / 0.8f
+            X_LARGE -> 1.15f
+            XX_LARGE -> 1.35f
+            XXX_LARGE -> 1.6f
+            ACCESSIBILITY1 -> 1.9f
+            ACCESSIBILITY2 -> 2.2f
+            ACCESSIBILITY3 -> 2.5f
+            ACCESSIBILITY4 -> 2.8f
+            ACCESSIBILITY5 -> 3.2f
         }
         return mediumSize * factor
     }
@@ -31,8 +31,8 @@ enum class QuranFontSize {
     fun arabicTafseerTextSize(): TextUnit = scaledSize(ARABIC_TAFSEER_MEDIUM_SIZE).sp
 
     companion object {
-        private const val QURAN_TEXT_MEDIUM_SIZE = 21f
-        private const val ARABIC_TAFSEER_MEDIUM_SIZE = 21f
+        private const val QURAN_TEXT_MEDIUM_SIZE = 24f
+        private const val ARABIC_TAFSEER_MEDIUM_SIZE = 22f
     }
 }
 

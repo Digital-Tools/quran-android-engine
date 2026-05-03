@@ -78,7 +78,7 @@ fun QuranViewScreen(
                 .fillMaxSize()
                 .padding(
                     top = if (state.barsVisible) 64.dp else 0.dp,
-                    bottom = if (state.barsVisible) 112.dp else 0.dp,
+                    bottom = if (state.barsVisible) 136.dp else 0.dp,
                 ),
         ) {
             pageContent()
@@ -161,7 +161,7 @@ fun QuranViewScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = QuranTheme.colors.background.copy(alpha = 0.95f),
+                    containerColor = QuranTheme.colors.background.copy(alpha = 0.85f),
                     titleContentColor = QuranTheme.colors.text,
                     navigationIconContentColor = QuranTheme.colors.text,
                     actionIconContentColor = QuranTheme.colors.text,

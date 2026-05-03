@@ -37,6 +37,7 @@ fun NoteEditorSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
         containerColor = QuranTheme.colors.background,
         contentColor = QuranTheme.colors.text,
         modifier = modifier,

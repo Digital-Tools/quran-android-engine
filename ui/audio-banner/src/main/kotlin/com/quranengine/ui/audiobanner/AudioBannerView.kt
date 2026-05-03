@@ -36,134 +36,125 @@ fun AudioBannerView(
         enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
         exit = slideOutVertically(targetOffsetY = { it }) + fadeOut(),
     ) {
-        Column(
+        Box(
             modifier = modifier
                 .fillMaxWidth()
-                .shadow(10.dp, RoundedCornerShape(topStart = 22.dp, topEnd = 22.dp))
-                .clip(RoundedCornerShape(topStart = 22.dp, topEnd = 22.dp))
-                .background(QuranTheme.colors.secondaryBackground)
-                .clickable(onClick = onBannerTap)
-                .navigationBarsPadding(),
+                .navigationBarsPadding()
+                .padding(horizontal = 16.dp, vertical = 16.dp)
         ) {
-            // Progress bar
-            LinearProgressIndicator(
-                progress = { state.progress },
-                modifier = Modifier.fillMaxWidth().height(3.dp),
-                color = QuranTheme.appIdentity,
-                trackColor = QuranTheme.colors.secondaryBackground,
-            )
-
-            Row(
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(min = 92.dp)
-                    .padding(horizontal = 18.dp, vertical = 14.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                // Info
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(end = 10.dp),
-                    verticalArrangement = Arrangement.spacedBy(2.dp),
-                ) {
-                    Text(
-                        text = state.title,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = QuranTheme.colors.text,
-                        maxLines = 1,
+                    .shadow(
+                        elevation = 16.dp,
+                        shape = RoundedCornerShape(32.dp),
+                        spotColor = QuranTheme.appIdentity.copy(alpha = 0.5f)
                     )
-                    if (state.subtitle.isNotEmpty()) {
-                        Text(
-                            text = state.subtitle,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = QuranTheme.colors.secondaryText,
-                            maxLines = 1,
-                        )
-                    }
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.MoreHoriz,
-                            contentDescription = null,
-                            tint = QuranTheme.appIdentity,
-                            modifier = Modifier.size(16.dp),
-                        )
-                        Text(
-                            text = state.actionHint,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = QuranTheme.appIdentity,
-                            maxLines = 1,
-                        )
-                    }
-                }
-
-                // Controls
+                    .clip(RoundedCornerShape(32.dp))
+                    .background(QuranTheme.colors.secondaryBackground.copy(alpha = 0.95f))
+                    .clickable(onClick = onBannerTap)
+            ) {
                 Row(
                     modifier = Modifier
-                        .align(Alignment.CenterVertically)
-                        .height(56.dp),
+                        .fillMaxWidth()
+                        .padding(start = 20.dp, end = 12.dp, top = 12.dp, bottom = 12.dp),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(
-                        space = 4.dp,
-                        alignment = Alignment.CenterHorizontally,
-                    ),
                 ) {
-                    PlaybackSpeedMenu(
-                        playbackRate = state.playbackRate,
-                        onSetPlaybackRate = onSetPlaybackRate,
-                    )
-
-                    IconButton(
-                        onClick = onBackward,
-                        enabled = state.canGoBackward,
-                        modifier = Modifier.size(36.dp),
+                    // Info
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(end = 10.dp),
+                        verticalArrangement = Arrangement.spacedBy(2.dp),
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.SkipPrevious,
-                            contentDescription = "Previous",
-                            tint = if (state.canGoBackward) QuranTheme.colors.text else QuranTheme.colors.secondaryText,
+                        Text(
+                            text = state.title,
+                            style = MaterialTheme.typography.titleSmall,
+                            color = QuranTheme.colors.text,
+                            maxLines = 1,
                         )
+                        if (state.subtitle.isNotEmpty()) {
+                            Text(
+                                text = state.subtitle,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = QuranTheme.colors.secondaryText,
+                                maxLines = 1,
+                            )
+                        }
                     }
 
-                    IconButton(
-                        onClick = onPlayPause,
-                        modifier = Modifier.size(40.dp),
+                    // Controls
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(2.dp),
                     ) {
-                        Icon(
-                            imageVector = if (state.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                            contentDescription = if (state.isPlaying) "Pause" else "Play",
-                            tint = QuranTheme.appIdentity,
-                            modifier = Modifier.size(28.dp),
+                        PlaybackSpeedMenu(
+                            playbackRate = state.playbackRate,
+                            onSetPlaybackRate = onSetPlaybackRate,
                         )
-                    }
 
-                    IconButton(
-                        onClick = onForward,
-                        enabled = state.canGoForward,
-                        modifier = Modifier.size(36.dp),
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.SkipNext,
-                            contentDescription = "Next",
-                            tint = if (state.canGoForward) QuranTheme.colors.text else QuranTheme.colors.secondaryText,
-                        )
-                    }
+                        IconButton(
+                            onClick = onBackward,
+                            enabled = state.canGoBackward,
+                            modifier = Modifier.size(36.dp),
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.SkipPrevious,
+                                contentDescription = "Previous",
+                                tint = if (state.canGoBackward) QuranTheme.colors.text else QuranTheme.colors.secondaryText,
+                            )
+                        }
 
-                    IconButton(
-                        onClick = onStop,
-                        modifier = Modifier.size(36.dp),
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = "Stop",
-                            tint = QuranTheme.colors.secondaryText,
-                            modifier = Modifier.size(20.dp),
-                        )
+                        // Play/Pause with a subtle background circle
+                        Box(
+                            modifier = Modifier
+                                .size(44.dp)
+                                .clip(RoundedCornerShape(50))
+                                .background(QuranTheme.appIdentity.copy(alpha = 0.1f))
+                                .clickable(onClick = onPlayPause),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = if (state.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                                contentDescription = if (state.isPlaying) "Pause" else "Play",
+                                tint = QuranTheme.appIdentity,
+                                modifier = Modifier.size(28.dp),
+                            )
+                        }
+
+                        IconButton(
+                            onClick = onForward,
+                            enabled = state.canGoForward,
+                            modifier = Modifier.size(36.dp),
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.SkipNext,
+                                contentDescription = "Next",
+                                tint = if (state.canGoForward) QuranTheme.colors.text else QuranTheme.colors.secondaryText,
+                            )
+                        }
+
+                        IconButton(
+                            onClick = onStop,
+                            modifier = Modifier.size(36.dp),
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Stop",
+                                tint = QuranTheme.colors.secondaryText,
+                                modifier = Modifier.size(20.dp),
+                            )
+                        }
                     }
                 }
+
+                // Progress bar at the bottom edge of the pill
+                LinearProgressIndicator(
+                    progress = { state.progress },
+                    modifier = Modifier.fillMaxWidth().height(4.dp),
+                    color = QuranTheme.appIdentity,
+                    trackColor = QuranTheme.colors.secondaryBackground.copy(alpha = 0f),
+                )
             }
         }
     }
