@@ -91,17 +91,19 @@ fun QuranViewScreen(
             exit = slideOutVertically(targetOffsetY = { -it }),
             modifier = Modifier.align(Alignment.TopCenter),
         ) {
-            TopAppBar(
+            CenterAlignedTopAppBar(
                 title = {
-                    Column {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
                             text = state.title,
-                            style = MaterialTheme.typography.titleMedium,
+                            fontSize = androidx.compose.ui.unit.TextUnit(18f, androidx.compose.ui.unit.TextUnitType.Sp),
+                            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
                         )
                         if (state.subtitle.isNotEmpty()) {
                             Text(
                                 text = state.subtitle,
-                                style = MaterialTheme.typography.bodySmall,
+                                fontSize = androidx.compose.ui.unit.TextUnit(14f, androidx.compose.ui.unit.TextUnitType.Sp),
+                                color = androidx.compose.ui.graphics.Color.Gray,
                             )
                         }
                     }
@@ -160,11 +162,11 @@ fun QuranViewScreen(
                         )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = QuranTheme.colors.background.copy(alpha = 0.85f),
-                    titleContentColor = QuranTheme.colors.text,
-                    navigationIconContentColor = QuranTheme.colors.text,
-                    actionIconContentColor = QuranTheme.colors.text,
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = androidx.compose.ui.graphics.Color(0xFF121212),
+                    titleContentColor = androidx.compose.ui.graphics.Color.White,
+                    navigationIconContentColor = androidx.compose.ui.graphics.Color.White,
+                    actionIconContentColor = androidx.compose.ui.graphics.Color.White,
                 ),
             )
         }

@@ -37,124 +37,106 @@ fun AudioBannerView(
         exit = slideOutVertically(targetOffsetY = { it }) + fadeOut(),
         modifier = modifier
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .navigationBarsPadding()
-                .padding(horizontal = 16.dp, vertical = 16.dp)
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            color = androidx.compose.ui.graphics.Color(0xFF1C1C1E),
+            tonalElevation = 12.dp,
+            shadowElevation = 8.dp
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .shadow(
-                        elevation = 8.dp,
-                        shape = RoundedCornerShape(24.dp),
-                    )
-                    .clip(RoundedCornerShape(24.dp))
-                    .background(QuranTheme.colors.secondaryBackground)
-                    .clickable(onClick = onBannerTap)
+                    .navigationBarsPadding()
             ) {
+                // Info Row
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(start = 24.dp, end = 16.dp, top = 16.dp, bottom = 16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
+                        .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Info
-                    Column(
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(end = 12.dp),
-                        verticalArrangement = Arrangement.Center,
-                    ) {
+                    Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = state.title,
-                            style = MaterialTheme.typography.titleSmall,
-                            color = QuranTheme.colors.text,
-                            maxLines = 1,
+                            color = androidx.compose.ui.graphics.Color.White,
+                            fontWeight = androidx.compose.ui.text.font.FontWeight.Medium
                         )
                         if (state.subtitle.isNotEmpty()) {
                             Text(
                                 text = state.subtitle,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = QuranTheme.colors.secondaryText,
-                                maxLines = 1,
+                                color = androidx.compose.ui.graphics.Color.Gray,
+                                fontSize = androidx.compose.ui.unit.TextUnit(12f, androidx.compose.ui.unit.TextUnitType.Sp)
                             )
                         }
-                        Spacer(modifier = Modifier.height(6.dp))
-                        LinearProgressIndicator(
-                            progress = { state.progress },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(3.dp),
-                            color = QuranTheme.appIdentity,
-                            trackColor = QuranTheme.colors.text.copy(alpha = 0.1f),
-                            strokeCap = androidx.compose.ui.graphics.StrokeCap.Round,
+                    }
+                    IconButton(onClick = onBannerTap) {
+                        Icon(
+                            imageVector = Icons.Default.MoreVert,
+                            contentDescription = "More",
+                            tint = androidx.compose.ui.graphics.Color.White
                         )
                     }
+                }
 
-                    // Controls
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(2.dp),
-                    ) {
-                        PlaybackSpeedMenu(
-                            playbackRate = state.playbackRate,
-                            onSetPlaybackRate = onSetPlaybackRate,
-                        )
-
-                        IconButton(
-                            onClick = onBackward,
-                            enabled = state.canGoBackward,
-                            modifier = Modifier.size(36.dp),
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.SkipPrevious,
-                                contentDescription = "Previous",
-                                tint = if (state.canGoBackward) QuranTheme.colors.text else QuranTheme.colors.secondaryText,
-                            )
-                        }
-
-                        // Play/Pause with a subtle background circle
+                // Controls Row
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 12.dp, end = 12.dp, top = 8.dp, bottom = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    // Stop Button
+                    IconButton(onClick = onStop) {
                         Box(
                             modifier = Modifier
-                                .size(44.dp)
-                                .clip(RoundedCornerShape(50))
-                                .background(QuranTheme.appIdentity.copy(alpha = 0.1f))
-                                .clickable(onClick = onPlayPause),
+                                .size(40.dp)
+                                .background(androidx.compose.ui.graphics.Color(0xFF00D4FF), shape = RoundedCornerShape(8.dp)),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
-                                imageVector = if (state.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                                contentDescription = if (state.isPlaying) "Pause" else "Play",
-                                tint = QuranTheme.appIdentity,
-                                modifier = Modifier.size(28.dp),
-                            )
-                        }
-
-                        IconButton(
-                            onClick = onForward,
-                            enabled = state.canGoForward,
-                            modifier = Modifier.size(36.dp),
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.SkipNext,
-                                contentDescription = "Next",
-                                tint = if (state.canGoForward) QuranTheme.colors.text else QuranTheme.colors.secondaryText,
-                            )
-                        }
-
-                        IconButton(
-                            onClick = onStop,
-                            modifier = Modifier.size(36.dp),
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Close,
+                                imageVector = Icons.Default.Stop,
                                 contentDescription = "Stop",
-                                tint = QuranTheme.colors.secondaryText,
-                                modifier = Modifier.size(20.dp),
+                                tint = androidx.compose.ui.graphics.Color.Black,
+                                modifier = Modifier.size(24.dp)
                             )
                         }
+                    }
+
+                    // Speed Button
+                    PlaybackSpeedMenu(
+                        playbackRate = state.playbackRate,
+                        onSetPlaybackRate = onSetPlaybackRate,
+                    )
+
+                    // Previous
+                    IconButton(onClick = onBackward, enabled = state.canGoBackward) {
+                        Icon(
+                            imageVector = Icons.Default.SkipPrevious,
+                            contentDescription = "Previous",
+                            tint = if (state.canGoBackward) androidx.compose.ui.graphics.Color.White else androidx.compose.ui.graphics.Color.Gray,
+                            modifier = Modifier.size(32.dp)
+                        )
+                    }
+
+                    // Play/Pause (Large)
+                    IconButton(onClick = onPlayPause) {
+                        Icon(
+                            imageVector = if (state.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                            contentDescription = "Play/Pause",
+                            tint = androidx.compose.ui.graphics.Color(0xFF00D4FF),
+                            modifier = Modifier.size(48.dp)
+                        )
+                    }
+
+                    // Next
+                    IconButton(onClick = onForward, enabled = state.canGoForward) {
+                        Icon(
+                            imageVector = Icons.Default.SkipNext,
+                            contentDescription = "Next",
+                            tint = if (state.canGoForward) androidx.compose.ui.graphics.Color.White else androidx.compose.ui.graphics.Color.Gray,
+                            modifier = Modifier.size(32.dp)
+                        )
                     }
                 }
             }
@@ -174,17 +156,19 @@ private fun PlaybackSpeedMenu(
     Box {
         TextButton(
             onClick = { expanded = true },
-            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
             modifier = Modifier
                 .height(40.dp)
-                .align(Alignment.Center),
+                .align(Alignment.Center)
+                .background(androidx.compose.ui.graphics.Color(0xFF2C2C2E), RoundedCornerShape(20.dp)),
             colors = ButtonDefaults.textButtonColors(
-                contentColor = QuranTheme.colors.text,
+                contentColor = androidx.compose.ui.graphics.Color.White,
             ),
         ) {
             Text(
                 text = formatPlaybackSpeed(playbackRate),
-                style = MaterialTheme.typography.labelMedium,
+                fontSize = androidx.compose.ui.unit.TextUnit(16f, androidx.compose.ui.unit.TextUnitType.Sp),
+                fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
             )
         }
         DropdownMenu(
