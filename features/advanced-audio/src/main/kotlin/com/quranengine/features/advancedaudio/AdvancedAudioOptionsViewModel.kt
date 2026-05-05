@@ -4,9 +4,11 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.quranengine.core.audioplayer.Runs
+import com.quranengine.core.localization.Localizer
 import com.quranengine.domain.quranaudiokit.AudioPreferences
 import com.quranengine.domain.reciterservice.ReciterDataRetriever
 import com.quranengine.domain.reciterservice.ReciterPreferences
+import com.quranengine.domain.reciterservice.localizedName
 import com.quranengine.model.quranaudio.Reciter
 import com.quranengine.model.qurankit.AyahNumber
 import com.quranengine.model.qurankit.Quran
@@ -30,6 +32,7 @@ class AdvancedAudioOptionsViewModel @Inject constructor(
     private val audioPreferences: AudioPreferences,
     private val reciterDataRetriever: ReciterDataRetriever,
     private val reciterPreferences: ReciterPreferences,
+    private val localizer: Localizer,
 ) : ViewModel() {
     private val defaultStart = quran.suras.first().firstVerse
     private val initialStart = savedStateHandle.ayahArgument(
@@ -69,6 +72,9 @@ class AdvancedAudioOptionsViewModel @Inject constructor(
                 ?: reciters.firstOrNull()
         }
     }
+
+    fun localizedName(reciter: Reciter): String =
+        reciter.localizedName(localizer)
 
     fun setLastVerseToEndOfPage() {
         val finder = PageBasedLastAyahFinder()

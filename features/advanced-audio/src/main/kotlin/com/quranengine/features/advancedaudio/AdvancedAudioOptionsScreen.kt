@@ -88,8 +88,8 @@ fun AdvancedAudioOptionsScreen(
             item {
                 NoorBasicSection(title = "Reciter") {
                     NoorListItem(
-                        title = reciter?.nameKey ?: "Loading reciter...",
-                        subtitle = "Select from the bundled reciter list",
+                        title = reciter?.let(viewModel::localizedName) ?: "Loading reciter...",
+                        subtitle = "Tap to change reciter",
                         accessory = NoorAccessory.DisclosureIndicator,
                         onClick = onNavigateToReciterList,
                     )

@@ -35,41 +35,39 @@ fun AudioBannerView(
         visible = state.isVisible,
         enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
         exit = slideOutVertically(targetOffsetY = { it }) + fadeOut(),
+        modifier = modifier
     ) {
-        Column(
-            modifier = modifier
+        Box(
+            modifier = Modifier
                 .fillMaxWidth()
-                .shadow(8.dp, RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
-                .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
-                .background(QuranTheme.colors.secondaryBackground)
-                .clickable(onClick = onBannerTap),
+                .navigationBarsPadding()
+                .padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
         ) {
-            // Progress bar
-            LinearProgressIndicator(
-                progress = { state.progress },
-                modifier = Modifier.fillMaxWidth().height(2.dp),
-                color = QuranTheme.appIdentity,
-                trackColor = QuranTheme.colors.secondaryBackground,
-            )
-
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
+                    .shadow(elevation = 12.dp, shape = RoundedCornerShape(percent = 50))
+                    .clip(RoundedCornerShape(percent = 50))
+                    .background(QuranTheme.colors.secondaryBackground.copy(alpha = 0.95f))
+                    .clickable(onClick = onBannerTap)
+                    .padding(start = 24.dp, end = 8.dp, top = 8.dp, bottom = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                // Info
-                Column(modifier = Modifier.weight(1f)) {
+                // Info Text
+                Column(
+                    modifier = Modifier.weight(1f).padding(end = 8.dp),
+                    verticalArrangement = Arrangement.Center
+                ) {
                     Text(
                         text = state.title,
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MaterialTheme.typography.titleSmall,
                         color = QuranTheme.colors.text,
                         maxLines = 1,
                     )
                     if (state.subtitle.isNotEmpty()) {
                         Text(
                             text = state.subtitle,
-                            style = MaterialTheme.typography.bodySmall,
+                            style = MaterialTheme.typography.labelSmall,
                             color = QuranTheme.colors.secondaryText,
                             maxLines = 1,
                         )
@@ -79,111 +77,67 @@ fun AudioBannerView(
                 // Controls
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    PlaybackSpeedMenu(
-                        playbackRate = state.playbackRate,
-                        onSetPlaybackRate = onSetPlaybackRate,
-                    )
-
+                    // Previous
                     IconButton(
                         onClick = onBackward,
                         enabled = state.canGoBackward,
-                        modifier = Modifier.size(36.dp),
+                        modifier = Modifier.size(36.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Default.SkipPrevious,
                             contentDescription = "Previous",
                             tint = if (state.canGoBackward) QuranTheme.colors.text else QuranTheme.colors.secondaryText,
+                            modifier = Modifier.size(24.dp)
                         )
                     }
 
-                    IconButton(
-                        onClick = onPlayPause,
-                        modifier = Modifier.size(40.dp),
+                    // Play/Pause (Vibrant Circle)
+                    Box(
+                        modifier = Modifier
+                            .size(44.dp)
+                            .clip(RoundedCornerShape(percent = 50))
+                            .background(QuranTheme.appIdentity)
+                            .clickable(onClick = onPlayPause),
+                        contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = if (state.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                            contentDescription = if (state.isPlaying) "Pause" else "Play",
-                            tint = QuranTheme.appIdentity,
-                            modifier = Modifier.size(28.dp),
+                            contentDescription = "Play/Pause",
+                            tint = androidx.compose.ui.graphics.Color.White,
+                            modifier = Modifier.size(28.dp)
                         )
                     }
 
+                    // Next
                     IconButton(
                         onClick = onForward,
                         enabled = state.canGoForward,
-                        modifier = Modifier.size(36.dp),
+                        modifier = Modifier.size(36.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Default.SkipNext,
                             contentDescription = "Next",
                             tint = if (state.canGoForward) QuranTheme.colors.text else QuranTheme.colors.secondaryText,
+                            modifier = Modifier.size(24.dp)
                         )
                     }
 
+                    // Stop / Close
                     IconButton(
                         onClick = onStop,
-                        modifier = Modifier.size(36.dp),
+                        modifier = Modifier.size(36.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Default.Close,
                             contentDescription = "Stop",
                             tint = QuranTheme.colors.secondaryText,
-                            modifier = Modifier.size(20.dp),
+                            modifier = Modifier.size(20.dp)
                         )
                     }
                 }
             }
         }
-    }
-}
-
-private val playbackSpeedValues = listOf(0.5f, 0.75f, 1f, 1.25f, 1.5f, 1.75f, 2f)
-
-@Composable
-private fun PlaybackSpeedMenu(
-    playbackRate: Float,
-    onSetPlaybackRate: (Float) -> Unit,
-) {
-    var expanded by remember { mutableStateOf(false) }
-
-    Box {
-        TextButton(
-            onClick = { expanded = true },
-            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
-            modifier = Modifier.height(32.dp),
-            colors = ButtonDefaults.textButtonColors(
-                contentColor = QuranTheme.colors.text,
-            ),
-        ) {
-            Text(
-                text = formatPlaybackSpeed(playbackRate),
-                style = MaterialTheme.typography.labelMedium,
-            )
-        }
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false },
-        ) {
-            playbackSpeedValues.forEach { rate ->
-                DropdownMenuItem(
-                    text = { Text(formatPlaybackSpeed(rate)) },
-                    onClick = {
-                        expanded = false
-                        onSetPlaybackRate(rate)
-                    },
-                )
-            }
-        }
-    }
-}
-
-private fun formatPlaybackSpeed(rate: Float): String {
-    val rounded = kotlin.math.round(rate * 100f) / 100f
-    return if (rounded % 1f == 0f) {
-        "${rounded.toInt()}x"
-    } else {
-        "${rounded}x"
     }
 }
