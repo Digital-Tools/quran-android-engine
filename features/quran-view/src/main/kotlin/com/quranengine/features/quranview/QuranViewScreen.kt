@@ -3,6 +3,7 @@ package com.quranengine.features.quranview
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
@@ -18,6 +19,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.unit.dp
 import com.quranengine.model.qurankit.AyahNumber
 import com.quranengine.ui.audiobanner.AudioBannerView
@@ -76,10 +79,6 @@ fun QuranViewScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(
-                    top = if (state.barsVisible) 64.dp else 0.dp,
-                    bottom = if (state.barsVisible) 136.dp else 0.dp,
-                ),
         ) {
             pageContent()
         }
@@ -91,84 +90,85 @@ fun QuranViewScreen(
             exit = slideOutVertically(targetOffsetY = { -it }),
             modifier = Modifier.align(Alignment.TopCenter),
         ) {
-            CenterAlignedTopAppBar(
-                title = {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            text = state.title,
-                            fontSize = androidx.compose.ui.unit.TextUnit(18f, androidx.compose.ui.unit.TextUnitType.Sp),
-                            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-                        )
-                        if (state.subtitle.isNotEmpty()) {
-                            Text(
-                                text = state.subtitle,
-                                fontSize = androidx.compose.ui.unit.TextUnit(14f, androidx.compose.ui.unit.TextUnitType.Sp),
-                                color = androidx.compose.ui.graphics.Color.Gray,
-                            )
-                        }
-                    }
-                },
-                navigationIcon = {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .statusBarsPadding()
+                    .padding(start = 16.dp, end = 16.dp, top = 8.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .shadow(elevation = 12.dp, shape = androidx.compose.foundation.shape.RoundedCornerShape(50))
+                        .clip(androidx.compose.foundation.shape.RoundedCornerShape(50))
+                        .background(QuranTheme.colors.secondaryBackground.copy(alpha = 0.95f))
+                        .padding(horizontal = 4.dp, vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Back button
                     IconButton(onClick = onBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back",
+                            tint = QuranTheme.colors.text
                         )
                     }
-                },
-                actions = {
-                    IconButton(onClick = onAudioPlayPause) {
-                        Icon(
-                            imageVector = if (state.audioBannerState.isPlaying) {
-                                Icons.Default.Pause
-                            } else {
-                                Icons.Default.PlayArrow
-                            },
-                            contentDescription = if (state.audioBannerState.isPlaying) {
-                                "Pause audio"
-                            } else {
-                                "Play audio"
-                            },
+
+                    // Title / Subtitle
+                    Column(
+                        modifier = Modifier.weight(1f).padding(horizontal = 4.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = state.title,
+                            style = MaterialTheme.typography.titleMedium,
+                            color = QuranTheme.colors.text,
+                            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                            maxLines = 1,
                         )
+                        if (state.subtitle.isNotEmpty()) {
+                            Text(
+                                text = state.subtitle,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = QuranTheme.colors.secondaryText,
+                                maxLines = 1,
+                            )
+                        }
                     }
-                    IconButton(onClick = onToggleMode) {
-                        Icon(
-                            imageVector = Icons.Default.Translate,
-                            contentDescription = if (state.quranMode == com.quranengine.model.qurantext.QuranMode.ARABIC) {
-                                "Show translation"
-                            } else {
-                                "Show Arabic"
-                            },
-                        )
+
+                    // Actions
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        IconButton(onClick = onAudioPlayPause) {
+                            Icon(
+                                imageVector = if (state.audioBannerState.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                                contentDescription = if (state.audioBannerState.isPlaying) "Pause audio" else "Play audio",
+                                tint = QuranTheme.colors.text
+                            )
+                        }
+                        IconButton(onClick = onToggleMode) {
+                            Icon(
+                                imageVector = Icons.Default.Translate,
+                                contentDescription = if (state.quranMode == com.quranengine.model.qurantext.QuranMode.ARABIC) "Show translation" else "Show Arabic",
+                                tint = QuranTheme.colors.text
+                            )
+                        }
+                        IconButton(onClick = onToggleBookmark) {
+                            Icon(
+                                imageVector = if (state.isCurrentPageBookmarked) Icons.Default.Bookmark else Icons.Outlined.BookmarkBorder,
+                                contentDescription = if (state.isCurrentPageBookmarked) "Remove page bookmark" else "Save page bookmark",
+                                tint = QuranTheme.colors.text
+                            )
+                        }
+                        IconButton(onClick = { menuAyah = state.firstVerse }) {
+                            Icon(
+                                imageVector = Icons.Default.MoreVert,
+                                contentDescription = "More",
+                                tint = QuranTheme.colors.text
+                            )
+                        }
                     }
-                    IconButton(onClick = onToggleBookmark) {
-                        Icon(
-                            imageVector = if (state.isCurrentPageBookmarked) {
-                                Icons.Default.Bookmark
-                            } else {
-                                Icons.Outlined.BookmarkBorder
-                            },
-                            contentDescription = if (state.isCurrentPageBookmarked) {
-                                "Remove page bookmark"
-                            } else {
-                                "Save page bookmark"
-                            },
-                        )
-                    }
-                    IconButton(onClick = { menuAyah = state.firstVerse }) {
-                        Icon(
-                            imageVector = Icons.Default.MoreVert,
-                            contentDescription = "More",
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = androidx.compose.ui.graphics.Color(0xFF121212),
-                    titleContentColor = androidx.compose.ui.graphics.Color.White,
-                    navigationIconContentColor = androidx.compose.ui.graphics.Color.White,
-                    actionIconContentColor = androidx.compose.ui.graphics.Color.White,
-                ),
-            )
+                }
+            }
         }
 
         // Ayah context menu
