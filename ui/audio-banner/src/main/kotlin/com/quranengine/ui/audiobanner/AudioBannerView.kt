@@ -37,162 +37,107 @@ fun AudioBannerView(
         exit = slideOutVertically(targetOffsetY = { it }) + fadeOut(),
         modifier = modifier
     ) {
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            color = androidx.compose.ui.graphics.Color(0xFF1C1C1E),
-            tonalElevation = 12.dp,
-            shadowElevation = 8.dp
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .navigationBarsPadding()
+                .padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
         ) {
-            Column(
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .navigationBarsPadding()
+                    .shadow(elevation = 12.dp, shape = RoundedCornerShape(percent = 50))
+                    .clip(RoundedCornerShape(percent = 50))
+                    .background(QuranTheme.colors.secondaryBackground.copy(alpha = 0.95f))
+                    .clickable(onClick = onBannerTap)
+                    .padding(start = 24.dp, end = 8.dp, top = 8.dp, bottom = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                // Info Row
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                // Info Text
+                Column(
+                    modifier = Modifier.weight(1f).padding(end = 8.dp),
+                    verticalArrangement = Arrangement.Center
                 ) {
-                    Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = state.title,
+                        style = MaterialTheme.typography.titleSmall,
+                        color = QuranTheme.colors.text,
+                        maxLines = 1,
+                    )
+                    if (state.subtitle.isNotEmpty()) {
                         Text(
-                            text = state.title,
-                            color = androidx.compose.ui.graphics.Color.White,
-                            fontWeight = androidx.compose.ui.text.font.FontWeight.Medium
-                        )
-                        if (state.subtitle.isNotEmpty()) {
-                            Text(
-                                text = state.subtitle,
-                                color = androidx.compose.ui.graphics.Color.Gray,
-                                fontSize = androidx.compose.ui.unit.TextUnit(12f, androidx.compose.ui.unit.TextUnitType.Sp)
-                            )
-                        }
-                    }
-                    IconButton(onClick = onBannerTap) {
-                        Icon(
-                            imageVector = Icons.Default.MoreVert,
-                            contentDescription = "More",
-                            tint = androidx.compose.ui.graphics.Color.White
+                            text = state.subtitle,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = QuranTheme.colors.secondaryText,
+                            maxLines = 1,
                         )
                     }
                 }
 
-                // Controls Row
+                // Controls
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 12.dp, end = 12.dp, top = 8.dp, bottom = 12.dp),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    // Stop Button
-                    IconButton(onClick = onStop) {
-                        Box(
-                            modifier = Modifier
-                                .size(40.dp)
-                                .background(androidx.compose.ui.graphics.Color(0xFF00D4FF), shape = RoundedCornerShape(8.dp)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Stop,
-                                contentDescription = "Stop",
-                                tint = androidx.compose.ui.graphics.Color.Black,
-                                modifier = Modifier.size(24.dp)
-                            )
-                        }
-                    }
-
-                    // Speed Button
-                    PlaybackSpeedMenu(
-                        playbackRate = state.playbackRate,
-                        onSetPlaybackRate = onSetPlaybackRate,
-                    )
-
                     // Previous
-                    IconButton(onClick = onBackward, enabled = state.canGoBackward) {
+                    IconButton(
+                        onClick = onBackward,
+                        enabled = state.canGoBackward,
+                        modifier = Modifier.size(36.dp)
+                    ) {
                         Icon(
                             imageVector = Icons.Default.SkipPrevious,
                             contentDescription = "Previous",
-                            tint = if (state.canGoBackward) androidx.compose.ui.graphics.Color.White else androidx.compose.ui.graphics.Color.Gray,
-                            modifier = Modifier.size(32.dp)
+                            tint = if (state.canGoBackward) QuranTheme.colors.text else QuranTheme.colors.secondaryText,
+                            modifier = Modifier.size(24.dp)
                         )
                     }
 
-                    // Play/Pause (Large)
-                    IconButton(onClick = onPlayPause) {
+                    // Play/Pause (Vibrant Circle)
+                    Box(
+                        modifier = Modifier
+                            .size(44.dp)
+                            .clip(RoundedCornerShape(percent = 50))
+                            .background(QuranTheme.appIdentity)
+                            .clickable(onClick = onPlayPause),
+                        contentAlignment = Alignment.Center
+                    ) {
                         Icon(
                             imageVector = if (state.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
                             contentDescription = "Play/Pause",
-                            tint = androidx.compose.ui.graphics.Color(0xFF00D4FF),
-                            modifier = Modifier.size(48.dp)
+                            tint = androidx.compose.ui.graphics.Color.White,
+                            modifier = Modifier.size(28.dp)
                         )
                     }
 
                     // Next
-                    IconButton(onClick = onForward, enabled = state.canGoForward) {
+                    IconButton(
+                        onClick = onForward,
+                        enabled = state.canGoForward,
+                        modifier = Modifier.size(36.dp)
+                    ) {
                         Icon(
                             imageVector = Icons.Default.SkipNext,
                             contentDescription = "Next",
-                            tint = if (state.canGoForward) androidx.compose.ui.graphics.Color.White else androidx.compose.ui.graphics.Color.Gray,
-                            modifier = Modifier.size(32.dp)
+                            tint = if (state.canGoForward) QuranTheme.colors.text else QuranTheme.colors.secondaryText,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+
+                    // Stop / Close
+                    IconButton(
+                        onClick = onStop,
+                        modifier = Modifier.size(36.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Stop",
+                            tint = QuranTheme.colors.secondaryText,
+                            modifier = Modifier.size(20.dp)
                         )
                     }
                 }
             }
         }
-    }
-}
-
-private val playbackSpeedValues = listOf(0.5f, 0.75f, 1f, 1.25f, 1.5f, 1.75f, 2f)
-
-@Composable
-private fun PlaybackSpeedMenu(
-    playbackRate: Float,
-    onSetPlaybackRate: (Float) -> Unit,
-) {
-    var expanded by remember { mutableStateOf(false) }
-
-    Box {
-        TextButton(
-            onClick = { expanded = true },
-            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
-            modifier = Modifier
-                .height(40.dp)
-                .align(Alignment.Center)
-                .background(androidx.compose.ui.graphics.Color(0xFF2C2C2E), RoundedCornerShape(20.dp)),
-            colors = ButtonDefaults.textButtonColors(
-                contentColor = androidx.compose.ui.graphics.Color.White,
-            ),
-        ) {
-            Text(
-                text = formatPlaybackSpeed(playbackRate),
-                fontSize = androidx.compose.ui.unit.TextUnit(16f, androidx.compose.ui.unit.TextUnitType.Sp),
-                fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
-            )
-        }
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false },
-        ) {
-            playbackSpeedValues.forEach { rate ->
-                DropdownMenuItem(
-                    text = { Text(formatPlaybackSpeed(rate)) },
-                    onClick = {
-                        expanded = false
-                        onSetPlaybackRate(rate)
-                    },
-                )
-            }
-        }
-    }
-}
-
-private fun formatPlaybackSpeed(rate: Float): String {
-    val rounded = kotlin.math.round(rate * 100f) / 100f
-    return if (rounded % 1f == 0f) {
-        "${rounded.toInt()}x"
-    } else {
-        "${rounded}x"
     }
 }
