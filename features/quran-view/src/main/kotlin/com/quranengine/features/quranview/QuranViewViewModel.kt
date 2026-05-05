@@ -123,6 +123,14 @@ class QuranViewViewModel @Inject constructor(
     fun setReadingAyah(progress: AyahPlaybackProgress?) {
         highlightedAyahProgress = progress
         refreshArabicHighlights()
+
+        if (progress != null) {
+            val ayahPage = progress.ayah.page.pageNumber
+            val currentVisiblePages = _state.value.visiblePages
+            if (ayahPage !in currentVisiblePages) {
+                setVisiblePages(listOf(ayahPage))
+            }
+        }
     }
 
     fun toggleQuranMode() {

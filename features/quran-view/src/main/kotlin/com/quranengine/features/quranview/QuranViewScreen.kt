@@ -21,6 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
 import com.quranengine.model.qurankit.AyahNumber
 import com.quranengine.ui.audiobanner.AudioBannerView
@@ -53,6 +54,15 @@ fun QuranViewScreen(
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     var menuAyah by remember { mutableStateOf(selectedAyah) }
+    val view = LocalView.current
+    val isPlaying = state.audioBannerState.isPlaying
+
+    DisposableEffect(isPlaying) {
+        view.keepScreenOn = isPlaying
+        onDispose {
+            view.keepScreenOn = false
+        }
+    }
 
     LaunchedEffect(selectedAyah) {
         menuAyah = selectedAyah
