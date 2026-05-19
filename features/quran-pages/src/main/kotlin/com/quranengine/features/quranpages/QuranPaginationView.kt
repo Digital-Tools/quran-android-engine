@@ -64,6 +64,13 @@ private fun SinglePagePager(
     val initialIndex = pages.indexOf(selectedPage).coerceAtLeast(0)
     val pagerState = rememberPagerState(initialPage = initialIndex, pageCount = { pages.size })
 
+    LaunchedEffect(selectedPage) {
+        val targetIndex = pages.indexOf(selectedPage)
+        if (targetIndex >= 0 && pagerState.currentPage != targetIndex) {
+            pagerState.animateScrollToPage(targetIndex)
+        }
+    }
+
     LaunchedEffect(pagerState.currentPage) {
         val page = pages.getOrNull(pagerState.currentPage) ?: return@LaunchedEffect
         onPageChanged(page)
@@ -115,6 +122,15 @@ private fun DoublePagePager(
     }
 
     val pagerState = rememberPagerState(initialPage = selectedIndex, pageCount = { doublePages.size })
+
+    LaunchedEffect(selectedPages) {
+        val firstSelected = selectedPages.firstOrNull() ?: pages.first()
+        val pageIndex = pages.indexOf(firstSelected).coerceAtLeast(0)
+        val targetIndex = pageIndex / 2
+        if (pagerState.currentPage != targetIndex) {
+            pagerState.animateScrollToPage(targetIndex)
+        }
+    }
 
     LaunchedEffect(pagerState.currentPage) {
         val (first, second) = doublePages.getOrNull(pagerState.currentPage) ?: return@LaunchedEffect
