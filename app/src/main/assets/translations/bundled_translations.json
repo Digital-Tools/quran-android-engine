@@ -1,0 +1,69 @@
+{
+  "data": [
+    {
+      "id": 64,
+      "displayName": "Arabic Muyassar Tafseer",
+      "languageCode": "ar",
+      "fileUrl": "https://android.quran.com/data/getTranslation.php?id=64&ext=zip",
+      "fileName": "quran.ar.muyassar.db",
+      "saveTo": "databases",
+      "downloadType": "translation",
+      "last_modified": "2023-01-17 21:17:11",
+      "minimumVersion": 5,
+      "currentVersion": 10,
+      "translatorForeign": "الميسر"
+    },
+    {
+      "id": 98,
+      "displayName": "English Translation (Sahih International)",
+      "translator": "Sahih International",
+      "languageCode": "en",
+      "fileUrl": "https://android.quran.com/data/getTranslation.php?id=98&ext=zip",
+      "fileName": "quran.ensi.db",
+      "saveTo": "databases",
+      "downloadType": "translation",
+      "last_modified": "2023-01-22 21:36:02",
+      "minimumVersion": 5,
+      "currentVersion": 20
+    },
+    {
+      "id": 3,
+      "displayName": "French Translation",
+      "translator": "Muhammad Hamidullah",
+      "languageCode": "fr",
+      "fileUrl": "https://android.quran.com/data/getTranslation.php?id=3&ext=zip",
+      "fileName": "quran.fr.db",
+      "saveTo": "databases",
+      "downloadType": "translation",
+      "last_modified": "2025-03-02 13:28:58",
+      "minimumVersion": 2,
+      "currentVersion": 6
+    },
+    {
+      "id": 29,
+      "displayName": "Portuguese Translation",
+      "translator": "Samir El Hayek",
+      "languageCode": "pt",
+      "fileUrl": "https://android.quran.com/data/getTranslation.php?id=29",
+      "fileName": "quran.pt.db",
+      "saveTo": "databases",
+      "downloadType": "translation",
+      "last_modified": "2023-01-17 21:17:11",
+      "minimumVersion": 2,
+      "currentVersion": 2
+    },
+    {
+      "id": 19,
+      "displayName": "Swahili Translation",
+      "translator": "Ali Muhsin Al-Barwani",
+      "languageCode": "sw",
+      "fileUrl": "https://android.quran.com/data/getTranslation.php?id=19",
+      "fileName": "quran.sw.barwani.db",
+      "saveTo": "databases",
+      "downloadType": "translation",
+      "last_modified": "2023-01-17 21:17:11",
+      "minimumVersion": 2,
+      "currentVersion": 2
+    }
+  ]
+}

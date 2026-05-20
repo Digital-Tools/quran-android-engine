@@ -23,6 +23,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 
+import com.quranengine.domain.translationservice.TranslationAssetsInstaller
+import kotlinx.coroutines.launch
+
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val quran: Quran,
@@ -31,7 +34,14 @@ class MainViewModel @Inject constructor(
     private val readingPreferences: ReadingPreferences,
     private val fontSizePreferences: FontSizePreferences,
     private val themePreferences: ThemePreferences,
+    private val translationAssetsInstaller: TranslationAssetsInstaller,
 ) : ViewModel() {
+
+    init {
+        viewModelScope.launch {
+            translationAssetsInstaller.ensureInstalled()
+        }
+    }
 
     val lastPages: StateFlow<List<LastPage>> = lastPageService.lastPages(quran)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
