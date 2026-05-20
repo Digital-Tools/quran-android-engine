@@ -108,7 +108,7 @@ object DataModule {
     @Provides
     @Singleton
     fun provideNetworkManager(httpClient: HttpClient): NetworkManager =
-        NetworkManager(httpClient, "https://quran.com/api")
+        NetworkManager(httpClient, "https://android.quran.com")
 
     // -- Download Manager -----------------------------------------------------
 

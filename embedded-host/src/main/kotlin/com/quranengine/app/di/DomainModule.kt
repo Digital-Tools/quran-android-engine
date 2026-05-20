@@ -61,6 +61,7 @@ import com.quranengine.domain.translationservice.TranslationDeleter
 import com.quranengine.domain.translationservice.TranslationNetworkManager
 import com.quranengine.domain.translationservice.TranslationsDownloader
 import com.quranengine.domain.translationservice.TranslationsRepository
+import com.quranengine.domain.translationservice.TranslationAssetsInstaller
 import com.quranengine.domain.translationservice.TranslationsVersionUpdater
 import com.quranengine.model.qurankit.Quran
 import com.quranengine.model.qurantext.SearchResults
@@ -250,6 +251,25 @@ object DomainModule {
         @Named("baseDir") baseDir: File,
     ): TranslationDeleter =
         TranslationDeleter(persistence, selectedTranslationsPreferences, fileSystem, baseDir)
+
+    @Provides
+    @Singleton
+    fun provideTranslationAssetsInstaller(
+        systemBundle: SystemBundle,
+        fileSystem: FileSystem,
+        persistence: SqliteActiveTranslationsPersistence,
+        unzipper: TranslationUnzipper,
+        selectedTranslationsPreferences: SelectedTranslationsPreferences,
+        @Named("baseDir") baseDir: File,
+    ): TranslationAssetsInstaller =
+        TranslationAssetsInstaller(
+            systemBundle = systemBundle,
+            fileSystem = fileSystem,
+            persistence = persistence,
+            unzipper = unzipper,
+            selectedTranslationsPreferences = selectedTranslationsPreferences,
+            baseDir = baseDir,
+        )
 
     // -- Reciter services -----------------------------------------------------
 

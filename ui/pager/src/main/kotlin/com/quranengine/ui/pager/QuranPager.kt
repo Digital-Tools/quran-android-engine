@@ -16,7 +16,7 @@ fun QuranPager(
     pageCount: Int,
     initialPage: Int = 0,
     modifier: Modifier = Modifier,
-    reverseLayout: Boolean = true,
+    reverseLayout: Boolean = false,
     onPageChanged: ((Int) -> Unit)? = null,
     state: PagerState = rememberPagerState(initialPage = initialPage, pageCount = { pageCount }),
     pageContent: @Composable (page: Int) -> Unit,
