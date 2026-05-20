@@ -22,7 +22,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
-
 import com.quranengine.domain.translationservice.TranslationAssetsInstaller
 import kotlinx.coroutines.launch
 
