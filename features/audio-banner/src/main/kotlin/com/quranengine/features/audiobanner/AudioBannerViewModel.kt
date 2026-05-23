@@ -6,8 +6,8 @@ import com.quranengine.core.audioplayer.Runs
 import com.quranengine.core.localization.Localizer
 import com.quranengine.domain.quranaudiokit.AudioPreferences
 import com.quranengine.domain.quranaudiokit.QuranAudioDownloader
-import com.quranengine.domain.quranaudiokit.QuranAudioPlayer
 import com.quranengine.domain.quranaudiokit.QuranAudioPlayerActions
+import com.quranengine.domain.quranaudiokit.QuranAudioPlayerStore
 import com.quranengine.domain.reciterservice.ReciterDataRetriever
 import com.quranengine.domain.reciterservice.ReciterPreferences
 import com.quranengine.domain.reciterservice.localizedName
@@ -29,7 +29,7 @@ data class AyahPlaybackProgress(
 
 @HiltViewModel
 class AudioBannerViewModel @Inject constructor(
-    private val audioPlayer: QuranAudioPlayer,
+    private val audioPlayerStore: QuranAudioPlayerStore,
     private val audioPreferences: AudioPreferences,
     private val reciterPreferences: ReciterPreferences,
     private val audioDownloader: QuranAudioDownloader,
@@ -59,13 +59,20 @@ class AudioBannerViewModel @Inject constructor(
 
     private var currentReciterName: String? = null
 
+    private val audioPlayer
+        get() = audioPlayerStore.player
+
     init {
-        audioPlayer.actions = QuranAudioPlayerActions(
-            playbackEnded = { onPlaybackEnded() },
-            playbackPaused = { onPlaybackPaused() },
-            playbackResumed = { onPlaybackResumed() },
-            playing = { ayah, progress -> onPlayingAyah(ayah, progress) },
+        audioPlayerStore.register(
+            this,
+            QuranAudioPlayerActions(
+                playbackEnded = { onPlaybackEnded() },
+                playbackPaused = { onPlaybackPaused() },
+                playbackResumed = { onPlaybackResumed() },
+                playing = { ayah, progress -> onPlayingAyah(ayah, progress) },
+            ),
         )
+        syncPlayingStateFromSharedPlayer()
     }
 
     fun play(
@@ -226,9 +233,19 @@ class AudioBannerViewModel @Inject constructor(
     private suspend fun resolveReciterById(id: Int): com.quranengine.model.quranaudio.Reciter? =
         reciterDataRetriever.getReciters().firstOrNull { it.id == id }
 
+    private fun syncPlayingStateFromSharedPlayer() {
+        when {
+            audioPlayerStore.isPlaying.value -> updatePlaybackState(PlaybackState.Playing)
+            audioPlayerStore.isPaused.value -> updatePlaybackState(PlaybackState.Paused)
+            else -> updatePlaybackState(PlaybackState.Stopped)
+        }
+        audioPlayerStore.currentAyah?.let { ayah ->
+            onPlayingAyah(ayah, null)
+        }
+    }
+
     override fun onCleared() {
         super.onCleared()
-        audioPlayer.stopAudio()
-        audioPlayer.actions = null
+        audioPlayerStore.unregister(this)
     }
 }

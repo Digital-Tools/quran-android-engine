@@ -31,6 +31,7 @@ import com.quranengine.domain.quranaudiokit.GappedAudioRequestBuilder
 import com.quranengine.domain.quranaudiokit.PreferencesLastAyahFinder
 import com.quranengine.domain.quranaudiokit.QuranAudioDownloader
 import com.quranengine.domain.quranaudiokit.QuranAudioPlayer
+import com.quranengine.domain.quranaudiokit.QuranAudioPlayerStore
 import com.quranengine.domain.quranaudiokit.QuranAudioRequestBuilder
 import com.quranengine.domain.quranaudiokit.QueuingPlayer
 import com.quranengine.domain.audiotimingservice.ReciterTimingRetriever
@@ -412,6 +413,11 @@ object DomainModule {
         @Named("gapped") gappedBuilder: QuranAudioRequestBuilder,
     ): QuranAudioPlayer =
         QuranAudioPlayer(player, unzipper, nowPlayingUpdater, gaplessBuilder, gappedBuilder)
+
+    @Provides
+    @Singleton
+    fun provideQuranAudioPlayerStore(player: QuranAudioPlayer): QuranAudioPlayerStore =
+        QuranAudioPlayerStore(player)
 
     // -- Search ---------------------------------------------------------------
 
