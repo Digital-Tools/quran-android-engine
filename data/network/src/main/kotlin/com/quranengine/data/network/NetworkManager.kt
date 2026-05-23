@@ -10,7 +10,8 @@ class NetworkManager(
 ) {
     suspend fun request(path: String, parameters: List<Pair<String, String>> = emptyList()): ByteArray {
         return try {
-            val response = client.get("$baseUrl/$path") {
+            val normalizedPath = path.trimStart('/')
+            val response = client.get("$baseUrl/$normalizedPath") {
                 parameters.forEach { (key, value) ->
                     parameter(key, value)
                 }

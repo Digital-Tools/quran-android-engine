@@ -27,3 +27,6 @@ captures/
 
 # Copilot Config
 .github/copilot-instructions.md
+
+# Local Cursor rules (machine-specific paths)
+.cursor/

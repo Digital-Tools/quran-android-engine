@@ -16,12 +16,17 @@ import timber.log.Timber
  *
  * The bundled manifest is at `assets/translations/bundled_translations.json`.
  * Each translation's ZIP is at `assets/translations/<baseName>.zip`.
+ *
+ * When bundled ZIPs are absent (common in embedded Mizan builds), English is
+ * downloaded from android.quran.com so translation mode works out of the box.
  */
 class TranslationAssetsInstaller(
     private val systemBundle: SystemBundle,
     private val fileSystem: FileSystem,
     private val persistence: ActiveTranslationsPersistence,
     private val unzipper: TranslationUnzipper,
+    private val translationsDownloader: TranslationsDownloader,
+    private val versionUpdater: TranslationsVersionUpdater,
     private val selectedTranslationsPreferences: SelectedTranslationsPreferences,
     private val baseDir: File,
 ) {
@@ -49,20 +54,38 @@ class TranslationAssetsInstaller(
         }
 
         for (translation in bundledTranslations) {
-            installIfNeeded(translation, alreadyRegistered, translationsDir)
+            installIfNeeded(
+                translation = translation,
+                alreadyRegistered = alreadyRegistered,
+                translationsDir = translationsDir,
+                allowNetworkDownload = false,
+            )
         }
 
-        // Auto-select English (Sahih International, id=98) as the default if the user
-        // has never picked any translation yet.
-        if (selectedTranslationsPreferences.selectedTranslationIds.isEmpty()) {
-            val englishId = bundledTranslations.firstOrNull { it.id == 98 }?.id
-            if (englishId != null) {
-                val dbFile = File(baseDir, bundledTranslations.first { it.id == englishId }.localPath)
-                if (dbFile.isFile) {
-                    selectedTranslationsPreferences.select(englishId)
-                    Timber.i("TranslationAssets: auto-selected English (id=%d)", englishId)
-                }
-            }
+        ensureDefaultEnglishSelected(bundledTranslations, alreadyRegistered, translationsDir)
+    }
+
+    private suspend fun ensureDefaultEnglishSelected(
+        bundledTranslations: List<Translation>,
+        alreadyRegistered: Map<String, Translation>,
+        translationsDir: File,
+    ) {
+        if (selectedTranslationsPreferences.selectedTranslationIds.isNotEmpty()) return
+
+        val english = bundledTranslations.firstOrNull { it.id == ENGLISH_TRANSLATION_ID } ?: return
+        val dbFile = File(baseDir, english.localPath)
+        if (!dbFile.isFile) {
+            installIfNeeded(
+                translation = english,
+                alreadyRegistered = alreadyRegistered,
+                translationsDir = translationsDir,
+                allowNetworkDownload = true,
+            )
+        }
+
+        if (File(baseDir, english.localPath).isFile) {
+            selectedTranslationsPreferences.select(ENGLISH_TRANSLATION_ID)
+            Timber.i("TranslationAssets: auto-selected English (id=%d)", ENGLISH_TRANSLATION_ID)
         }
     }
 
@@ -70,6 +93,7 @@ class TranslationAssetsInstaller(
         translation: Translation,
         alreadyRegistered: Map<String, Translation>,
         translationsDir: File,
+        allowNetworkDownload: Boolean,
     ) {
         val dbFile = File(baseDir, translation.localPath)
 
@@ -84,11 +108,25 @@ class TranslationAssetsInstaller(
             extractBundledZip(translation, translationsDir)
         }
 
+        if (!dbFile.isFile && allowNetworkDownload) {
+            downloadTranslation(translation)
+        }
+
         // Register in persistence if the DB file is now present on disk.
         if (dbFile.isFile) {
-            val registered = translation.copy(installedVersion = translation.version)
-            persistence.insert(registered)
-            Timber.i("TranslationAssets: registered %s (v%d)", translation.fileName, translation.version)
+            val existing = alreadyRegistered[translation.fileName]
+            val registered = if (existing != null) {
+                versionUpdater.updateInstalledVersion(existing)
+            } else {
+                val installed = versionUpdater.updateInstalledVersion(translation)
+                persistence.insert(installed)
+                installed
+            }
+            Timber.i(
+                "TranslationAssets: registered %s (v%d)",
+                registered.fileName,
+                registered.installedVersion ?: translation.version,
+            )
         } else {
             Timber.w("TranslationAssets: DB still missing after extraction for %s", translation.fileName)
         }
@@ -134,5 +172,34 @@ class TranslationAssetsInstaller(
                 try { destZipFile.delete() } catch (_: Exception) { }
             }
         }
+    }
+
+    private suspend fun downloadTranslation(translation: Translation) {
+        val downloadTarget = translation.withZipDownloadUrl()
+        try {
+            Timber.i("TranslationAssets: downloading %s", downloadTarget.fileName)
+            val response = translationsDownloader.download(downloadTarget)
+            response.awaitCompletion()
+            val error = response.getError()
+            if (error != null) {
+                Timber.w(error, "TranslationAssets: download failed for %s", translation.fileName)
+                return
+            }
+            unzipper.unzipIfNeeded(downloadTarget.copy(installedVersion = null), baseDir)
+        } catch (e: Exception) {
+            Timber.e(e, "TranslationAssets: download failed for %s", translation.fileName)
+        }
+    }
+
+    private fun Translation.withZipDownloadUrl(): Translation {
+        if (fileURL.endsWith(".zip", ignoreCase = true) || fileURL.contains("ext=zip")) {
+            return this
+        }
+        val separator = if (fileURL.contains("?")) "&" else "?"
+        return copy(fileURL = "$fileURL${separator}ext=zip")
+    }
+
+    companion object {
+        private const val ENGLISH_TRANSLATION_ID = 98
     }
 }
