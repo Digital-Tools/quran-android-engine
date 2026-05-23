@@ -259,6 +259,8 @@ object DomainModule {
         fileSystem: FileSystem,
         persistence: SqliteActiveTranslationsPersistence,
         unzipper: TranslationUnzipper,
+        translationsDownloader: TranslationsDownloader,
+        versionUpdater: TranslationsVersionUpdater,
         selectedTranslationsPreferences: SelectedTranslationsPreferences,
         @Named("baseDir") baseDir: File,
     ): TranslationAssetsInstaller =
@@ -267,6 +269,8 @@ object DomainModule {
             fileSystem = fileSystem,
             persistence = persistence,
             unzipper = unzipper,
+            translationsDownloader = translationsDownloader,
+            versionUpdater = versionUpdater,
             selectedTranslationsPreferences = selectedTranslationsPreferences,
             baseDir = baseDir,
         )
