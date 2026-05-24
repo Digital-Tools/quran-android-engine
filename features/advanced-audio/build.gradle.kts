@@ -9,6 +9,7 @@ dependencies {
     implementation(project(":ui:theme"))
     implementation(project(":ui:components"))
     implementation(project(":model:quran-kit"))
+    implementation(project(":domain:quran-text-kit"))
     implementation(project(":model:quran-audio"))
     implementation(project(":domain:quran-audio-kit"))
     implementation(project(":domain:reciter-service"))

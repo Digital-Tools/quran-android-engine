@@ -11,6 +11,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
 import com.quranengine.app.MainViewModel
 import com.quranengine.features.appstructure.AppStructureScreen
 import com.quranengine.features.appstructure.DeepLinkHandler
@@ -28,6 +30,10 @@ fun QuranHostScreen(
 ) {
     val themeStyle by viewModel.themeStyle.collectAsState()
     val storedAppearanceMode by viewModel.appearanceMode.collectAsState()
+    val navController = rememberNavController()
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+    val isAdvancedAudioOpen = currentRoute?.startsWith("advanced_audio") == true
 
     QuranTheme(
         themeStyle = themeStyle,
@@ -35,11 +41,12 @@ fun QuranHostScreen(
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             AppStructureScreen(
+                navController = navController,
                 deepLinkHandler = deepLinkHandler,
                 initialDeepLinkUri = initialDeepLinkUri,
             )
 
-            if (showCloseButton && onClose != null) {
+            if (showCloseButton && onClose != null && !isAdvancedAudioOpen) {
                 TextButton(
                     onClick = onClose,
                     modifier = Modifier

@@ -12,6 +12,7 @@ import com.quranengine.domain.reciterservice.localizedName
 import com.quranengine.model.quranaudio.Reciter
 import com.quranengine.model.qurankit.AyahNumber
 import com.quranengine.model.qurankit.Quran
+import com.quranengine.model.qurankit.Sura
 import com.quranengine.model.qurankit.lastayahfinder.JuzBasedLastAyahFinder
 import com.quranengine.model.qurankit.lastayahfinder.PageBasedLastAyahFinder
 import com.quranengine.model.qurankit.lastayahfinder.QuranBasedLastAyahFinder
@@ -55,6 +56,8 @@ class AdvancedAudioOptionsViewModel @Inject constructor(
     val listRuns = MutableStateFlow(Runs.ONE)
     val playbackRate = MutableStateFlow(audioPreferences.playbackRate)
 
+    val suras: List<Sura> = quran.suras
+
     private val _dismissed = MutableStateFlow(false)
     val dismissed: StateFlow<Boolean> = _dismissed.asStateFlow()
 
@@ -71,6 +74,30 @@ class AdvancedAudioOptionsViewModel @Inject constructor(
             _reciter.value = reciters.firstOrNull { it.id == reciterPreferences.lastSelectedReciterId }
                 ?: reciters.firstOrNull()
         }
+    }
+
+    fun selectFromSura(suraNumber: Int) {
+        val s = Sura(quran, suraNumber) ?: return
+        val ayahNumber = AyahNumber(s, 1) ?: return
+        updateFromVerse(ayahNumber)
+    }
+
+    fun selectFromAyah(ayahNumber: Int) {
+        val s = fromVerse.value.sura
+        val newAyah = AyahNumber(s, ayahNumber) ?: return
+        updateFromVerse(newAyah)
+    }
+
+    fun selectToSura(suraNumber: Int) {
+        val s = Sura(quran, suraNumber) ?: return
+        val ayahNumber = AyahNumber(s, 1) ?: return
+        updateToVerse(ayahNumber)
+    }
+
+    fun selectToAyah(ayahNumber: Int) {
+        val s = toVerse.value.sura
+        val newAyah = AyahNumber(s, ayahNumber) ?: return
+        updateToVerse(newAyah)
     }
 
     fun localizedName(reciter: Reciter): String =
