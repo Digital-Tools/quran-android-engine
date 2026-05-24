@@ -32,4 +32,7 @@ private val ENGLISH_RECITER_NAMES = mapOf(
     "qari_afasy_gapless" to "Mishary Al-Afasy",
     "qari_minshawi_mujawwad" to "Minshawy Mujawwad (gapped)",
     "qari_shatri_gapless" to "Abu Bakr Ash-Shatri",
+    "qari_sudais_gapless" to "Abdurrahman As-Sudais",
+    "qari_muaiqly_gapless" to "Maher Al Muaiqly",
+    "qari_saad_al_ghamidi_gapless" to "Saad Al-Ghamdi",
 )

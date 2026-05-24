@@ -43,5 +43,32 @@
     "path": "abu_bakr_ash-shaatree",
     "name": "qari_shatri_gapless",
     "hasGaplessAlternative": false
+  },
+  {
+    "category": "arabic",
+    "url": "https://download.quranicaudio.com/quran/abdurrahmaan_as-sudais_and_su3ood_ash-shuraym/",
+    "id": 6,
+    "databaseName": "sudais",
+    "path": "sudais",
+    "name": "qari_sudais_gapless",
+    "hasGaplessAlternative": false
+  },
+  {
+    "category": "arabic",
+    "url": "https://download.quranicaudio.com/quran/maher_al_muaiqly/",
+    "id": 9,
+    "databaseName": "muaiqly_kfgqpc",
+    "path": "muaiqly_kfgqpc",
+    "name": "qari_muaiqly_gapless",
+    "hasGaplessAlternative": false
+  },
+  {
+    "category": "arabic",
+    "url": "https://download.quranicaudio.com/quran/sa3d_al-ghamidi/",
+    "id": 5,
+    "databaseName": "sa3d_alghamidi",
+    "path": "sa3d_alghamidi",
+    "name": "qari_saad_al_ghamidi_gapless",
+    "hasGaplessAlternative": false
   }
 ]

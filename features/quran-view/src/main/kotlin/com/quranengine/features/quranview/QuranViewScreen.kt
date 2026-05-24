@@ -179,6 +179,7 @@ fun QuranViewScreen(
         if (currentMenuAyah != null) {
             AyahMenuSheet(
                 ayah = currentMenuAyah,
+                quranMode = state.quranMode,
                 actions = ayahMenuActions.copy(
                     onDismiss = {
                         menuAyah = null

@@ -182,6 +182,9 @@ fun AppStructureScreen(
                     onNavigateToAdvancedAudio = { from, to ->
                         navController.navigateToAdvancedAudio(from, to)
                     },
+                    onNavigateToTranslations = {
+                        navController.navigate(AppRoute.TranslationsList.route)
+                    },
                 )
             }
 

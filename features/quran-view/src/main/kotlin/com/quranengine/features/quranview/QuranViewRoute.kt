@@ -28,6 +28,7 @@ fun QuranViewRoute(
     audioBannerViewModel: AudioBannerViewModel,
     onBack: () -> Unit,
     onNavigateToAdvancedAudio: (AyahNumber, AyahNumber) -> Unit,
+    onNavigateToTranslations: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val state by viewModel.state.collectAsState()
@@ -72,6 +73,8 @@ fun QuranViewRoute(
             onAddNote = { ayah ->
                 noteEditorAyah = ayah
             },
+            onToggleTranslations = viewModel::toggleQuranMode,
+            onManageTranslations = onNavigateToTranslations,
         ),
         noteEditorAyah = noteEditorAyah,
         onDismissNoteEditor = { noteEditorAyah = null },

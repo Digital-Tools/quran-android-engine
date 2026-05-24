@@ -8,5 +8,7 @@ data class AyahMenuActions(
     val onShare: (AyahNumber) -> Unit = {},
     val onCopy: (AyahNumber) -> Unit = {},
     val onAddNote: (AyahNumber) -> Unit = {},
+    val onToggleTranslations: () -> Unit = {},
+    val onManageTranslations: () -> Unit = {},
     val onDismiss: () -> Unit = {},
 )
