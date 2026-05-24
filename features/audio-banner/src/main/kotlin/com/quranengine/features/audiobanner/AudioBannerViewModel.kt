@@ -73,6 +73,9 @@ class AudioBannerViewModel @Inject constructor(
             ),
         )
         syncPlayingStateFromSharedPlayer()
+        viewModelScope.launch {
+            loadReciterName()
+        }
     }
 
     fun play(
@@ -180,10 +183,7 @@ class AudioBannerViewModel @Inject constructor(
         _audioBannerState.update { state ->
             state.copy(
                 title = "Ayah ${ayah.ayah}",
-                subtitle = listOfNotNull(
-                    "Surah ${ayah.sura.suraNumber}",
-                    currentReciterName,
-                ).joinToString(" • "),
+                subtitle = currentReciterName.orEmpty(),
             )
         }
     }
@@ -199,6 +199,8 @@ class AudioBannerViewModel @Inject constructor(
                     isPlaying = false,
                     playbackRate = _playbackRate.value,
                     progress = 0f,
+                    title = currentReciterName.orEmpty(),
+                    subtitle = "",
                 )
                 is PlaybackState.Playing -> current.copy(
                     isVisible = true,
@@ -230,6 +232,22 @@ class AudioBannerViewModel @Inject constructor(
      * query a reciter repository. Returns `null` when the reciter cannot
      * be found so callers can bail out gracefully.
      */
+    private suspend fun loadReciterName() {
+        val reciterId = reciterPreferences.lastSelectedReciterId
+        val reciter = resolveReciterById(reciterId)
+        currentReciterName = reciter?.localizedName(localizer)
+        _audioBannerState.update { current ->
+            if (_playbackState.value is PlaybackState.Stopped) {
+                current.copy(
+                    title = currentReciterName.orEmpty(),
+                    subtitle = ""
+                )
+            } else {
+                current
+            }
+        }
+    }
+
     private suspend fun resolveReciterById(id: Int): com.quranengine.model.quranaudio.Reciter? =
         reciterDataRetriever.getReciters().firstOrNull { it.id == id }
 

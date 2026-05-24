@@ -10,10 +10,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Bookmark
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Pause
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -148,19 +146,14 @@ fun QuranViewScreen(
 
                     // Actions
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        IconButton(onClick = onAudioPlayPause) {
-                            Icon(
-                                imageVector = if (state.audioBannerState.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                                contentDescription = if (state.audioBannerState.isPlaying) "Pause audio" else "Play audio",
-                                tint = QuranTheme.colors.text
-                            )
-                        }
-                        IconButton(onClick = onToggleMode) {
-                            Icon(
-                                imageVector = Icons.Default.Translate,
-                                contentDescription = if (state.quranMode == com.quranengine.model.qurantext.QuranMode.ARABIC) "Show translation" else "Show Arabic",
-                                tint = QuranTheme.colors.text
-                            )
+                        if (state.audioBannerState.isVisible) {
+                            IconButton(onClick = onAudioStop) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Close audio",
+                                    tint = QuranTheme.colors.text
+                                )
+                            }
                         }
                         IconButton(onClick = onToggleBookmark) {
                             Icon(
@@ -214,7 +207,7 @@ fun QuranViewScreen(
 
         // Audio banner at bottom
         AudioBannerView(
-            state = state.audioBannerState.copy(isVisible = state.barsVisible && state.audioBannerState.isVisible),
+            state = state.audioBannerState.copy(isVisible = state.barsVisible),
             modifier = Modifier.align(Alignment.BottomCenter),
             onPlayPause = onAudioPlayPause,
             onForward = onAudioForward,

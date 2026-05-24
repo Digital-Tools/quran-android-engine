@@ -50,12 +50,31 @@ fun AudioBannerView(
                     .clip(RoundedCornerShape(percent = 50))
                     .background(QuranTheme.colors.secondaryBackground.copy(alpha = 0.95f))
                     .clickable(onClick = onBannerTap)
-                    .padding(start = 24.dp, end = 8.dp, top = 8.dp, bottom = 8.dp),
+                    .padding(start = 8.dp, end = 8.dp, top = 8.dp, bottom = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Info Text
+                // Play/Pause (Vibrant Circle) on the left
+                Box(
+                    modifier = Modifier
+                        .size(44.dp)
+                        .clip(RoundedCornerShape(percent = 50))
+                        .background(QuranTheme.appIdentity)
+                        .clickable(onClick = onPlayPause),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = if (state.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                        contentDescription = "Play/Pause",
+                        tint = androidx.compose.ui.graphics.Color.White,
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
+
+                // Info Text in the middle
                 Column(
-                    modifier = Modifier.weight(1f).padding(end = 8.dp),
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(horizontal = 16.dp),
                     verticalArrangement = Arrangement.Center
                 ) {
                     Text(
@@ -74,68 +93,17 @@ fun AudioBannerView(
                     }
                 }
 
-                // Controls
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                // More Options ("...") on the right
+                IconButton(
+                    onClick = onBannerTap,
+                    modifier = Modifier.size(36.dp)
                 ) {
-                    // Previous
-                    IconButton(
-                        onClick = onBackward,
-                        enabled = state.canGoBackward,
-                        modifier = Modifier.size(36.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.SkipPrevious,
-                            contentDescription = "Previous",
-                            tint = if (state.canGoBackward) QuranTheme.colors.text else QuranTheme.colors.secondaryText,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-
-                    // Play/Pause (Vibrant Circle)
-                    Box(
-                        modifier = Modifier
-                            .size(44.dp)
-                            .clip(RoundedCornerShape(percent = 50))
-                            .background(QuranTheme.appIdentity)
-                            .clickable(onClick = onPlayPause),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = if (state.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                            contentDescription = "Play/Pause",
-                            tint = androidx.compose.ui.graphics.Color.White,
-                            modifier = Modifier.size(28.dp)
-                        )
-                    }
-
-                    // Next
-                    IconButton(
-                        onClick = onForward,
-                        enabled = state.canGoForward,
-                        modifier = Modifier.size(36.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.SkipNext,
-                            contentDescription = "Next",
-                            tint = if (state.canGoForward) QuranTheme.colors.text else QuranTheme.colors.secondaryText,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-
-                    // Stop / Close
-                    IconButton(
-                        onClick = onStop,
-                        modifier = Modifier.size(36.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = "Stop",
-                            tint = QuranTheme.colors.secondaryText,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
+                    Icon(
+                        imageVector = Icons.Default.MoreHoriz,
+                        contentDescription = "More options",
+                        tint = QuranTheme.colors.text,
+                        modifier = Modifier.size(24.dp)
+                    )
                 }
             }
         }
