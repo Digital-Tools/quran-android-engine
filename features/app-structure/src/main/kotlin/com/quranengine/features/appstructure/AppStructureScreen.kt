@@ -207,6 +207,7 @@ fun AppStructureScreen(
                     onSelect = viewModel::select,
                     onDeselect = viewModel::deselect,
                     onMoveSelected = viewModel::moveSelectedTranslation,
+                    onBack = { navController.popBackStack() },
                 )
             }
 

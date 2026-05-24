@@ -7,9 +7,17 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DragHandle
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -32,70 +40,97 @@ fun TranslationsListScreen(
     onSelect: (Translation) -> Unit,
     onDeselect: (Translation) -> Unit,
     onMoveSelected: (fromIndex: Int, toIndex: Int) -> Unit,
+    onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    PullToRefreshBox(
-        isRefreshing = uiState.isRefreshing,
-        onRefresh = onRefresh,
-        modifier = modifier.fillMaxSize(),
-    ) {
-        LazyColumn(modifier = Modifier.fillMaxSize()) {
-            // Selected translations section
-            if (uiState.selectedItems.isNotEmpty()) {
-                item(key = "section-selected") {
-                    NoorSection(
-                        items = uiState.selectedItems,
-                        title = "Selected",
-                    ) { itemState ->
-                        TranslationRow(
-                            itemState = itemState,
-                            showReorderHandle = true,
-                            onClick = { onDeselect(itemState.translation) },
-                            onDownloadClick = { onDownload(itemState.translation) },
-                            onDeleteClick = { onDelete(itemState.translation) },
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Manage Translations") },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back",
                         )
                     }
-                    Spacer(modifier = Modifier.height(16.dp))
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = QuranTheme.colors.background,
+                    titleContentColor = QuranTheme.colors.text,
+                    navigationIconContentColor = QuranTheme.colors.text,
+                ),
+            )
+        },
+        containerColor = QuranTheme.colors.background,
+        modifier = modifier,
+    ) { innerPadding ->
+        PullToRefreshBox(
+            isRefreshing = uiState.isRefreshing,
+            onRefresh = onRefresh,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding),
+        ) {
+            LazyColumn(modifier = Modifier.fillMaxSize()) {
+                if (uiState.selectedItems.isNotEmpty()) {
+                    item(key = "section-selected") {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        NoorSection(
+                            items = uiState.selectedItems,
+                            title = "Selected",
+                        ) { itemState ->
+                            TranslationRow(
+                                itemState = itemState,
+                                isSelected = true,
+                                showReorderHandle = true,
+                                onClick = { onDeselect(itemState.translation) },
+                                onDownloadClick = { onDownload(itemState.translation) },
+                                onDeleteClick = { onDelete(itemState.translation) },
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(16.dp))
+                    }
                 }
-            }
 
-            // Downloaded but not selected section
-            if (uiState.downloadedItems.isNotEmpty()) {
-                item(key = "section-downloaded") {
-                    NoorSection(
-                        items = uiState.downloadedItems,
-                        title = "Downloaded",
-                    ) { itemState ->
-                        TranslationRow(
-                            itemState = itemState,
-                            showReorderHandle = false,
-                            onClick = { onSelect(itemState.translation) },
-                            onDownloadClick = { onDownload(itemState.translation) },
-                            onDeleteClick = { onDelete(itemState.translation) },
-                        )
+                if (uiState.downloadedItems.isNotEmpty()) {
+                    item(key = "section-downloaded") {
+                        NoorSection(
+                            items = uiState.downloadedItems,
+                            title = "Downloaded",
+                        ) { itemState ->
+                            TranslationRow(
+                                itemState = itemState,
+                                isSelected = false,
+                                showReorderHandle = false,
+                                onClick = { onSelect(itemState.translation) },
+                                onDownloadClick = { onDownload(itemState.translation) },
+                                onDeleteClick = { onDelete(itemState.translation) },
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(16.dp))
                     }
-                    Spacer(modifier = Modifier.height(16.dp))
                 }
-            }
 
-            // Available translations grouped by language
-            val sortedLanguages = uiState.availableByLanguage.keys.sorted()
-            for (language in sortedLanguages) {
-                val languageItems = uiState.availableByLanguage[language] ?: continue
-                item(key = "section-available-$language") {
-                    NoorSection(
-                        items = languageItems,
-                        title = language,
-                    ) { itemState ->
-                        TranslationRow(
-                            itemState = itemState,
-                            showReorderHandle = false,
-                            onClick = { onDownload(itemState.translation) },
-                            onDownloadClick = { onDownload(itemState.translation) },
-                            onDeleteClick = { onDelete(itemState.translation) },
-                        )
+                val sortedLanguages = uiState.availableByLanguage.keys.sorted()
+                for (language in sortedLanguages) {
+                    val languageItems = uiState.availableByLanguage[language] ?: continue
+                    item(key = "section-available-$language") {
+                        NoorSection(
+                            items = languageItems,
+                            title = language,
+                        ) { itemState ->
+                            TranslationRow(
+                                itemState = itemState,
+                                isSelected = false,
+                                showReorderHandle = false,
+                                onClick = { onDownload(itemState.translation) },
+                                onDownloadClick = { onDownload(itemState.translation) },
+                                onDeleteClick = { onDelete(itemState.translation) },
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(16.dp))
                     }
-                    Spacer(modifier = Modifier.height(16.dp))
                 }
             }
         }
@@ -105,6 +140,7 @@ fun TranslationsListScreen(
 @Composable
 private fun TranslationRow(
     itemState: TranslationItemState,
+    isSelected: Boolean,
     showReorderHandle: Boolean,
     onClick: () -> Unit,
     onDownloadClick: () -> Unit,
@@ -131,29 +167,48 @@ private fun TranslationRow(
             rightSubtitle = translation.languageCode,
             onClick = onClick,
             modifier = Modifier.weight(1f),
-            image = if (showReorderHandle) {
-                {
-                    Icon(
-                        imageVector = Icons.Default.DragHandle,
-                        contentDescription = "Reorder",
-                        tint = QuranTheme.colors.secondaryText,
-                    )
+            image = when {
+                isSelected -> {
+                    {
+                        Icon(
+                            imageVector = Icons.Default.Check,
+                            contentDescription = "Selected",
+                            tint = QuranTheme.appIdentity,
+                        )
+                    }
                 }
-            } else {
-                null
+                showReorderHandle -> {
+                    {
+                        Icon(
+                            imageVector = Icons.Default.DragHandle,
+                            contentDescription = "Reorder",
+                            tint = QuranTheme.colors.secondaryText,
+                        )
+                    }
+                }
+                else -> null
             },
         )
-        DownloadButton(
-            state = downloadState,
-            progress = progress,
-            onClick = when (downloadProgress) {
-                is TranslationItemState.DownloadProgress.Downloaded -> onDeleteClick
-                is TranslationItemState.DownloadProgress.NeedsUpgrade -> onDownloadClick
-                is TranslationItemState.DownloadProgress.NotDownloaded -> onDownloadClick
-                is TranslationItemState.DownloadProgress.Downloading -> { {} }
-            },
-            modifier = Modifier.padding(end = 16.dp),
-        )
+        if (downloadState != DownloadState.DOWNLOADED) {
+            DownloadButton(
+                state = downloadState,
+                progress = progress,
+                onClick = when (downloadProgress) {
+                    is TranslationItemState.DownloadProgress.NeedsUpgrade -> onDownloadClick
+                    is TranslationItemState.DownloadProgress.NotDownloaded -> onDownloadClick
+                    is TranslationItemState.DownloadProgress.Downloading -> { {} }
+                    is TranslationItemState.DownloadProgress.Downloaded -> onDeleteClick
+                },
+                modifier = Modifier.padding(end = 16.dp),
+            )
+        } else {
+            IconButton(onClick = onDeleteClick) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = "Delete",
+                    tint = QuranTheme.colors.secondaryText,
+                )
+            }
+        }
     }
 }
-

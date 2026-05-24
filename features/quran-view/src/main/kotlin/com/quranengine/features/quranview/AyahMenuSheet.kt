@@ -16,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import com.quranengine.domain.qurantextkit.englishName
 import com.quranengine.model.qurankit.AyahNumber
 import com.quranengine.model.qurantext.QuranMode
 import com.quranengine.ui.theme.QuranTheme
@@ -45,7 +46,7 @@ fun AyahMenuSheet(
                 .padding(bottom = 16.dp),
         ) {
             Text(
-                text = "${ayah.sura}:${ayah.ayah}",
+                text = "${ayah.sura.suraNumber}. ${ayah.sura.englishName()} — ${ayah.ayah}",
                 style = MaterialTheme.typography.titleSmall,
                 color = QuranTheme.colors.text.copy(alpha = 0.6f),
                 modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),

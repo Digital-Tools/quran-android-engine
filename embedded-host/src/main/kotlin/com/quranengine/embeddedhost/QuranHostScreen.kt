@@ -34,6 +34,9 @@ fun QuranHostScreen(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
     val isAdvancedAudioOpen = currentRoute?.startsWith("advanced_audio") == true
+    val hasOwnBackNavigation = currentRoute == "translations" ||
+        currentRoute == "bookmarks/notes" ||
+        currentRoute == "reciter_list"
 
     QuranTheme(
         themeStyle = themeStyle,
@@ -46,7 +49,7 @@ fun QuranHostScreen(
                 initialDeepLinkUri = initialDeepLinkUri,
             )
 
-            if (showCloseButton && onClose != null && !isAdvancedAudioOpen) {
+            if (showCloseButton && onClose != null && !isAdvancedAudioOpen && !hasOwnBackNavigation) {
                 TextButton(
                     onClick = onClose,
                     modifier = Modifier

@@ -58,12 +58,21 @@ fun AudioBannerView(
                     onClick = onPlayPause,
                     modifier = Modifier.size(44.dp)
                 ) {
-                    Icon(
-                        imageVector = if (state.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                        contentDescription = "Play/Pause",
-                        tint = QuranTheme.colors.text,
-                        modifier = Modifier.size(28.dp)
-                    )
+                    if (state.isDownloading) {
+                        CircularProgressIndicator(
+                            progress = { state.progress.coerceIn(0f, 1f) },
+                            modifier = Modifier.size(28.dp),
+                            color = QuranTheme.appIdentity,
+                            strokeWidth = 2.5.dp,
+                        )
+                    } else {
+                        Icon(
+                            imageVector = if (state.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                            contentDescription = "Play/Pause",
+                            tint = QuranTheme.colors.text,
+                            modifier = Modifier.size(28.dp)
+                        )
+                    }
                 }
 
                 // Info Text in the middle

@@ -166,10 +166,10 @@ class TranslationsListViewModel @Inject constructor(
             return TranslationItemState(translation, downloadProgress)
         }
 
-        // Selected translations in preference order
+        // Selected translations in preference order (downloaded only)
         val byId = translations.associateBy { it.id }
         val selectedItems = selectedIds.mapNotNull { id ->
-            byId[id]?.let { toItemState(it) }
+            byId[id]?.takeIf { it.isDownloaded }?.let { toItemState(it) }
         }
 
         // Downloaded but not selected

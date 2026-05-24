@@ -46,16 +46,16 @@
   },
   {
     "category": "arabic",
-    "url": "https://download.quranicaudio.com/quran/abdurrahmaan_as-sudais_and_su3ood_ash-shuraym/",
+    "url": "https://mirrors.quranicaudio.com/everyayah/Abdurrahmaan_As-Sudais_192kbps/",
     "id": 6,
-    "databaseName": "sudais",
+    "databaseName": "",
     "path": "sudais",
     "name": "qari_sudais_gapless",
     "hasGaplessAlternative": false
   },
   {
     "category": "arabic",
-    "url": "https://download.quranicaudio.com/quran/maher_al_muaiqly/",
+    "url": "https://download.quranicaudio.com/quran/maher_almu3aiqly/year1440/",
     "id": 9,
     "databaseName": "muaiqly_kfgqpc",
     "path": "muaiqly_kfgqpc",
@@ -64,7 +64,7 @@
   },
   {
     "category": "arabic",
-    "url": "https://download.quranicaudio.com/quran/sa3d_al-ghamidi/",
+    "url": "https://download.quranicaudio.com/quran/sa3d_al-ghaamidi/complete/",
     "id": 5,
     "databaseName": "sa3d_alghamidi",
     "path": "sa3d_alghamidi",
