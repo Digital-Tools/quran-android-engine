@@ -53,19 +53,15 @@ fun AudioBannerView(
                     .padding(start = 8.dp, end = 8.dp, top = 8.dp, bottom = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Play/Pause (Vibrant Circle) on the left
-                Box(
-                    modifier = Modifier
-                        .size(44.dp)
-                        .clip(RoundedCornerShape(percent = 50))
-                        .background(QuranTheme.appIdentity)
-                        .clickable(onClick = onPlayPause),
-                    contentAlignment = Alignment.Center
+                // Play/Pause on the left
+                IconButton(
+                    onClick = onPlayPause,
+                    modifier = Modifier.size(44.dp)
                 ) {
                     Icon(
                         imageVector = if (state.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
                         contentDescription = "Play/Pause",
-                        tint = androidx.compose.ui.graphics.Color.White,
+                        tint = QuranTheme.colors.text,
                         modifier = Modifier.size(28.dp)
                     )
                 }
@@ -75,7 +71,8 @@ fun AudioBannerView(
                     modifier = Modifier
                         .weight(1f)
                         .padding(horizontal = 16.dp),
-                    verticalArrangement = Arrangement.Center
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
                         text = state.title,
