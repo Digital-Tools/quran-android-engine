@@ -28,11 +28,11 @@
   },
   {
     "category": "arabic",
-    "url": "https://mirrors.quranicaudio.com/everyayah/Minshawy_Mujawwad_192kbps/",
+    "url": "https://download.quranicaudio.com/quran/minshawi_mujawwad/",
     "id": 16,
-    "databaseName": "",
-    "path": "13",
-    "name": "qari_minshawi_mujawwad",
+    "databaseName": "minshawi_mujawwad",
+    "path": "minshawi_mujawwad",
+    "name": "qari_minshawi_mujawwad_gapless",
     "hasGaplessAlternative": false
   },
   {
