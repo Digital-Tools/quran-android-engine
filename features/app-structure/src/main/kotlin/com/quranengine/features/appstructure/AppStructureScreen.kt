@@ -1,6 +1,7 @@
 package com.quranengine.features.appstructure
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
@@ -8,6 +9,7 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -62,6 +64,12 @@ fun AppStructureScreen(
     incomingDeepLinks: Flow<String>? = null,
 ) {
     val audioBannerViewModel: AudioBannerViewModel = hiltViewModel()
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+    // Mushaf / advanced audio must draw under status + nav bars so chrome can fuse
+    // with the system strips (iOS-style). Tab screens keep Scaffold insets.
+    val isImmersiveReader = currentRoute?.startsWith("quran/") == true ||
+        currentRoute?.startsWith("advanced_audio") == true
 
     LaunchedEffect(deepLinkHandler, initialDeepLinkUri) {
         if (deepLinkHandler == null || initialDeepLinkUri == null) return@LaunchedEffect
@@ -76,6 +84,11 @@ fun AppStructureScreen(
 
     Scaffold(
         containerColor = QuranTheme.colors.background,
+        contentWindowInsets = if (isImmersiveReader) {
+            WindowInsets(0, 0, 0, 0)
+        } else {
+            ScaffoldDefaults.contentWindowInsets
+        },
         bottomBar = {
             AppBottomBar(navController = navController)
         },
@@ -83,7 +96,11 @@ fun AppStructureScreen(
         NavHost(
             navController = navController,
             startDestination = AppRoute.Home.route,
-            modifier = Modifier.padding(padding),
+            modifier = if (isImmersiveReader) {
+                Modifier.fillMaxSize()
+            } else {
+                Modifier.padding(padding)
+            },
         ) {
             composable(AppRoute.Home.route) {
                 val viewModel: HomeViewModel = hiltViewModel()

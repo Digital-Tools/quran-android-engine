@@ -11,5 +11,6 @@ dependencies {
     implementation(libs.compose.runtime)
     implementation(libs.compose.ui.tooling.preview)
     implementation(libs.coroutines.core)
+    implementation(libs.core.ktx)
     debugImplementation(libs.compose.ui.tooling)
 }

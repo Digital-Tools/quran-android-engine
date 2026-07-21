@@ -21,7 +21,9 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
 import com.quranengine.model.qurankit.AyahNumber
 import com.quranengine.ui.audiobanner.AudioBannerView
+import com.quranengine.ui.theme.MatchSystemBarsToChrome
 import com.quranengine.ui.theme.QuranTheme
+import com.quranengine.ui.theme.audioBannerBackground
 import com.quranengine.ui.theme.chromeBackground
 import com.quranengine.ui.theme.themedBackground
 
@@ -53,6 +55,15 @@ fun QuranViewScreen(
     var menuAyah by remember { mutableStateOf(selectedAyah) }
     val view = LocalView.current
     val isPlaying = state.audioBannerState.isPlaying
+    val chrome = QuranTheme.colors.chromeBackground()
+    val dock = QuranTheme.colors.audioBannerBackground(QuranTheme.isDark)
+    val pageBg = QuranTheme.colors.background
+
+    // Fuse status / nav bars with mushaf chrome (same idea as iOS opaque bars).
+    MatchSystemBarsToChrome(
+        statusBarColor = if (state.barsVisible) chrome else pageBg,
+        navigationBarColor = if (state.barsVisible) dock else pageBg,
+    )
 
     DisposableEffect(isPlaying) {
         view.keepScreenOn = isPlaying
