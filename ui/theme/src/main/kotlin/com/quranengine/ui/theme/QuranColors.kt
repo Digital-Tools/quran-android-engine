@@ -3,17 +3,21 @@ package com.quranengine.ui.theme
 import androidx.compose.ui.graphics.Color
 
 object QuranColors {
-    // App Identity
-    val appIdentityLight = Color(0xFF1B6B71)
-    val appIdentityDark = Color(0xFF2BA9B2)
+    // Mizan brand green (`AppColors.brand` / `brandBright`)
+    val appIdentityLight = Color(0xFF1A6B4A)
+    val appIdentityDark = Color(0xFF2E9E72)
+
+    // Mizan gold for mushaf / home top-bar buttons
+    val mizanGoldLight = Color(0xFFD4AF37)
+    val mizanGoldDark = Color(0xFFF1C40F)
 
     // Page Marker
     val pageMarkerLight = Color(0xFF004D40)
     val pageMarkerDark = Color(0xFF039F85)
 
-    // Highlight colors
-    val wordHighlight = Color(0x4D1B6B71) // appIdentity at 0.3 alpha
-    val readingHighlight = Color(0x4D1B6B71) // appIdentity at 0.3 alpha
+    // Highlight colors (brand green @ 30% alpha)
+    val wordHighlight = Color(0x4D1A6B4A)
+    val readingHighlight = Color(0x4D1A6B4A)
     val shareHighlight = Color(0x4D2196F3) // blue at 0.3 alpha
     val searchHighlight = Color(0x4D9E9E9E) // gray at 0.3 alpha
 }
@@ -80,6 +84,28 @@ private fun Color.pageSeparatorBackgroundVariant(): Color {
     } else {
         blendWith(Color.Black, blendFactor)
     }
+}
+
+/** Lift [background] toward white — used for chrome / audio dock fills (matches iOS). */
+fun Color.liftTowardWhite(factor: Float): Color {
+    return Color(
+        red = red + (1f - red) * factor,
+        green = green + (1f - green) * factor,
+        blue = blue + (1f - blue) * factor,
+        alpha = 1f,
+    )
+}
+
+/** Mushaf top-bar fill: slightly lighter than the page. */
+fun ThemeColors.chromeBackground(): Color = background.liftTowardWhite(0.05f)
+
+/**
+ * Bottom audio dock fill.
+ * Light: near-white; dark: lighter grey than the page (lift ~0.18).
+ */
+fun ThemeColors.audioBannerBackground(isDark: Boolean): Color {
+    val lift = if (isDark) 0.18f else 0.88f
+    return background.liftTowardWhite(lift)
 }
 
 fun ThemeStyle.colors(isDark: Boolean): ThemeColors {

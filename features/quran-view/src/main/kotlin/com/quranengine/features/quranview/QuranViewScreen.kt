@@ -17,13 +17,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
 import com.quranengine.model.qurankit.AyahNumber
 import com.quranengine.ui.audiobanner.AudioBannerView
 import com.quranengine.ui.theme.QuranTheme
+import com.quranengine.ui.theme.chromeBackground
 import com.quranengine.ui.theme.themedBackground
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -91,84 +90,73 @@ fun QuranViewScreen(
             pageContent()
         }
 
-        // Top bar
+        // Top bar — full-bleed chrome like iOS mushaf nav (not a floating pill).
         AnimatedVisibility(
             visible = state.barsVisible,
             enter = slideInVertically(initialOffsetY = { -it }),
             exit = slideOutVertically(targetOffsetY = { -it }),
             modifier = Modifier.align(Alignment.TopCenter),
         ) {
-            Box(
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .background(QuranTheme.colors.chromeBackground())
                     .statusBarsPadding()
-                    .padding(start = 16.dp, end = 16.dp, top = 8.dp)
+                    .padding(horizontal = 4.dp, vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .shadow(elevation = 12.dp, shape = androidx.compose.foundation.shape.RoundedCornerShape(50))
-                        .clip(androidx.compose.foundation.shape.RoundedCornerShape(50))
-                        .background(QuranTheme.colors.secondaryBackground.copy(alpha = 0.95f))
-                        .padding(horizontal = 4.dp, vertical = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // Back button
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            tint = QuranTheme.colors.text
-                        )
-                    }
+                IconButton(onClick = onBack) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Back",
+                        tint = QuranTheme.mizanGold
+                    )
+                }
 
-                    // Title / Subtitle
-                    Column(
-                        modifier = Modifier.weight(1f).padding(horizontal = 4.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
+                Column(
+                    modifier = Modifier.weight(1f).padding(horizontal = 4.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = state.title,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = QuranTheme.colors.text,
+                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                        maxLines = 1,
+                    )
+                    if (state.subtitle.isNotEmpty()) {
                         Text(
-                            text = state.title,
-                            style = MaterialTheme.typography.titleMedium,
-                            color = QuranTheme.colors.text,
-                            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                            text = state.subtitle,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = QuranTheme.colors.secondaryText,
                             maxLines = 1,
                         )
-                        if (state.subtitle.isNotEmpty()) {
-                            Text(
-                                text = state.subtitle,
-                                style = MaterialTheme.typography.labelSmall,
-                                color = QuranTheme.colors.secondaryText,
-                                maxLines = 1,
+                    }
+                }
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (state.audioBannerState.isVisible) {
+                        IconButton(onClick = onAudioStop) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Close audio",
+                                tint = QuranTheme.mizanGold
                             )
                         }
                     }
-
-                    // Actions
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        if (state.audioBannerState.isVisible) {
-                            IconButton(onClick = onAudioStop) {
-                                Icon(
-                                    imageVector = Icons.Default.Close,
-                                    contentDescription = "Close audio",
-                                    tint = QuranTheme.colors.text
-                                )
-                            }
-                        }
-                        IconButton(onClick = onToggleBookmark) {
-                            Icon(
-                                imageVector = if (state.isCurrentPageBookmarked) Icons.Default.Bookmark else Icons.Outlined.BookmarkBorder,
-                                contentDescription = if (state.isCurrentPageBookmarked) "Remove page bookmark" else "Save page bookmark",
-                                tint = QuranTheme.colors.text
-                            )
-                        }
-                        IconButton(onClick = { menuAyah = state.firstVerse }) {
-                            Icon(
-                                imageVector = Icons.Default.MoreVert,
-                                contentDescription = "More",
-                                tint = QuranTheme.colors.text
-                            )
-                        }
+                    IconButton(onClick = onToggleBookmark) {
+                        Icon(
+                            imageVector = if (state.isCurrentPageBookmarked) Icons.Default.Bookmark else Icons.Outlined.BookmarkBorder,
+                            contentDescription = if (state.isCurrentPageBookmarked) "Remove page bookmark" else "Save page bookmark",
+                            tint = if (state.isCurrentPageBookmarked) MaterialTheme.colorScheme.error else QuranTheme.mizanGold
+                        )
+                    }
+                    IconButton(onClick = { menuAyah = state.firstVerse }) {
+                        Icon(
+                            imageVector = Icons.Default.MoreVert,
+                            contentDescription = "More",
+                            tint = QuranTheme.mizanGold
+                        )
                     }
                 }
             }

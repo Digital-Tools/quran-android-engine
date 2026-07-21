@@ -9,16 +9,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.unit.dp
 import com.quranengine.ui.theme.QuranTheme
+import com.quranengine.ui.theme.audioBannerBackground
 
 @Composable
 fun AudioBannerView(
@@ -31,32 +28,36 @@ fun AudioBannerView(
     onBannerTap: () -> Unit = {},
     onSetPlaybackRate: (Float) -> Unit = {},
 ) {
+    val dockShape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
+    val dockColor = QuranTheme.colors.audioBannerBackground(QuranTheme.isDark)
+
     AnimatedVisibility(
         visible = state.isVisible,
         enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
         exit = slideOutVertically(targetOffsetY = { it }) + fadeOut(),
         modifier = modifier
     ) {
+        // Docked full-width bar: solid fill through the nav/gesture inset;
+        // controls stay above that inset (same pattern as iOS audio banner).
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .navigationBarsPadding()
-                .padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
+                .shadow(elevation = 10.dp, shape = dockShape, clip = false)
+                .clip(dockShape)
+                .background(dockColor)
         ) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .shadow(elevation = 12.dp, shape = RoundedCornerShape(percent = 50))
-                    .clip(RoundedCornerShape(percent = 50))
-                    .background(QuranTheme.colors.secondaryBackground.copy(alpha = 0.95f))
+                    .navigationBarsPadding()
                     .clickable(onClick = onBannerTap)
-                    .padding(start = 8.dp, end = 8.dp, top = 8.dp, bottom = 8.dp),
+                    // Raised controls: less top pad, more bottom pad (matches iOS).
+                    .padding(start = 8.dp, end = 8.dp, top = 5.dp, bottom = 12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Play/Pause on the left
                 IconButton(
                     onClick = onPlayPause,
-                    modifier = Modifier.size(44.dp)
+                    modifier = Modifier.size(52.dp)
                 ) {
                     if (state.isDownloading) {
                         CircularProgressIndicator(
@@ -70,12 +71,11 @@ fun AudioBannerView(
                             imageVector = if (state.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
                             contentDescription = "Play/Pause",
                             tint = QuranTheme.colors.text,
-                            modifier = Modifier.size(28.dp)
+                            modifier = Modifier.size(30.dp)
                         )
                     }
                 }
 
-                // Info Text in the middle
                 Column(
                     modifier = Modifier
                         .weight(1f)
@@ -99,16 +99,15 @@ fun AudioBannerView(
                     }
                 }
 
-                // More Options ("...") on the right
                 IconButton(
                     onClick = onBannerTap,
-                    modifier = Modifier.size(36.dp)
+                    modifier = Modifier.size(52.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Default.MoreHoriz,
                         contentDescription = "More options",
                         tint = QuranTheme.colors.text,
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.size(28.dp)
                     )
                 }
             }

@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -288,6 +289,13 @@ private fun AppBottomBar(navController: NavHostController) {
                     )
                 },
                 label = { Text(text = tab.title) },
+                colors = NavigationBarItemDefaults.colors(
+                    selectedIconColor = QuranTheme.appIdentity,
+                    selectedTextColor = QuranTheme.appIdentity,
+                    indicatorColor = QuranTheme.appIdentity.copy(alpha = 0.14f),
+                    unselectedIconColor = QuranTheme.colors.secondaryText,
+                    unselectedTextColor = QuranTheme.colors.secondaryText,
+                ),
             )
         }
     }
