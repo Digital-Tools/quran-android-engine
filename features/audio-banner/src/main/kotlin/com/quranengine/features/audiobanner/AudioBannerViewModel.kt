@@ -197,6 +197,7 @@ class AudioBannerViewModel @Inject constructor(
                 is PlaybackState.Stopped -> current.copy(
                     isVisible = false,
                     isPlaying = false,
+                    isPaused = false,
                     isDownloading = false,
                     playbackRate = _playbackRate.value,
                     progress = 0f,
@@ -206,18 +207,21 @@ class AudioBannerViewModel @Inject constructor(
                 is PlaybackState.Playing -> current.copy(
                     isVisible = true,
                     isPlaying = true,
+                    isPaused = false,
                     isDownloading = false,
                     playbackRate = _playbackRate.value,
                 )
                 is PlaybackState.Paused -> current.copy(
                     isVisible = true,
                     isPlaying = false,
+                    isPaused = true,
                     isDownloading = false,
                     playbackRate = _playbackRate.value,
                 )
                 is PlaybackState.Downloading -> current.copy(
                     isVisible = true,
                     isPlaying = false,
+                    isPaused = false,
                     isDownloading = true,
                     playbackRate = _playbackRate.value,
                     progress = state.progress,
