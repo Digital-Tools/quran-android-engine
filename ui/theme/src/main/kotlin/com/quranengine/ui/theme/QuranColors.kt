@@ -96,8 +96,8 @@ fun Color.liftTowardWhite(factor: Float): Color {
     )
 }
 
-/** Mushaf top-bar fill: slightly lighter than the page. */
-fun ThemeColors.chromeBackground(): Color = background.liftTowardWhite(0.05f)
+/** Mushaf top-bar fill: a bit lighter than the page. */
+fun ThemeColors.chromeBackground(): Color = background.liftTowardWhite(0.12f)
 
 /**
  * Bottom audio dock fill.
