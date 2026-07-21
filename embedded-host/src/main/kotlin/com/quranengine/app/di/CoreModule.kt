@@ -104,7 +104,7 @@ object CoreModule {
     @Singleton
     @Named("databasesDir")
     fun provideDatabasesDir(@ApplicationContext context: Context): File =
-        File(context.filesDir, "databases")
+        File(context.filesDir, "databases").also { it.mkdirs() }
 
     // -- Networking -----------------------------------------------------------
 

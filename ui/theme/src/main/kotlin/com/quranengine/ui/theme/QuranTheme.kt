@@ -71,11 +71,11 @@ fun QuranTheme(
 
     val themeColors = themeStyle.colors(isDark)
 
-    // Map to Material3 color scheme
+    // Map to Material3 color scheme — primary accents use gold (was green).
     val colorScheme = if (isDark) {
         darkColorScheme(
-            primary = QuranColors.appIdentityDark,
-            onPrimary = themeColors.text,
+            primary = QuranColors.mizanGoldDark,
+            onPrimary = themeColors.background,
             background = themeColors.background,
             onBackground = themeColors.text,
             surface = themeColors.background,
@@ -85,7 +85,7 @@ fun QuranTheme(
         )
     } else {
         lightColorScheme(
-            primary = QuranColors.appIdentityLight,
+            primary = QuranColors.mizanGoldLight,
             onPrimary = themeColors.background,
             background = themeColors.background,
             onBackground = themeColors.text,

@@ -15,10 +15,10 @@ object QuranColors {
     val pageMarkerLight = Color(0xFF004D40)
     val pageMarkerDark = Color(0xFF039F85)
 
-    // Highlight colors (brand green @ 30% alpha)
-    val wordHighlight = Color(0x4D1A6B4A)
-    val readingHighlight = Color(0x4D1A6B4A)
-    val shareHighlight = Color(0x4D2196F3) // blue at 0.3 alpha
+    // Highlight colors: former green accents → gold; former blue share → brand green
+    val wordHighlight = Color(0x4DD4AF37)
+    val readingHighlight = Color(0x4DD4AF37)
+    val shareHighlight = Color(0x4D1A6B4A) // mizan green at 0.3 alpha
     val searchHighlight = Color(0x4D9E9E9E) // gray at 0.3 alpha
 }
 

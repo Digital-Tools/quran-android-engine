@@ -46,6 +46,7 @@ import com.quranengine.domain.qurantextkit.Searcher
 import com.quranengine.domain.qurantextkit.localizedName
 import com.quranengine.domain.readingservice.ReadingAssetsInstaller
 import com.quranengine.domain.readingservice.ReadingPreferences
+import com.quranengine.domain.readingservice.VerseTextAssetsInstaller
 import com.quranengine.domain.reciterservice.ReciterDataRetriever
 import com.quranengine.domain.reciterservice.ReciterDataSource
 import com.quranengine.domain.reciterservice.AudioUnzipper
@@ -126,6 +127,15 @@ object DomainModule {
         @Named("baseDir") baseDir: File,
     ): ReadingAssetsInstaller =
         ReadingAssetsInstaller(systemBundle, fileSystem, baseDir)
+
+    @Provides
+    @Singleton
+    fun provideVerseTextAssetsInstaller(
+        systemBundle: SystemBundle,
+        fileSystem: FileSystem,
+        @Named("databasesDir") databasesDir: File,
+    ): VerseTextAssetsInstaller =
+        VerseTextAssetsInstaller(systemBundle, fileSystem, databasesDir)
 
     @Provides
     @Singleton

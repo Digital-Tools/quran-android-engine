@@ -58,7 +58,7 @@ fun StandaloneReciterListScreen(
                 title = { Text("Reciters") },
                 actions = {
                     TextButton(onClick = onDone) {
-                        Text("Done", color = QuranTheme.appIdentity)
+                        Text("Done", color = QuranTheme.mizanGold)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -166,7 +166,7 @@ private fun ReciterSection(
                     Icon(
                         imageVector = Icons.Default.Check,
                         contentDescription = "Selected",
-                        tint = QuranTheme.appIdentity,
+                        tint = QuranTheme.mizanGold,
                     )
                 }
             } else {

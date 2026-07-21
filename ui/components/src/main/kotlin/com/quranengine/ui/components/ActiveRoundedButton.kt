@@ -24,7 +24,7 @@ fun ActiveRoundedButton(
         enabled = enabled,
         shape = RoundedCornerShape(12.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = QuranTheme.appIdentity,
+            containerColor = QuranTheme.mizanGold,
             contentColor = QuranTheme.colors.background,
         ),
         contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp),

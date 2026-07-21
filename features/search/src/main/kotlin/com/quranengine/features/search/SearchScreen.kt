@@ -355,7 +355,7 @@ private fun SearchResultItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val highlightColor = QuranTheme.appIdentity
+    val highlightColor = QuranTheme.mizanGold
     val annotatedText = buildAnnotatedString {
         var cursor = 0
         for (range in result.ranges.sortedBy { it.first }) {

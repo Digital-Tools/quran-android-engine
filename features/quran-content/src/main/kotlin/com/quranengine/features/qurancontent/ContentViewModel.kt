@@ -16,8 +16,8 @@ data class QuranHighlights(
         get() {
             val result = mutableMapOf<Int, Color>()
             for (v in searchVerses) result[v] = Color(0x4D9E9E9E) // gray highlight
-            for (v in readingVerses) result[v] = Color(0x4D1B6B71) // identity highlight
-            for (v in shareVerses) result[v] = Color(0x4D2196F3) // blue highlight
+            for (v in readingVerses) result[v] = Color(0x4DD4AF37) // gold highlight (was green)
+            for (v in shareVerses) result[v] = Color(0x4D1A6B4A) // mizan green (was blue)
             for ((v, _) in noteVerses) result.putIfAbsent(v, Color(0x4DFFC107)) // amber for notes
             return result
         }

@@ -119,7 +119,7 @@ private fun TooltipPopup(state: WordPointerState.Highlighting) {
                     }
                     .offset(x = (-TooltipPadding)),
                 shape = RoundedCornerShape(TooltipCornerRadius),
-                color = QuranColors.appIdentityDark,
+                color = QuranColors.mizanGoldDark,
                 shadowElevation = 4.dp,
             ) {
                 Text(

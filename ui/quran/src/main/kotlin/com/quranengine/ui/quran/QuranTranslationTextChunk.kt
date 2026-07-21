@@ -53,7 +53,7 @@ fun QuranTranslationTextChunk(
             Text(
                 text = "Read more",
                 style = MaterialTheme.typography.bodySmall,
-                color = QuranTheme.appIdentity,
+                color = QuranTheme.mizanGold,
                 modifier = Modifier
                     .clickable { expanded = true }
                     .padding(top = 4.dp),

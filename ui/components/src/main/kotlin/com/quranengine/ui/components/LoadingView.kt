@@ -15,7 +15,7 @@ fun LoadingView(modifier: Modifier = Modifier) {
         contentAlignment = Alignment.Center,
     ) {
         CircularProgressIndicator(
-            color = QuranTheme.appIdentity,
+            color = QuranTheme.mizanGold,
         )
     }
 }

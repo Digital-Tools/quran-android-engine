@@ -307,9 +307,9 @@ private fun AppBottomBar(navController: NavHostController) {
                 },
                 label = { Text(text = tab.title) },
                 colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = QuranTheme.appIdentity,
-                    selectedTextColor = QuranTheme.appIdentity,
-                    indicatorColor = QuranTheme.appIdentity.copy(alpha = 0.14f),
+                    selectedIconColor = QuranTheme.mizanGold,
+                    selectedTextColor = QuranTheme.mizanGold,
+                    indicatorColor = QuranTheme.mizanGold.copy(alpha = 0.14f),
                     unselectedIconColor = QuranTheme.colors.secondaryText,
                     unselectedTextColor = QuranTheme.colors.secondaryText,
                 ),

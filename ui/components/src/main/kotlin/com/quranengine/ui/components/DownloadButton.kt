@@ -26,7 +26,7 @@ fun DownloadButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val identity = QuranTheme.appIdentity
+    val identity = QuranTheme.mizanGold
 
     IconButton(onClick = onClick, modifier = modifier.size(32.dp)) {
         when (state) {

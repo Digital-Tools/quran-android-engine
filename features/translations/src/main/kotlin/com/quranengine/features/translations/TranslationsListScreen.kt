@@ -173,7 +173,7 @@ private fun TranslationRow(
                         Icon(
                             imageVector = Icons.Default.Check,
                             contentDescription = "Selected",
-                            tint = QuranTheme.appIdentity,
+                            tint = QuranTheme.mizanGold,
                         )
                     }
                 }

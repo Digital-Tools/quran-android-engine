@@ -27,13 +27,13 @@ fun ErrorAlertDialog(
                     error.retryAction.invoke()
                     onDismiss()
                 }) {
-                    Text("Retry", color = QuranTheme.appIdentity)
+                    Text("Retry", color = QuranTheme.mizanGold)
                 }
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("OK", color = QuranTheme.appIdentity)
+                Text("OK", color = QuranTheme.mizanGold)
             }
         },
     )

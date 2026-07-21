@@ -45,7 +45,7 @@ fun <T> ChoicesView(
                     .weight(1f)
                     .clickable { onItemSelected(item) }
                     .background(
-                        if (isSelected) QuranTheme.appIdentity else Color.Transparent,
+                        if (isSelected) QuranTheme.mizanGold else Color.Transparent,
                         RoundedCornerShape(8.dp),
                     )
                     .padding(vertical = 8.dp),
@@ -113,7 +113,7 @@ fun ThemeStyleSelector(
                         .background(colors.background)
                         .then(
                             if (isSelected) Modifier.border(
-                                BorderStroke(2.dp, QuranTheme.appIdentity),
+                                BorderStroke(2.dp, QuranTheme.mizanGold),
                                 CircleShape,
                             ) else Modifier
                         ),
