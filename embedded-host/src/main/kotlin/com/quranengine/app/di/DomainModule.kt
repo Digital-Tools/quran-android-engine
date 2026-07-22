@@ -64,6 +64,7 @@ import com.quranengine.domain.translationservice.TranslationNetworkManager
 import com.quranengine.domain.translationservice.TranslationsDownloader
 import com.quranengine.domain.translationservice.TranslationsRepository
 import com.quranengine.domain.translationservice.TranslationAssetsInstaller
+import com.quranengine.domain.translationservice.QuranContentBootstrap
 import com.quranengine.domain.translationservice.TranslationsVersionUpdater
 import com.quranengine.model.qurankit.Quran
 import com.quranengine.model.qurantext.SearchResults
@@ -262,6 +263,19 @@ object DomainModule {
         @Named("baseDir") baseDir: File,
     ): TranslationDeleter =
         TranslationDeleter(persistence, selectedTranslationsPreferences, fileSystem, baseDir)
+
+    @Provides
+    @Singleton
+    fun provideQuranContentBootstrap(
+        verseTextAssetsInstaller: VerseTextAssetsInstaller,
+        translationAssetsInstaller: TranslationAssetsInstaller,
+        applicationScope: CoroutineScope,
+    ): QuranContentBootstrap =
+        QuranContentBootstrap(
+            verseTextAssetsInstaller = verseTextAssetsInstaller,
+            translationAssetsInstaller = translationAssetsInstaller,
+            applicationScope = applicationScope,
+        )
 
     @Provides
     @Singleton

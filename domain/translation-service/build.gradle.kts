@@ -4,6 +4,7 @@ plugins {
 }
 
 dependencies {
+    implementation(project(":domain:reading-service"))
     implementation(project(":model:quran-text"))
     implementation(project(":data:translation-persistence"))
     implementation(project(":data:verse-text-persistence"))

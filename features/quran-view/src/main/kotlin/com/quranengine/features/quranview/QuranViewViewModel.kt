@@ -23,6 +23,7 @@ import com.quranengine.domain.readingservice.ReadingAssetsInstaller
 import com.quranengine.domain.readingservice.ReadingPreferences
 import com.quranengine.domain.readingservice.imageResources
 import com.quranengine.domain.readingservice.localPath
+import com.quranengine.domain.translationservice.QuranContentBootstrap
 import com.quranengine.features.qurancontent.ContentState
 import com.quranengine.features.quranimage.ContentImageState
 import com.quranengine.features.qurantranslation.TranslationItem
@@ -72,6 +73,7 @@ class QuranViewViewModel @Inject constructor(
     private val lastPageService: LastPageService,
     private val lastPageUpdater: LastPageUpdater,
     private val readingAssetsInstaller: ReadingAssetsInstaller,
+    private val quranContentBootstrap: QuranContentBootstrap,
     @Named("baseDir") private val baseDir: File,
 ) : ViewModel() {
 
@@ -109,6 +111,7 @@ class QuranViewViewModel @Inject constructor(
     private var lastPageUpdaterConfigured = false
 
     init {
+        observeBootstrap()
         observeReaderPreferences()
         observeReading()
         observeSelectedTranslations()
@@ -276,6 +279,16 @@ class QuranViewViewModel @Inject constructor(
         }
     }
 
+    private fun observeBootstrap() {
+        viewModelScope.launch {
+            quranContentBootstrap.ready.first { it }
+            _translationContentStates.value = emptyMap()
+            if (_state.value.quranMode == QuranMode.TRANSLATION) {
+                refreshReader(_state.value.visiblePages, updateLastPage = false)
+            }
+        }
+    }
+
     private suspend fun refreshReader(
         pageNumbers: List<Int>,
         updateLastPage: Boolean,
@@ -397,6 +410,13 @@ class QuranViewViewModel @Inject constructor(
     }
 
     private suspend fun loadTranslationPageContent(page: Page): TranslationPageContent {
+        if (!quranContentBootstrap.ready.value) {
+            return TranslationPageContent(
+                placeholderTitle = "Preparing translations",
+                placeholderMessage = "Bundled translation files are still being installed.",
+            )
+        }
+
         val localTranslations = quranTextDataService.localTranslationRetriever.getLocalTranslations()
         val selectedTranslations = selectedTranslationsPreferences.selectedTranslations(localTranslations)
         if (selectedTranslations.isEmpty()) {

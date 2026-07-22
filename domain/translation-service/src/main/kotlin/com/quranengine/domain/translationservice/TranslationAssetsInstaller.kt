@@ -74,7 +74,8 @@ class TranslationAssetsInstaller(
 
         val english = bundledTranslations.firstOrNull { it.id == ENGLISH_TRANSLATION_ID } ?: return
         val dbFile = File(baseDir, english.localPath)
-        if (!dbFile.isFile) {
+        if (!isValidTranslationDatabase(dbFile)) {
+            removeInvalidTranslationArtifacts(english)
             installIfNeeded(
                 translation = english,
                 alreadyRegistered = alreadyRegistered,
@@ -83,7 +84,7 @@ class TranslationAssetsInstaller(
             )
         }
 
-        if (File(baseDir, english.localPath).isFile) {
+        if (isValidTranslationDatabase(File(baseDir, english.localPath))) {
             selectedTranslationsPreferences.select(ENGLISH_TRANSLATION_ID)
             Timber.i("TranslationAssets: auto-selected English (id=%d)", ENGLISH_TRANSLATION_ID)
         }
@@ -97,23 +98,27 @@ class TranslationAssetsInstaller(
     ) {
         val dbFile = File(baseDir, translation.localPath)
 
-        // If already registered AND the DB file is on disk — nothing to do.
-        if (alreadyRegistered.containsKey(translation.fileName) && dbFile.isFile) {
+        if (!isValidTranslationDatabase(dbFile)) {
+            removeInvalidTranslationArtifacts(translation)
+        }
+
+        // If already registered AND the DB file is valid — nothing to do.
+        if (alreadyRegistered.containsKey(translation.fileName) && isValidTranslationDatabase(dbFile)) {
             Timber.d("TranslationAssets: already installed %s, skipping", translation.fileName)
             return
         }
 
-        // DB is missing — try to extract the bundled ZIP.
-        if (!dbFile.isFile) {
+        // DB is missing or invalid — try to extract the bundled ZIP.
+        if (!isValidTranslationDatabase(dbFile)) {
             extractBundledZip(translation, translationsDir)
         }
 
-        if (!dbFile.isFile && allowNetworkDownload) {
+        if (!isValidTranslationDatabase(dbFile) && allowNetworkDownload) {
             downloadTranslation(translation)
         }
 
         // Register in persistence if the DB file is now present on disk.
-        if (dbFile.isFile) {
+        if (isValidTranslationDatabase(dbFile)) {
             val existing = alreadyRegistered[translation.fileName]
             val registered = if (existing != null) {
                 versionUpdater.updateInstalledVersion(existing)
@@ -191,6 +196,32 @@ class TranslationAssetsInstaller(
         }
     }
 
+    private fun removeInvalidTranslationArtifacts(translation: Translation) {
+        translation.localFiles.forEach { relativePath ->
+            val file = File(baseDir, relativePath)
+            if (file.exists()) {
+                try {
+                    fileSystem.removeItem(file)
+                } catch (error: Exception) {
+                    Timber.w(error, "TranslationAssets: failed to remove invalid file %s", file.path)
+                }
+            }
+        }
+    }
+
+    private fun isValidTranslationDatabase(file: File): Boolean {
+        if (!file.isFile || file.length() < MIN_VALID_DB_BYTES) return false
+        return try {
+            file.inputStream().use { input ->
+                val header = ByteArray(SQLITE_HEADER.size)
+                if (input.read(header) != header.size) return false
+                header.contentEquals(SQLITE_HEADER)
+            }
+        } catch (_: Exception) {
+            false
+        }
+    }
+
     private fun Translation.withZipDownloadUrl(): Translation {
         if (fileURL.endsWith(".zip", ignoreCase = true) || fileURL.contains("ext=zip")) {
             return this
@@ -201,5 +232,7 @@ class TranslationAssetsInstaller(
 
     companion object {
         private const val ENGLISH_TRANSLATION_ID = 98
+        private const val MIN_VALID_DB_BYTES = 10_000L
+        private val SQLITE_HEADER = "SQLite format 3\u0000".toByteArray()
     }
 }

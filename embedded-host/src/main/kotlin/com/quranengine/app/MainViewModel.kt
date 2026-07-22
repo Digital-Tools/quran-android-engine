@@ -3,7 +3,6 @@ package com.quranengine.app
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.quranengine.domain.annotationservice.LastPageService
-import com.quranengine.domain.annotationservice.PageBookmarkService
 import com.quranengine.domain.qurantextkit.FontSizePreferences
 import com.quranengine.domain.readingservice.ReadingPreferences
 import com.quranengine.features.home.HomeViewType
@@ -22,28 +21,15 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
-import com.quranengine.domain.translationservice.TranslationAssetsInstaller
-import com.quranengine.domain.readingservice.VerseTextAssetsInstaller
-import kotlinx.coroutines.launch
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val quran: Quran,
     private val lastPageService: LastPageService,
-    private val pageBookmarkService: PageBookmarkService,
     private val readingPreferences: ReadingPreferences,
     private val fontSizePreferences: FontSizePreferences,
     private val themePreferences: ThemePreferences,
-    private val translationAssetsInstaller: TranslationAssetsInstaller,
-    private val verseTextAssetsInstaller: VerseTextAssetsInstaller,
 ) : ViewModel() {
-
-    init {
-        viewModelScope.launch {
-            verseTextAssetsInstaller.ensureInstalled()
-            translationAssetsInstaller.ensureInstalled()
-        }
-    }
 
     val lastPages: StateFlow<List<LastPage>> = lastPageService.lastPages(quran)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())

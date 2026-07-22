@@ -11,6 +11,7 @@ import androidx.activity.viewModels
 import androidx.lifecycle.lifecycleScope
 import com.quranengine.app.MainViewModel
 import com.quranengine.data.annotation.persistence.LastPagePersistence
+import com.quranengine.domain.translationservice.QuranContentBootstrap
 import com.quranengine.features.appstructure.DeepLinkHandler
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -23,9 +24,11 @@ class QuranHostActivity : ComponentActivity() {
 
     @Inject lateinit var deepLinkHandler: DeepLinkHandler
     @Inject lateinit var lastPagePersistence: LastPagePersistence
+    @Inject lateinit var quranContentBootstrap: QuranContentBootstrap
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        quranContentBootstrap.start()
         // Transparent scrims so mushaf chrome can paint into status / nav bars.
         enableEdgeToEdge(
             statusBarStyle = SystemBarStyle.auto(

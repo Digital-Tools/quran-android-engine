@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.quranengine.data.batchdownloader.DownloadBatchResponse
 import com.quranengine.data.batchdownloader.DownloadsObserver
 import com.quranengine.domain.translationservice.LocalTranslationsRetriever
+import com.quranengine.domain.translationservice.QuranContentBootstrap
 import com.quranengine.domain.translationservice.SelectedTranslationsPreferences
 import com.quranengine.domain.translationservice.TranslationDeleter
 import com.quranengine.domain.translationservice.TranslationsDownloader
@@ -17,6 +18,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -35,6 +37,7 @@ class TranslationsListViewModel @Inject constructor(
     private val selectedTranslationsPreferences: SelectedTranslationsPreferences,
     private val translationsDownloader: TranslationsDownloader,
     private val translationDeleter: TranslationDeleter,
+    private val quranContentBootstrap: QuranContentBootstrap,
 ) : ViewModel() {
 
     private val downloadsObserver = DownloadsObserver<Int>(
@@ -57,6 +60,7 @@ class TranslationsListViewModel @Inject constructor(
     init {
         loadTranslations()
         observeRunningDownloads()
+        observeBootstrap()
     }
 
     fun refresh() {
@@ -139,6 +143,13 @@ class TranslationsListViewModel @Inject constructor(
             } catch (e: Exception) {
                 Timber.e(e, "Failed to observe running downloads")
             }
+        }
+    }
+
+    private fun observeBootstrap() {
+        viewModelScope.launch {
+            quranContentBootstrap.ready.first { it }
+            reloadLocal()
         }
     }
 
