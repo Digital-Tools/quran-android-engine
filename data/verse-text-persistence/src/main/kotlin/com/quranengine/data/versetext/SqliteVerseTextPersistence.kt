@@ -35,9 +35,9 @@ class SqliteVerseTextPersistence(
             val cursor = database.rawQuery(
                 """
                 SELECT text FROM $textTable
-                WHERE (ayah = ? OR ayah = ?) AND (sura = ? OR sura = ?)
+                WHERE (ayah = CAST(? AS INTEGER) OR ayah = CAST(? AS INTEGER)) AND (sura = CAST(? AS INTEGER) OR sura = CAST(? AS INTEGER))
                 """.trimIndent(),
-                arrayOf(ayah, ayah.toString(), sura, sura.toString())
+                arrayOf(ayah.toString(), ayah.toString(), sura.toString(), sura.toString())
             )
             cursor.firstOrNull { it.getStringColumn("text") }
                 ?: throw PersistenceError.General("Cannot find any records for verse '$verse'")
@@ -54,9 +54,9 @@ class SqliteVerseTextPersistence(
                     val cursor = database.rawQuery(
                         """
                         SELECT text FROM $textTable
-                        WHERE (ayah = ? OR ayah = ?) AND (sura = ? OR sura = ?)
+                        WHERE (ayah = CAST(? AS INTEGER) OR ayah = CAST(? AS INTEGER)) AND (sura = CAST(? AS INTEGER) OR sura = CAST(? AS INTEGER))
                         """.trimIndent(),
-                        arrayOf(ayah, ayah.toString(), sura, sura.toString())
+                        arrayOf(ayah.toString(), ayah.toString(), sura.toString(), sura.toString())
                     )
                     cursor.firstOrNull { it.getStringColumn("text") }?.let {
                         result[verse] = it
