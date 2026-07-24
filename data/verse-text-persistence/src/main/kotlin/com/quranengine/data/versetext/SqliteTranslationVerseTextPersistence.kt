@@ -33,7 +33,7 @@ class SqliteTranslationVerseTextPersistence(
                     SELECT text FROM $TEXT_TABLE
                     WHERE (ayah = ? OR ayah = ?) AND (sura = ? OR sura = ?)
                     """.trimIndent(),
-                    arrayOf(ayah.toString(), ayah.toString(), sura.toString(), sura.toString())
+                    arrayOf(ayah, ayah, sura, sura)
                 )
                 cursor.firstOrNull { parseText(it.getStringColumnOrNull("text"), verse.quran) }
                     ?: throw PersistenceError.General("Cannot find any records for verse '$verse'")
@@ -52,7 +52,7 @@ class SqliteTranslationVerseTextPersistence(
                         SELECT text FROM $TEXT_TABLE
                         WHERE (ayah = ? OR ayah = ?) AND (sura = ? OR sura = ?)
                         """.trimIndent(),
-                        arrayOf(ayah.toString(), ayah.toString(), sura.toString(), sura.toString())
+                        arrayOf(ayah, ayah, sura, sura)
                     )
                     cursor.firstOrNull { parseText(it.getStringColumnOrNull("text"), verse.quran) }
                         ?.let { result[verse] = it }
