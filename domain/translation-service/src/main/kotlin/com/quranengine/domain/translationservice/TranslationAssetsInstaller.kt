@@ -58,7 +58,7 @@ class TranslationAssetsInstaller(
                 translation = translation,
                 alreadyRegistered = alreadyRegistered,
                 translationsDir = translationsDir,
-                allowNetworkDownload = false,
+                allowNetworkDownload = true,
             )
         }
 

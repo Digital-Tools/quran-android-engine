@@ -9,6 +9,7 @@ import com.quranengine.domain.quranaudiokit.QuranAudioPlayerActions
 import com.quranengine.domain.quranaudiokit.QuranAudioPlayerStore
 import com.quranengine.domain.reciterservice.ReciterDataRetriever
 import com.quranengine.domain.reciterservice.ReciterPreferences
+import com.quranengine.domain.translationservice.QuranContentBootstrap
 import com.quranengine.model.qurankit.Quran
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -34,6 +35,7 @@ class QuranPlaybackCoordinator @Inject constructor(
     private val lastAyahFinder: PreferencesLastAyahFinder,
     private val lastPagePersistence: LastPagePersistence,
     private val quran: Quran,
+    quranContentBootstrap: QuranContentBootstrap,
 ) {
     private val coordinatorKey = Any()
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
@@ -41,6 +43,9 @@ class QuranPlaybackCoordinator @Inject constructor(
     private var onStateChanged: ((Boolean) -> Unit)? = null
 
     init {
+        // Install bundled verse text + translations at app launch so they're
+        // ready before the user opens the Quran reader (parity with iOS).
+        quranContentBootstrap.start()
         store.register(
             coordinatorKey,
             QuranAudioPlayerActions(

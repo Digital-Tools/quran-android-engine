@@ -24,6 +24,14 @@ class DefaultTranslationUnzipper(
             val zipFile = File(baseDir, translation.unprocessedLocalPath)
             if (zipFile.exists()) {
                 try {
+                    if (zipFile.isSqliteDatabase()) {
+                        val dbFile = File(baseDir, translation.localPath)
+                        if (dbFile.exists()) {
+                            fileSystem.removeItem(dbFile)
+                        }
+                        fileSystem.moveItem(zipFile, dbFile)
+                        return
+                    }
                     attempt(times = 3) {
                         zipper.unzipFile(
                             zipFile = zipFile,
@@ -43,5 +51,22 @@ class DefaultTranslationUnzipper(
                 }
             }
         }
+    }
+
+    private fun File.isSqliteDatabase(): Boolean {
+        if (!isFile || length() < SQLITE_HEADER.size.toLong()) return false
+        return try {
+            inputStream().use { input ->
+                val header = ByteArray(SQLITE_HEADER.size)
+                if (input.read(header) != header.size) return false
+                header.contentEquals(SQLITE_HEADER)
+            }
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    companion object {
+        private val SQLITE_HEADER = "SQLite format 3\u0000".toByteArray()
     }
 }

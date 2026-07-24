@@ -105,13 +105,19 @@ class QuranTextDataService(
             for (verse in verses) {
                 val text = versesText[verse]
                     ?: TranslationTextPersistenceModel.Text(
-                        localizer.l("error.translation.text-not-available")
+                        localizedFallback(
+                            key = "error.translation.text-not-available",
+                            fallback = "Translation text is not available for this verse.",
+                        )
                     )
                 verseTextList.add(translationText(text))
             }
         } catch (e: Exception) {
             Timber.e(e, "Issue getting verse $verses, translation: ${translation.id}")
-            val errorText = localizer.l("error.translation.text-retrieval")
+            val errorText = localizedFallback(
+                key = "error.translation.text-retrieval",
+                fallback = "Unable to load translation text.",
+            )
             for (verse in verses) {
                 verseTextList.add(
                     TranslationText.StringText(
@@ -126,6 +132,14 @@ class QuranTextDataService(
             }
         }
         return translation to verseTextList
+    }
+
+    private fun localizedFallback(
+        key: String,
+        fallback: String,
+    ): String {
+        val localized = localizer.l(key)
+        return if (localized == key) fallback else localized
     }
 
     private fun translationText(from: TranslationTextPersistenceModel): TranslationText {

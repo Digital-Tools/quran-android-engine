@@ -58,6 +58,22 @@ fun AyahMenuSheet(
             )
 
             AyahMenuItem(
+                icon = Icons.Outlined.Translate,
+                label = if (quranMode == QuranMode.ARABIC) "Show Translations" else "Show Arabic",
+                onClick = {
+                    actions.onToggleTranslations()
+                    actions.onDismiss()
+                },
+            )
+            AyahMenuItem(
+                icon = Icons.Outlined.ManageSearch,
+                label = "Manage Translations",
+                onClick = {
+                    actions.onManageTranslations()
+                    actions.onDismiss()
+                },
+            )
+            AyahMenuItem(
                 icon = Icons.Outlined.BookmarkAdd,
                 label = "Bookmark",
                 onClick = {
@@ -94,22 +110,6 @@ fun AyahMenuSheet(
                 label = "Add Note",
                 onClick = {
                     actions.onAddNote(ayah)
-                    actions.onDismiss()
-                },
-            )
-            AyahMenuItem(
-                icon = Icons.Outlined.Translate,
-                label = if (quranMode == QuranMode.ARABIC) "Show Translations" else "Show Arabic",
-                onClick = {
-                    actions.onToggleTranslations()
-                    actions.onDismiss()
-                },
-            )
-            AyahMenuItem(
-                icon = Icons.Outlined.ManageSearch,
-                label = "Manage Translations",
-                onClick = {
-                    actions.onManageTranslations()
                     actions.onDismiss()
                 },
             )
