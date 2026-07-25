@@ -419,12 +419,6 @@ class QuranViewViewModel @Inject constructor(
 
         val localTranslations = quranTextDataService.localTranslationRetriever.getLocalTranslations()
         val selectedTranslations = selectedTranslationsPreferences.selectedTranslations(localTranslations)
-        if (selectedTranslations.isEmpty()) {
-            return TranslationPageContent(
-                placeholderTitle = "No translations selected",
-                placeholderMessage = "Download and select at least one translation from the Translations screen.",
-            )
-        }
 
         val verses = page.firstVerse.arrayTo(page.lastVerse).toList()
         val verseTexts = quranTextDataService.textForVerses(verses, selectedTranslations)
