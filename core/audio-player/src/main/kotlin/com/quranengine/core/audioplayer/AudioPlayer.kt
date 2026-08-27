@@ -87,14 +87,26 @@ internal class AudioPlayer(
         cancelFrameTimer()
         playing.resetFramePlays()
 
+        val currentPlayer = player
+        val currentPosition = currentPlayer?.currentTime ?: 0.0
+        val frameStartTime = playing.frame.startTime
+
+        // If played more than 2 seconds into current frame, restart current frame first
+        if (currentPlayer != null && (currentPosition - frameStartTime) > 2.0) {
+            currentPlayer.seek(frameStartTime, rate)
+            waitUntilFrameEnds()
+            return
+        }
+
         val prev = playing.previousFrame()
         if (prev != null) {
             play(fileIndex = prev.first, frameIndex = prev.second, forceSeek = true)
         } else {
             // Already at start — re-seek to the beginning of the current frame.
-            val currentPlayer = player ?: return
-            currentPlayer.seek(playing.frame.startTime, rate)
-            waitUntilFrameEnds()
+            if (currentPlayer != null) {
+                currentPlayer.seek(frameStartTime, rate)
+                waitUntilFrameEnds()
+            }
         }
     }
 

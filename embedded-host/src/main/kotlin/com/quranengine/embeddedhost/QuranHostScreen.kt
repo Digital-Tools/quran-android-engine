@@ -39,7 +39,7 @@ fun QuranHostScreen(
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
-    val isHomeRoute = currentRoute == AppRoute.Home.route
+    val isHomeRoute = currentRoute == null || currentRoute == AppRoute.Home.route
 
     QuranTheme(
         themeStyle = themeStyle,

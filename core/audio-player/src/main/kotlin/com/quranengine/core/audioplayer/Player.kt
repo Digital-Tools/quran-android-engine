@@ -30,7 +30,7 @@ internal class Player(
                 .setUsage(C.USAGE_MEDIA)
                 .setContentType(C.AUDIO_CONTENT_TYPE_MUSIC)
                 .build(),
-            false,
+            true,
         )
         volume = 1f
     }
