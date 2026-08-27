@@ -62,9 +62,9 @@ internal class AudioPlaying(
         this.frameIndex = frameIndex
     }
 
-    fun isLastPlayForCurrentFrame(): Boolean = framePlays + 1 >= request.frameRuns.maxRuns
+    fun isLastPlayForCurrentFrame(): Boolean = framePlays >= request.frameRuns.maxRuns
 
-    fun isLastRun(): Boolean = requestPlays + 1 >= request.requestRuns.maxRuns
+    fun isLastRun(): Boolean = requestPlays >= request.requestRuns.maxRuns
 
     fun incrementRequestPlays() {
         if (request.requestRuns != Runs.INDEFINITE) {

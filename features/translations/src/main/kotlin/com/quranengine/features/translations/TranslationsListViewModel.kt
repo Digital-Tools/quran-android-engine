@@ -1,5 +1,6 @@
 package com.quranengine.features.translations
 
+import java.util.Locale
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.quranengine.data.batchdownloader.DownloadBatchResponse
@@ -194,7 +195,10 @@ class TranslationsListViewModel @Inject constructor(
             .filter { !it.isDownloaded }
             .sorted()
             .map { toItemState(it) }
-            .groupBy { it.translation.languageCode }
+            .groupBy { 
+                val displayName = Locale(it.translation.languageCode).displayLanguage
+                displayName.replaceFirstChar { char -> char.uppercase() }
+            }
             .toSortedMap()
 
         return TranslationsListUiState(

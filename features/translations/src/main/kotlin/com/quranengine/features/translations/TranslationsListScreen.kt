@@ -164,7 +164,6 @@ private fun TranslationRow(
         NoorListItem(
             title = translation.displayName,
             subtitle = translation.translatorDisplayName,
-            rightSubtitle = translation.languageCode,
             onClick = onClick,
             modifier = Modifier.weight(1f),
             image = when {
