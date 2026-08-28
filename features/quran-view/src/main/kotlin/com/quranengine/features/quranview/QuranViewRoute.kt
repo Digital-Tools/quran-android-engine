@@ -60,19 +60,31 @@ fun QuranViewRoute(
         transientMessage = userMessage,
         onTransientMessageShown = viewModel::clearUserMessage,
         ayahMenuActions = AyahMenuActions(
-            onBookmarkPage = viewModel::addBookmarkForAyah,
             onPlayFromHere = { ayah ->
                 audioBannerViewModel.play(ayah, JuzBasedLastAyahFinder().findLastAyah(ayah))
             },
-            onShare = viewModel::shareAyah,
+            onRepeatVerse = { ayah ->
+                onNavigateToAdvancedAudio(ayah, ayah)
+            },
+            onHighlight = { ayah ->
+                viewModel.addBookmarkForAyah(ayah)
+            },
+            onSelectHighlightColor = { ayah ->
+                viewModel.addBookmarkForAyah(ayah)
+            },
+            onAddNote = { ayah ->
+                noteEditorAyah = ayah
+            },
+            onTranslationTafseer = {
+                viewModel.toggleQuranMode()
+            },
             onCopy = { ayah ->
                 viewModel.copyAyah(ayah) { text ->
                     clipboardManager.setPrimaryClip(ClipData.newPlainText("Quran ayah", text))
                 }
             },
-            onAddNote = { ayah ->
-                noteEditorAyah = ayah
-            },
+            onShare = viewModel::shareAyah,
+            onBookmarkPage = viewModel::addBookmarkForAyah,
             onToggleTranslations = viewModel::toggleQuranMode,
             onManageTranslations = onNavigateToTranslations,
         ),

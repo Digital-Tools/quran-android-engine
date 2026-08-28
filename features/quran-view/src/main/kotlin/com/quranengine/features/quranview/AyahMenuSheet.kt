@@ -1,20 +1,25 @@
 package com.quranengine.features.quranview
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.BookmarkAdd
 import androidx.compose.material.icons.outlined.ContentCopy
+import androidx.compose.material.icons.outlined.Language
 import androidx.compose.material.icons.outlined.NoteAdd
 import androidx.compose.material.icons.outlined.PlayArrow
+import androidx.compose.material.icons.outlined.Repeat
 import androidx.compose.material.icons.outlined.Share
-import androidx.compose.material.icons.outlined.Translate
-import androidx.compose.material.icons.outlined.ManageSearch
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.quranengine.domain.qurantextkit.englishName
 import com.quranengine.model.qurankit.AyahNumber
@@ -34,8 +39,8 @@ fun AyahMenuSheet(
     ModalBottomSheet(
         onDismissRequest = actions.onDismiss,
         sheetState = sheetState,
-        shape = androidx.compose.foundation.shape.RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
-        containerColor = QuranTheme.colors.background,
+        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+        containerColor = QuranTheme.colors.secondaryBackground,
         contentColor = QuranTheme.colors.text,
         modifier = modifier,
     ) {
@@ -45,55 +50,109 @@ fun AyahMenuSheet(
                 .navigationBarsPadding()
                 .padding(bottom = 16.dp),
         ) {
+            // Header: Surah name & Ayah number
             Text(
-                text = "${ayah.sura.suraNumber}. ${ayah.sura.englishName()} — ${ayah.ayah}",
+                text = "${ayah.sura.suraNumber}. ${ayah.sura.englishName()} — Ayah ${ayah.ayah}",
                 style = MaterialTheme.typography.titleSmall,
-                color = QuranTheme.colors.text.copy(alpha = 0.6f),
-                modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
+                color = QuranTheme.colors.text.copy(alpha = 0.5f),
+                modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
             )
 
             HorizontalDivider(
-                color = QuranTheme.colors.text.copy(alpha = 0.12f),
-                modifier = Modifier.padding(bottom = 4.dp),
+                color = QuranTheme.colors.text.copy(alpha = 0.08f),
+                modifier = Modifier.padding(vertical = 4.dp),
             )
 
-            AyahMenuItem(
-                icon = Icons.Outlined.Translate,
-                label = if (quranMode == QuranMode.ARABIC) "Show Translations" else "Show Arabic",
-                onClick = {
-                    actions.onToggleTranslations()
-                    actions.onDismiss()
-                },
-            )
-            AyahMenuItem(
-                icon = Icons.Outlined.ManageSearch,
-                label = "Manage Translations",
-                onClick = {
-                    actions.onManageTranslations()
-                    actions.onDismiss()
-                },
-            )
-            AyahMenuItem(
-                icon = Icons.Outlined.BookmarkAdd,
-                label = "Bookmark",
-                onClick = {
-                    actions.onBookmarkPage(ayah)
-                    actions.onDismiss()
-                },
-            )
+            // Group 1: Playback Controls
             AyahMenuItem(
                 icon = Icons.Outlined.PlayArrow,
-                label = "Play from here",
+                label = "Play",
+                subtitle = "to the end of Juz'",
                 onClick = {
                     actions.onPlayFromHere(ayah)
                     actions.onDismiss()
                 },
             )
             AyahMenuItem(
-                icon = Icons.Outlined.Share,
-                label = "Share",
+                icon = Icons.Outlined.Repeat,
+                label = "Repeat",
+                subtitle = "selected verse",
                 onClick = {
-                    actions.onShare(ayah)
+                    actions.onRepeatVerse(ayah)
+                    actions.onDismiss()
+                },
+            )
+
+            HorizontalDivider(
+                color = QuranTheme.colors.text.copy(alpha = 0.08f),
+                modifier = Modifier.padding(vertical = 6.dp),
+            )
+
+            // Group 2: Highlights & Annotations
+            AyahMenuItem(
+                label = "Highlight",
+                customIcon = {
+                    Box(
+                        modifier = Modifier
+                            .size(18.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xFFFF6B8B)), // Rose/Pink highlight
+                    )
+                },
+                onClick = {
+                    actions.onHighlight(ayah)
+                    actions.onDismiss()
+                },
+            )
+            AyahMenuItem(
+                label = "Highlight",
+                subtitle = "select color",
+                customIcon = {
+                    // Split dual color dot (Green/Yellow) matching iOS design
+                    Row(
+                        modifier = Modifier
+                            .size(18.dp)
+                            .clip(CircleShape),
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxHeight()
+                                .background(Color(0xFF8BC34A)),
+                        )
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxHeight()
+                                .background(Color(0xFFFFD54F)),
+                        )
+                    }
+                },
+                onClick = {
+                    actions.onSelectHighlightColor(ayah)
+                    actions.onDismiss()
+                },
+            )
+            AyahMenuItem(
+                icon = Icons.Outlined.NoteAdd,
+                label = "Add Note",
+                onClick = {
+                    actions.onAddNote(ayah)
+                    actions.onDismiss()
+                },
+            )
+
+            HorizontalDivider(
+                color = QuranTheme.colors.text.copy(alpha = 0.08f),
+                modifier = Modifier.padding(vertical = 6.dp),
+            )
+
+            // Group 3: Tools & Actions
+            AyahMenuItem(
+                icon = Icons.Outlined.Language,
+                label = "Translation/Tafseer",
+                onClick = {
+                    actions.onTranslationTafseer(ayah)
                     actions.onDismiss()
                 },
             )
@@ -106,10 +165,10 @@ fun AyahMenuSheet(
                 },
             )
             AyahMenuItem(
-                icon = Icons.Outlined.NoteAdd,
-                label = "Add Note",
+                icon = Icons.Outlined.Share,
+                label = "Share...",
                 onClick = {
-                    actions.onAddNote(ayah)
+                    actions.onShare(ayah)
                     actions.onDismiss()
                 },
             )
@@ -119,29 +178,53 @@ fun AyahMenuSheet(
 
 @Composable
 private fun AyahMenuItem(
-    icon: ImageVector,
     label: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    subtitle: String? = null,
+    icon: ImageVector? = null,
+    customIcon: (@Composable () -> Unit)? = null,
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(horizontal = 24.dp, vertical = 14.dp),
+            .padding(horizontal = 20.dp, vertical = 11.dp),
     ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = label,
-            tint = QuranTheme.colors.text,
+        Box(
             modifier = Modifier.size(24.dp),
-        )
+            contentAlignment = Alignment.Center,
+        ) {
+            if (customIcon != null) {
+                customIcon()
+            } else if (icon != null) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = label,
+                    tint = QuranTheme.colors.text,
+                    modifier = Modifier.size(22.dp),
+                )
+            }
+        }
         Spacer(modifier = Modifier.width(16.dp))
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyLarge,
-            color = QuranTheme.colors.text,
-        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.weight(1f),
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
+                color = QuranTheme.colors.text,
+            )
+            if (subtitle != null) {
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = QuranTheme.colors.text.copy(alpha = 0.5f),
+                )
+            }
+        }
     }
 }
