@@ -44,6 +44,7 @@ fun QuranViewRoute(
         context.getSystemService(ClipboardManager::class.java)
     }
     var noteEditorAyah by remember { mutableStateOf<AyahNumber?>(null) }
+    var selectedAyahForMenu by remember { mutableStateOf<AyahNumber?>(null) }
     val pages = remember(state.totalPages) { (1..state.totalPages).toList() }
     val defaultPlaybackRange = state.firstVerse?.let { from ->
         from to JuzBasedLastAyahFinder().findLastAyah(from)
@@ -56,6 +57,7 @@ fun QuranViewRoute(
 
     QuranViewScreen(
         state = state.copy(audioBannerState = audioBannerState.copy(playbackRate = playbackRate)),
+        selectedAyah = selectedAyahForMenu,
         modifier = modifier,
         transientMessage = userMessage,
         onTransientMessageShown = viewModel::clearUserMessage,
@@ -130,6 +132,9 @@ fun QuranViewRoute(
                         ContentImageView(
                             state = content,
                             modifier = Modifier,
+                            onAyahTapped = {
+                                selectedAyahForMenu = state.firstVerse
+                            },
                         )
                     }
                 } else {
@@ -141,7 +146,15 @@ fun QuranViewRoute(
                                 message = content.placeholderMessage,
                             )
                         } else {
-                            ContentTranslationView(items = content.items)
+                            ContentTranslationView(
+                                items = content.items,
+                                onAyahTapped = { verse ->
+                                    val first = state.firstVerse
+                                    if (first != null) {
+                                        selectedAyahForMenu = AyahNumber(first.sura, verse) ?: first
+                                    }
+                                }
+                            )
                         }
                     }
                 }

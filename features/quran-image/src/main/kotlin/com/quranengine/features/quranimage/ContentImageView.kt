@@ -1,5 +1,7 @@
 package com.quranengine.features.quranimage
 
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -10,10 +12,12 @@ import androidx.compose.ui.unit.toSize
 import com.quranengine.ui.components.LoadingView
 import com.quranengine.ui.quran.*
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ContentImageView(
     state: ContentImageState,
     modifier: Modifier = Modifier,
+    onAyahTapped: () -> Unit = {},
 ) {
     if (state.isLoading) {
         LoadingView(modifier = modifier)
@@ -39,7 +43,11 @@ fun ContentImageView(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .onSizeChanged { viewSize = it },
+                .onSizeChanged { viewSize = it }
+                .combinedClickable(
+                    onClick = onAyahTapped,
+                    onLongClick = onAyahTapped
+                ),
         ) {
             QuranThemedImage(
                 bitmap = bitmap,

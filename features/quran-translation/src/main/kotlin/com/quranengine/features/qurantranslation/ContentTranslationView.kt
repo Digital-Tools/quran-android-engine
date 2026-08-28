@@ -1,6 +1,8 @@
 package com.quranengine.features.qurantranslation
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -16,11 +18,13 @@ import androidx.compose.ui.unit.dp
 import com.quranengine.ui.quran.*
 import com.quranengine.ui.theme.QuranTheme
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ContentTranslationView(
     items: List<TranslationItem>,
     modifier: Modifier = Modifier,
     scrollToItemId: TranslationItemId? = null,
+    onAyahTapped: (Int) -> Unit = {},
 ) {
     val listState = rememberLazyListState()
 
@@ -48,7 +52,16 @@ fun ContentTranslationView(
                 Modifier
             }
 
-            Box(modifier = bgModifier.fillMaxWidth()) {
+            val verseNum = item.id.ayah
+            val clickableModifier = if (verseNum != null) {
+                bgModifier.fillMaxWidth().combinedClickable(
+                    onClick = { onAyahTapped(verseNum) },
+                    onLongClick = { onAyahTapped(verseNum) }
+                )
+            } else {
+                bgModifier.fillMaxWidth()
+            }
+            Box(modifier = clickableModifier) {
                 when (item) {
                     is TranslationItem.PageHeader -> {
                         QuranPageHeader(

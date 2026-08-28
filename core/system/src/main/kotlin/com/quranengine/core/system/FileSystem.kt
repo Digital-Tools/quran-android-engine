@@ -54,9 +54,9 @@ class DefaultFileSystem : FileSystem {
 
     override fun copyItem(src: File, dst: File) {
         if (src.isDirectory) {
-            src.copyRecursively(dst, overwrite = false)
+            src.copyRecursively(dst, overwrite = true)
         } else {
-            src.copyTo(dst, overwrite = false)
+            src.copyTo(dst, overwrite = true)
         }
     }
 
@@ -73,6 +73,11 @@ class DefaultFileSystem : FileSystem {
     }
 
     override fun moveItem(src: File, dst: File) {
+        if (dst.exists()) {
+            try {
+                removeItem(dst)
+            } catch (_: IOException) {}
+        }
         if (!src.renameTo(dst)) {
             // Fallback: copy then delete (handles cross-filesystem moves).
             copyItem(src, dst)
