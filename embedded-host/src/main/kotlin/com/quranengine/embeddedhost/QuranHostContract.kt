@@ -5,6 +5,7 @@ import android.content.Intent
 import com.quranengine.ui.theme.AppearanceMode
 
 object QuranHostContract {
+    var onPrayerSheetRequested: (() -> Unit)? = null
     private const val EXTRA_INITIAL_PAGE = "com.quranengine.embeddedhost.extra.INITIAL_PAGE"
     private const val EXTRA_FORCE_DARK_MODE = "com.quranengine.embeddedhost.extra.FORCE_DARK_MODE"
     private const val EXTRA_SHOW_CLOSE_BUTTON = "com.quranengine.embeddedhost.extra.SHOW_CLOSE_BUTTON"

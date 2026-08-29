@@ -203,6 +203,7 @@ fun AppStructureScreen(
                     onNavigateToTranslations = {
                         navController.navigate(AppRoute.TranslationsList.route)
                     },
+                    onOpenPrayerSheet = onOpenPrayerSheet,
                 )
             }
 

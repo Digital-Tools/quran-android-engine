@@ -54,6 +54,9 @@ class QuranHostActivity : ComponentActivity() {
                 forcedAppearanceMode = QuranHostContract.forcedAppearanceMode(intent),
                 showCloseButton = QuranHostContract.showCloseButton(intent),
                 onClose = ::finish,
+                onOpenPrayerSheet = {
+                    QuranHostContract.onPrayerSheetRequested?.invoke()
+                },
             )
         }
     }

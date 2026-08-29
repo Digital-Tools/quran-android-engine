@@ -33,6 +33,7 @@ fun QuranHostScreen(
     forcedAppearanceMode: AppearanceMode?,
     showCloseButton: Boolean,
     onClose: (() -> Unit)?,
+    onOpenPrayerSheet: (() -> Unit)? = null,
 ) {
     val themeStyle by viewModel.themeStyle.collectAsState()
     val storedAppearanceMode by viewModel.appearanceMode.collectAsState()
@@ -50,6 +51,7 @@ fun QuranHostScreen(
                 navController = navController,
                 deepLinkHandler = deepLinkHandler,
                 initialDeepLinkUri = initialDeepLinkUri,
+                onOpenPrayerSheet = { onOpenPrayerSheet?.invoke() },
             )
 
             if (showCloseButton && onClose != null && isHomeRoute) {
