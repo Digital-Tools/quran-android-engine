@@ -9,6 +9,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.AccessTimeFilled
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MoreVert
@@ -47,6 +48,7 @@ fun QuranViewScreen(
     onAudioStop: () -> Unit = {},
     onSetPlaybackRate: (Float) -> Unit = {},
     onAudioBannerTap: () -> Unit = {},
+    onOpenPrayerSheet: () -> Unit = {},
     onDismissNoteEditor: () -> Unit = {},
     onSaveNote: (AyahNumber, String) -> Unit = { _, _ -> },
     pageContent: @Composable () -> Unit = {},
@@ -146,6 +148,13 @@ fun QuranViewScreen(
                 }
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(onClick = onOpenPrayerSheet) {
+                        Icon(
+                            imageVector = Icons.Default.AccessTimeFilled,
+                            contentDescription = "Prayer Times",
+                            tint = QuranTheme.mizanGold
+                        )
+                    }
                     if (state.audioBannerState.isVisible) {
                         IconButton(onClick = onAudioStop) {
                             Icon(

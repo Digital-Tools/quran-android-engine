@@ -29,6 +29,7 @@ fun QuranViewRoute(
     onBack: () -> Unit,
     onNavigateToAdvancedAudio: (AyahNumber, AyahNumber) -> Unit,
     onNavigateToTranslations: () -> Unit = {},
+    onOpenPrayerSheet: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val state by viewModel.state.collectAsState()
@@ -114,6 +115,7 @@ fun QuranViewRoute(
                 onNavigateToAdvancedAudio(from, to)
             }
         },
+        onOpenPrayerSheet = onOpenPrayerSheet,
         pageContent = {
             QuranPaginationView(
                 pagingStrategy = if (state.twoPagesEnabled) {
