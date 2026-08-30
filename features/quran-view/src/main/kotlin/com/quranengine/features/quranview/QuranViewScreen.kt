@@ -55,6 +55,7 @@ fun QuranViewScreen(
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     var menuAyah by remember { mutableStateOf(selectedAyah) }
+    var showPrayerTimesSheet by remember { mutableStateOf(false) }
     val view = LocalView.current
     val isPlaying = state.audioBannerState.isPlaying
     val chrome = QuranTheme.colors.chromeBackground()
@@ -148,7 +149,10 @@ fun QuranViewScreen(
                 }
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(onClick = onOpenPrayerSheet) {
+                    IconButton(onClick = {
+                        showPrayerTimesSheet = true
+                        onOpenPrayerSheet()
+                    }) {
                         Icon(
                             imageVector = Icons.Default.AccessTimeFilled,
                             contentDescription = "Prayer Times",
@@ -213,6 +217,12 @@ fun QuranViewScreen(
                 .navigationBarsPadding()
                 .padding(bottom = if (state.barsVisible) 88.dp else 16.dp),
         )
+
+        if (showPrayerTimesSheet) {
+            PrayerTimesModalBottomSheet(
+                onDismissRequest = { showPrayerTimesSheet = false },
+            )
+        }
 
         // Audio banner at bottom
         AudioBannerView(
