@@ -65,31 +65,50 @@ fun QuranViewRoute(
         ayahMenuActions = AyahMenuActions(
             onPlayFromHere = { ayah ->
                 audioBannerViewModel.play(ayah, JuzBasedLastAyahFinder().findLastAyah(ayah))
+                selectedAyahForMenu = null
             },
             onRepeatVerse = { ayah ->
                 onNavigateToAdvancedAudio(ayah, ayah)
+                selectedAyahForMenu = null
             },
             onHighlight = { ayah ->
                 viewModel.addBookmarkForAyah(ayah)
+                selectedAyahForMenu = null
             },
             onSelectHighlightColor = { ayah ->
                 viewModel.addBookmarkForAyah(ayah)
+                selectedAyahForMenu = null
             },
             onAddNote = { ayah ->
                 noteEditorAyah = ayah
+                selectedAyahForMenu = null
             },
             onTranslationTafseer = {
                 viewModel.toggleQuranMode()
+                selectedAyahForMenu = null
             },
             onCopy = { ayah ->
                 viewModel.copyAyah(ayah) { text ->
                     clipboardManager.setPrimaryClip(ClipData.newPlainText("Quran ayah", text))
                 }
+                selectedAyahForMenu = null
             },
-            onShare = viewModel::shareAyah,
-            onBookmarkPage = viewModel::addBookmarkForAyah,
-            onToggleTranslations = viewModel::toggleQuranMode,
+            onShare = { ayah ->
+                viewModel.shareAyah(ayah)
+                selectedAyahForMenu = null
+            },
+            onBookmarkPage = { ayah ->
+                viewModel.addBookmarkForAyah(ayah)
+                selectedAyahForMenu = null
+            },
+            onToggleTranslations = {
+                viewModel.toggleQuranMode()
+                selectedAyahForMenu = null
+            },
             onManageTranslations = onNavigateToTranslations,
+            onDismiss = {
+                selectedAyahForMenu = null
+            },
         ),
         noteEditorAyah = noteEditorAyah,
         onDismissNoteEditor = { noteEditorAyah = null },
