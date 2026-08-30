@@ -105,6 +105,9 @@ fun QuranViewRoute(
                 viewModel.toggleQuranMode()
                 selectedAyahForMenu = null
             },
+            onOpenPrayerTimes = {
+                onOpenPrayerSheet()
+            },
             onManageTranslations = onNavigateToTranslations,
             onDismiss = {
                 selectedAyahForMenu = null

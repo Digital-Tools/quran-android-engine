@@ -149,16 +149,6 @@ fun QuranViewScreen(
                 }
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(onClick = {
-                        showPrayerTimesSheet = true
-                        onOpenPrayerSheet()
-                    }) {
-                        Icon(
-                            imageVector = Icons.Default.AccessTimeFilled,
-                            contentDescription = "Prayer Times",
-                            tint = QuranTheme.mizanGold
-                        )
-                    }
                     if (state.audioBannerState.isVisible) {
                         IconButton(onClick = onAudioStop) {
                             Icon(

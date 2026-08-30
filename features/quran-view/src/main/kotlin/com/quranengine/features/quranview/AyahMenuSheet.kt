@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.AccessTime
 import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.Language
 import androidx.compose.material.icons.outlined.NoteAdd
@@ -148,6 +149,15 @@ fun AyahMenuSheet(
             )
 
             // Group 3: Tools & Actions
+            AyahMenuItem(
+                icon = Icons.Outlined.AccessTime,
+                label = "Prayer Times",
+                subtitle = "view schedule",
+                onClick = {
+                    actions.onOpenPrayerTimes()
+                    actions.onDismiss()
+                },
+            )
             AyahMenuItem(
                 icon = Icons.Outlined.Language,
                 label = "Translation/Tafseer",
