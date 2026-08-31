@@ -62,6 +62,7 @@ fun AppStructureScreen(
     deepLinkHandler: DeepLinkHandler? = null,
     initialDeepLinkUri: String? = null,
     incomingDeepLinks: Flow<String>? = null,
+    onOpenPrayerSheet: () -> Unit = {},
 ) {
     val audioBannerViewModel: AudioBannerViewModel = hiltViewModel()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
