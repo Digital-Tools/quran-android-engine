@@ -523,6 +523,7 @@ class QuranViewViewModel @Inject constructor(
                         suraNames = page.localizedSuraTitle(localizer),
                         pageNumber = page.pageNumber.toString(),
                         isLoading = false,
+                        wordFramesByAyah = wordFramesByAyah,
                     ),
                     wordFramesByAyah = wordFramesByAyah,
                 )

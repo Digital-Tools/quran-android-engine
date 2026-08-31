@@ -156,8 +156,8 @@ fun QuranViewRoute(
                         ContentImageView(
                             state = content,
                             modifier = Modifier,
-                            onAyahTapped = {
-                                selectedAyahForMenu = state.firstVerse
+                            onAyahTapped = { tappedAyah ->
+                                selectedAyahForMenu = tappedAyah ?: state.firstVerse
                             },
                         )
                     }

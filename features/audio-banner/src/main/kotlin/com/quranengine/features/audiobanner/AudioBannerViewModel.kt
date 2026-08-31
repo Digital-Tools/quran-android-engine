@@ -87,6 +87,10 @@ class AudioBannerViewModel @Inject constructor(
         _playbackRange.value = from to to
         viewModelScope.launch {
             try {
+                if (_playbackState.value !is PlaybackState.Stopped) {
+                    audioPlayer.stopAudio()
+                }
+                
                 val reciterId = reciterPreferences.lastSelectedReciterId
                 val reciter = resolveReciterById(reciterId) ?: return@launch
                 currentReciterName = reciter.localizedName(localizer)
