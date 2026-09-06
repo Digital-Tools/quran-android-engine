@@ -30,7 +30,11 @@ internal class Player(
                 .setUsage(C.USAGE_MEDIA)
                 .setContentType(C.AUDIO_CONTENT_TYPE_MUSIC)
                 .build(),
-            true,
+            // QueuePlayer owns audio focus, because an interruption also has to cancel
+            // the frame-end timers rather than only pausing this player. If ExoPlayer
+            // requested focus too it would evict QueuePlayer's listener, whose loss
+            // handler then immediately pauses the playback we just started.
+            /* handleAudioFocus = */ false,
         )
         volume = 1f
     }

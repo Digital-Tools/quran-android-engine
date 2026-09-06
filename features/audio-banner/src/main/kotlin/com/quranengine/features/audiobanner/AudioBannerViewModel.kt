@@ -15,6 +15,8 @@ import com.quranengine.model.qurankit.AyahNumber
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import com.quranengine.ui.audiobanner.AudioBannerState
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -59,6 +61,8 @@ class AudioBannerViewModel @Inject constructor(
 
     private var currentReciterName: String? = null
 
+    private var playJob: Job? = null
+
     private val audioPlayer
         get() = audioPlayerStore.player
 
@@ -85,7 +89,10 @@ class AudioBannerViewModel @Inject constructor(
         listRuns: Runs = Runs.ONE,
     ) {
         _playbackRange.value = from to to
-        viewModelScope.launch {
+        // A second tap while the first request is still resolving the reciter or
+        // downloading would otherwise race it and start a different range.
+        playJob?.cancel()
+        playJob = viewModelScope.launch {
             try {
                 if (_playbackState.value !is PlaybackState.Stopped) {
                     audioPlayer.stopAudio()
@@ -116,6 +123,9 @@ class AudioBannerViewModel @Inject constructor(
                 val rate = _playbackRate.value
                 updatePlaybackState(PlaybackState.Playing)
                 audioPlayer.play(reciter, rate, from, to, verseRuns, listRuns)
+            } catch (e: CancellationException) {
+                // A newer play request took over; leave its state untouched.
+                throw e
             } catch (e: Exception) {
                 Timber.e(e, "Error starting playback")
                 _error.value = e
