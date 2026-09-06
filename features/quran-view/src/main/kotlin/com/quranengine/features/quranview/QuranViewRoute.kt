@@ -10,7 +10,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalContext
+import com.quranengine.core.audioplayer.Runs
 import com.quranengine.features.audiobanner.AudioBannerViewModel
 import com.quranengine.features.qurancontent.ContentPageView
 import com.quranengine.features.quranimage.ContentImageView
@@ -46,6 +48,7 @@ fun QuranViewRoute(
     }
     var noteEditorAyah by remember { mutableStateOf<AyahNumber?>(null) }
     var selectedAyahForMenu by remember { mutableStateOf<AyahNumber?>(null) }
+    var selectedAyahAnchor by remember { mutableStateOf<Offset?>(null) }
     val pages = remember(state.totalPages) { (1..state.totalPages).toList() }
     val defaultPlaybackRange = state.firstVerse?.let { from ->
         from to JuzBasedLastAyahFinder().findLastAyah(from)
@@ -59,16 +62,21 @@ fun QuranViewRoute(
     QuranViewScreen(
         state = state.copy(audioBannerState = audioBannerState.copy(playbackRate = playbackRate)),
         selectedAyah = selectedAyahForMenu,
+        ayahMenuAnchor = selectedAyahAnchor,
         modifier = modifier,
         transientMessage = userMessage,
         onTransientMessageShown = viewModel::clearUserMessage,
         ayahMenuActions = AyahMenuActions(
             onPlayFromHere = { ayah ->
-                audioBannerViewModel.play(ayah, JuzBasedLastAyahFinder().findLastAyah(ayah))
+                audioBannerViewModel.play(ayah, ayah)
                 selectedAyahForMenu = null
             },
             onRepeatVerse = { ayah ->
-                onNavigateToAdvancedAudio(ayah, ayah)
+                audioBannerViewModel.play(
+                    from = ayah,
+                    to = ayah,
+                    verseRuns = Runs.INDEFINITE,
+                )
                 selectedAyahForMenu = null
             },
             onHighlight = { ayah ->
@@ -111,6 +119,7 @@ fun QuranViewRoute(
             onManageTranslations = onNavigateToTranslations,
             onDismiss = {
                 selectedAyahForMenu = null
+                selectedAyahAnchor = null
             },
         ),
         noteEditorAyah = noteEditorAyah,
@@ -156,8 +165,10 @@ fun QuranViewRoute(
                         ContentImageView(
                             state = content,
                             modifier = Modifier,
-                            onAyahTapped = { tappedAyah ->
+                            selectedAyah = selectedAyahForMenu,
+                            onAyahTapped = { tappedAyah, tapInRoot ->
                                 selectedAyahForMenu = tappedAyah ?: state.firstVerse
+                                selectedAyahAnchor = tapInRoot
                             },
                         )
                     }
@@ -172,10 +183,12 @@ fun QuranViewRoute(
                         } else {
                             ContentTranslationView(
                                 items = content.items,
-                                onAyahTapped = { verse ->
+                                selectedVerse = selectedAyahForMenu?.ayah,
+                                onAyahTapped = { verse, tapInRoot ->
                                     val first = state.firstVerse
                                     if (first != null) {
                                         selectedAyahForMenu = AyahNumber(first.sura, verse) ?: first
+                                        selectedAyahAnchor = tapInRoot
                                     }
                                 }
                             )

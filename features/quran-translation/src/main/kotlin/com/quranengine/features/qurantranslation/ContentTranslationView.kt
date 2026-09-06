@@ -11,11 +11,16 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.unit.dp
 import com.quranengine.ui.quran.*
+import com.quranengine.ui.theme.QuranColors
 import com.quranengine.ui.theme.QuranTheme
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -24,7 +29,8 @@ fun ContentTranslationView(
     items: List<TranslationItem>,
     modifier: Modifier = Modifier,
     scrollToItemId: TranslationItemId? = null,
-    onAyahTapped: (Int) -> Unit = {},
+    selectedVerse: Int? = null,
+    onAyahTapped: (Int, Offset?) -> Unit = { _, _ -> },
 ) {
     val listState = rememberLazyListState()
 
@@ -53,13 +59,27 @@ fun ContentTranslationView(
             }
 
             val verseNum = item.id.ayah
-            val clickableModifier = if (verseNum != null) {
-                bgModifier.fillMaxWidth().combinedClickable(
-                    onClick = { onAyahTapped(verseNum) },
-                    onLongClick = { onAyahTapped(verseNum) }
-                )
+            val isSelected = verseNum != null && verseNum == selectedVerse
+            val highlightModifier = if (isSelected) {
+                Modifier.background(QuranColors.wordHighlight)
             } else {
-                bgModifier.fillMaxWidth()
+                bgModifier
+            }
+            var verseAnchor by remember(item.id) { mutableStateOf<Offset?>(null) }
+            val clickableModifier = if (verseNum != null) {
+                highlightModifier
+                    .fillMaxWidth()
+                    .onGloballyPositioned { coords ->
+                        verseAnchor = coords.localToRoot(
+                            Offset(coords.size.width / 2f, coords.size.height.toFloat()),
+                        )
+                    }
+                    .combinedClickable(
+                        onClick = { onAyahTapped(verseNum, verseAnchor) },
+                        onLongClick = { onAyahTapped(verseNum, verseAnchor) },
+                    )
+            } else {
+                highlightModifier.fillMaxWidth()
             }
             Box(modifier = clickableModifier) {
                 when (item) {

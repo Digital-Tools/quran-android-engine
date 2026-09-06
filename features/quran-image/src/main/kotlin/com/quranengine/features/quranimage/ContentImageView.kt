@@ -1,18 +1,23 @@
 package com.quranengine.features.quranimage
 
 import android.graphics.PointF
+import android.graphics.RectF
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.toSize
 import com.quranengine.ui.components.LoadingView
 import com.quranengine.ui.quran.*
+import com.quranengine.ui.theme.QuranColors
 import com.quranengine.model.qurankit.AyahNumber
 import com.quranengine.model.qurangeometry.WordFrameCollection
 
@@ -21,7 +26,8 @@ import com.quranengine.model.qurangeometry.WordFrameCollection
 fun ContentImageView(
     state: ContentImageState,
     modifier: Modifier = Modifier,
-    onAyahTapped: (AyahNumber?) -> Unit = {},
+    selectedAyah: AyahNumber? = null,
+    onAyahTapped: (AyahNumber?, Offset?) -> Unit = { _, _ -> },
 ) {
     if (state.isLoading) {
         LoadingView(modifier = modifier)
@@ -31,6 +37,14 @@ fun ContentImageView(
     val bitmap = state.bitmap ?: return
 
     var viewSize by remember { mutableStateOf(IntSize.Zero) }
+    var imageCoords by remember { mutableStateOf<LayoutCoordinates?>(null) }
+
+    val selectedHighlights = remember(selectedAyah, state.wordFramesByAyah) {
+        val ayah = selectedAyah ?: return@remember emptyList()
+        state.wordFramesByAyah[ayah].orEmpty().map { frame ->
+            WordHighlight(rect = RectF(frame.rect), color = QuranColors.wordHighlight)
+        }
+    }
 
     AdaptiveImageScrollView(
         modifier = modifier,
@@ -48,15 +62,18 @@ fun ContentImageView(
             modifier = Modifier
                 .fillMaxWidth()
                 .onSizeChanged { viewSize = it }
+                .onGloballyPositioned { imageCoords = it }
                 .pointerInput(viewSize, state.decorations.imageSize) {
                     detectTapGestures(
                         onTap = { offset ->
                             val ayah = resolveAyahAtOffset(offset, viewSize.toSize(), state)
-                            onAyahTapped(ayah)
+                            val root = imageCoords?.takeIf { it.isAttached }?.localToRoot(offset)
+                            onAyahTapped(ayah, root)
                         },
                         onLongPress = { offset ->
                             val ayah = resolveAyahAtOffset(offset, viewSize.toSize(), state)
-                            onAyahTapped(ayah)
+                            val root = imageCoords?.takeIf { it.isAttached }?.localToRoot(offset)
+                            onAyahTapped(ayah, root)
                         }
                     )
                 },
@@ -68,10 +85,11 @@ fun ContentImageView(
                 renderMode = state.renderMode,
             )
 
-            // Overlay decorations
             if (viewSize != IntSize.Zero) {
                 ImageDecorationsView(
-                    decorations = state.decorations,
+                    decorations = state.decorations.copy(
+                        wordHighlights = state.decorations.wordHighlights + selectedHighlights,
+                    ),
                     viewSize = viewSize.toSize(),
                 )
             }

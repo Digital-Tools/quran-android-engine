@@ -18,6 +18,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
 import com.quranengine.model.qurankit.AyahNumber
@@ -34,6 +35,7 @@ fun QuranViewScreen(
     state: QuranViewState,
     modifier: Modifier = Modifier,
     selectedAyah: AyahNumber? = null,
+    ayahMenuAnchor: Offset? = null,
     ayahMenuActions: AyahMenuActions = AyahMenuActions(),
     noteEditorAyah: AyahNumber? = null,
     transientMessage: String? = null,
@@ -182,6 +184,7 @@ fun QuranViewScreen(
             AyahMenuSheet(
                 ayah = currentMenuAyah,
                 quranMode = state.quranMode,
+                anchorInRoot = ayahMenuAnchor,
                 actions = ayahMenuActions.copy(
                     onDismiss = {
                         menuAyah = null
