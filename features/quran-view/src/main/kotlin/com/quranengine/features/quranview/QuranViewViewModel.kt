@@ -490,6 +490,7 @@ class QuranViewViewModel @Inject constructor(
                                     footnoteRanges = translationText.value.footnoteRanges,
                                     footnotes = translationText.value.footnotes,
                                     readMoreAt = truncationOffset(translationText.value.text),
+                                    readMoreLabel = localizer.l("translation.text.read-more"),
                                 )
                             )
                         }

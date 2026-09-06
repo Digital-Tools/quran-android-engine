@@ -94,6 +94,7 @@ sealed class TranslationItem {
         val isArabic: Boolean = false,
         /** Offset to cut the text at while collapsed, or null when it fits. */
         val readMoreAt: Int? = null,
+        val readMoreLabel: String = "",
         val quranRanges: List<IntRange> = emptyList(),
         val footnoteRanges: List<IntRange> = emptyList(),
         val footnotes: List<String> = emptyList(),

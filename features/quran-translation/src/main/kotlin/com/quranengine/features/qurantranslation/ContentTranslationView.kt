@@ -127,6 +127,7 @@ fun ContentTranslationView(
                             text = item.text,
                             isArabic = item.isArabic,
                             readMoreAt = item.readMoreAt,
+                            readMoreLabel = item.readMoreLabel,
                             quranRanges = item.quranRanges,
                             footnoteRanges = item.footnoteRanges,
                             onFootnoteClick = { index ->

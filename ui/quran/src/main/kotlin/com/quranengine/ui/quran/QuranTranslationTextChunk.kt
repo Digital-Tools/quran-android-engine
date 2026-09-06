@@ -35,6 +35,7 @@ fun QuranTranslationTextChunk(
     modifier: Modifier = Modifier,
     isArabic: Boolean = false,
     readMoreAt: Int? = null,
+    readMoreLabel: String = "",
     quranRanges: List<IntRange> = emptyList(),
     footnoteRanges: List<IntRange> = emptyList(),
     onFootnoteClick: (Int) -> Unit = {},
@@ -106,7 +107,7 @@ fun QuranTranslationTextChunk(
 
         if (truncated) {
             Text(
-                text = "Read more",
+                text = readMoreLabel,
                 style = MaterialTheme.typography.bodySmall,
                 color = gold,
                 modifier = Modifier
