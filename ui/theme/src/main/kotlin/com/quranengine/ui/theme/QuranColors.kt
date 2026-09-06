@@ -15,6 +15,9 @@ object QuranColors {
     val pageMarkerLight = Color(0xFF004D40)
     val pageMarkerDark = Color(0xFF039F85)
 
+    // Bookmarked state — iOS systemRed, not Material error (which reads pink).
+    val bookmark = Color(0xFFFF3B30)
+
     // Highlight colors: former green accents → gold; former blue share → brand green
     val wordHighlight = Color(0x4DD4AF37)
     val readingHighlight = Color(0x4DD4AF37)

@@ -12,7 +12,7 @@ QuranEngine for Android is the native Android port of the [QuranEngine iOS libra
 
 ## 🏗 Architecture
 
-The library is organized as a **54-module** Gradle multi-module project across 7 layers:
+The library is organized as a **55-module** Gradle multi-module project across 7 layers. `:embedded-host` is the reusable Hilt/bootstrap library that `mizan-app` and the standalone `:app` both consume:
 
 ```
 quran-android-engine/
@@ -21,8 +21,8 @@ quran-android-engine/
 ├── data/           9 modules — Persistence + networking
 ├── domain/        11 modules — Business logic
 ├── ui/             5 modules — Design system (Compose)
-├── features/      17 modules — Screens (Compose)
-└── app/            1 module  — Main app shell (Hilt DI)
+├── features/      18 modules — Screens (Compose)
+└── app/            1 module  — Standalone app shell (Hilt DI)
 ```
 
 Dependencies flow strictly downward: **Features → UI / Domain → Data / Core → Model**.
@@ -83,7 +83,7 @@ Dependencies flow strictly downward: **Features → UI / Domain → Data / Core 
 | `pager` | HorizontalPager wrapper |
 | `audio-banner` | Audio banner composable |
 
-### Features (17 modules)
+### Features (18 modules)
 | Module | Description |
 |--------|-------------|
 | `app-structure` | Tabs & navigation shell |
@@ -95,6 +95,7 @@ Dependencies flow strictly downward: **Features → UI / Domain → Data / Core 
 | `quran-translation` | Translation overlay |
 | `translation-verse` | Per-verse translation display |
 | `audio-banner` | Audio playback controls |
+| `audio-downloads` | Full-Quran reciter downloads (Audio Manager) |
 | `bookmarks` | Bookmark list & management |
 | `notes` | Note creation & management |
 | `search` | Full-text search |
@@ -105,7 +106,7 @@ Dependencies flow strictly downward: **Features → UI / Domain → Data / Core 
 | `word-pointer` | Word-by-word highlighting |
 
 ### App (1 module)
-Main application shell wiring all modules together with **Hilt** dependency injection.
+Standalone application shell. Shared Hilt modules, content bootstrap, and `QuranHostActivity` live in `:embedded-host` so a host app can `includeBuild` the engine without copying DI.
 
 ## 🛠 Tech Stack
 
@@ -163,6 +164,7 @@ quranengine://bookmarks
 quranengine://settings
 quranengine://translations
 quranengine://reciters
+quranengine://audio-downloads
 ```
 
 Page and sura links open the native reader, while search/settings/bookmarks-style links route into the existing tab or management screens.
@@ -186,15 +188,16 @@ plugins {
 
 ## 📋 Status
 
-This is an active, production-ready Android port of QuranEngine. All 54 core modules are implemented. The native reader flow currently covers:
+This is an active, production-ready Android port of QuranEngine. All 55 listed modules are implemented. The native reader flow currently covers:
 - Navigation, pagination, and search
-- Bookmarking and note-taking
-- Inline translation and word-by-word highlighting
+- Bookmarking (iOS-red filled icon) and note-taking
+- Translation mode laid out to match iOS: ornate sura header, Uthmanic / Kitab / surah-name fonts, gold Quran quotes, tappable footnotes, 800-character "Read more", and system-bar insets
 - Theme and appearance persistence
-- Advanced audio (playback speed, word-highlight sync, reciter management)
+- Verse-scoped long-press menu (opaque, near the tap); page actions stay on the ⋯ menu
+- Audio: Juz-length play, word-highlight sync, `QueuePlayer`-owned focus, advanced speed/range/repeat, and Settings → Audio Manager for one-tap full-Quran reciter downloads
 - Deep-link routing
 
-The engine is designed to be easily embedded into larger Android applications via AAR or Gradle composite builds, or run entirely standalone.
+The engine is designed to be easily embedded into larger Android applications via AAR or Gradle composite builds (`mizan-app` uses `includeBuild`), or run entirely standalone.
 
 ## 🤝 Contributions
 

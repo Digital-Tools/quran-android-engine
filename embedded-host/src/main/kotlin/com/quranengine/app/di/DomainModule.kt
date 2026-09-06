@@ -53,6 +53,7 @@ import com.quranengine.domain.reciterservice.AudioUnzipper
 import com.quranengine.domain.reciterservice.DownloadedRecitersService
 import com.quranengine.domain.reciterservice.RecentRecitersService
 import com.quranengine.domain.reciterservice.ReciterAudioDeleter
+import com.quranengine.domain.reciterservice.ReciterSizeInfoRetriever
 import com.quranengine.domain.reciterservice.ReciterPreferences
 import com.quranengine.domain.settingsservice.ReviewPersistence
 import com.quranengine.domain.translationservice.DefaultTranslationUnzipper
@@ -346,6 +347,15 @@ object DomainModule {
         @Named("baseDir") baseDir: File,
     ): ReciterAudioDeleter =
         ReciterAudioDeleter(fileSystem, baseDir)
+
+    @Provides
+    @Singleton
+    fun provideReciterSizeInfoRetriever(
+        @Named("filesAppHost") filesAppHost: String,
+        fileSystem: FileSystem,
+        @Named("baseDir") baseDir: File,
+    ): ReciterSizeInfoRetriever =
+        ReciterSizeInfoRetriever(filesAppHost, fileSystem, baseDir)
 
     @Provides
     @Singleton

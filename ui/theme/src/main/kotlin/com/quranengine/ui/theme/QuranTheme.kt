@@ -42,6 +42,11 @@ object QuranTheme {
         @ReadOnlyComposable
         get() = if (LocalIsDarkTheme.current) QuranColors.mizanGoldDark else QuranColors.mizanGoldLight
 
+    val bookmark: Color
+        @Composable
+        @ReadOnlyComposable
+        get() = QuranColors.bookmark
+
     val pageMarkerTint: Color
         @Composable
         @ReadOnlyComposable

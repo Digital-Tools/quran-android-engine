@@ -65,6 +65,7 @@ fun PageMenuSheet(
 
         ReaderMenuItem(
             icon = if (isBookmarked) Icons.Outlined.Bookmark else Icons.Outlined.BookmarkBorder,
+            iconTint = if (isBookmarked) QuranTheme.bookmark else QuranTheme.colors.text,
             label = if (isBookmarked) "Remove Bookmark" else "Bookmark Page",
             onClick = {
                 onToggleBookmark()

@@ -124,6 +124,7 @@ internal fun ReaderMenuItem(
     modifier: Modifier = Modifier,
     subtitle: String? = null,
     icon: ImageVector? = null,
+    iconTint: Color = QuranTheme.colors.text,
     customIcon: (@Composable () -> Unit)? = null,
 ) {
     Row(
@@ -143,7 +144,7 @@ internal fun ReaderMenuItem(
                 Icon(
                     imageVector = icon,
                     contentDescription = label,
-                    tint = QuranTheme.colors.text,
+                    tint = iconTint,
                     modifier = Modifier.size(22.dp),
                 )
             }

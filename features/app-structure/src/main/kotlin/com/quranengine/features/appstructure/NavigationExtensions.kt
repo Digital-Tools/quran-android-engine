@@ -51,6 +51,10 @@ fun NavController.navigateToReciters() {
     navigate(AppRoute.ReciterList.route)
 }
 
+fun NavController.navigateToAudioDownloads() {
+    navigate(AppRoute.AudioDownloads.route)
+}
+
 fun NavController.navigateToAdvancedAudio(from: AyahNumber, to: AyahNumber) {
     navigate(
         AppRoute.AdvancedAudio(

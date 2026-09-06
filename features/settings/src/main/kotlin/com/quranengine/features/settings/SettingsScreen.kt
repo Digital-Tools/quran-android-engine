@@ -26,6 +26,7 @@ fun SettingsScreen(
     viewModel: SettingsViewModel,
     onNavigateToTranslations: () -> Unit = {},
     onNavigateToReciters: () -> Unit = {},
+    onNavigateToAudioDownloads: () -> Unit = {},
     onShareApp: () -> Unit = {},
     onWriteReview: () -> Unit = {},
     onContactUs: () -> Unit = {},
@@ -84,6 +85,12 @@ fun SettingsScreen(
                     title = "Reciters",
                     accessory = NoorAccessory.DisclosureIndicator,
                     onClick = onNavigateToReciters,
+                )
+                NoorListItem(
+                    title = "Audio Manager",
+                    subtitle = "Download a reciter's full Quran",
+                    accessory = NoorAccessory.DisclosureIndicator,
+                    onClick = onNavigateToAudioDownloads,
                 )
                 ChoicesView(
                     items = AudioEnd.entries.toList(),

@@ -11,7 +11,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AccessTimeFilled
 import androidx.compose.material.icons.filled.Bookmark
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material3.*
@@ -114,58 +113,30 @@ fun QuranViewScreen(
             exit = slideOutVertically(targetOffsetY = { -it }),
             modifier = Modifier.align(Alignment.TopCenter),
         ) {
-            Row(
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(QuranTheme.colors.chromeBackground())
                     .statusBarsPadding()
                     .padding(horizontal = 4.dp, vertical = 4.dp),
-                verticalAlignment = Alignment.CenterVertically
             ) {
-                IconButton(onClick = onBack) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Back",
-                        tint = QuranTheme.mizanGold
-                    )
-                }
-
-                Column(
-                    modifier = Modifier.weight(1f).padding(horizontal = 4.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text(
-                        text = state.title,
-                        style = MaterialTheme.typography.titleMedium,
-                        color = QuranTheme.colors.text,
-                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-                        maxLines = 1,
-                    )
-                    if (state.subtitle.isNotEmpty()) {
-                        Text(
-                            text = state.subtitle,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = QuranTheme.colors.secondaryText,
-                            maxLines = 1,
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back",
+                            tint = QuranTheme.mizanGold
                         )
                     }
-                }
-
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    if (state.audioBannerState.isVisible) {
-                        IconButton(onClick = onAudioStop) {
-                            Icon(
-                                imageVector = Icons.Default.Close,
-                                contentDescription = "Close audio",
-                                tint = QuranTheme.mizanGold
-                            )
-                        }
-                    }
+                    Spacer(modifier = Modifier.weight(1f))
                     IconButton(onClick = onToggleBookmark) {
                         Icon(
                             imageVector = if (state.isCurrentPageBookmarked) Icons.Default.Bookmark else Icons.Outlined.BookmarkBorder,
                             contentDescription = if (state.isCurrentPageBookmarked) "Remove page bookmark" else "Save page bookmark",
-                            tint = if (state.isCurrentPageBookmarked) MaterialTheme.colorScheme.error else QuranTheme.mizanGold
+                            tint = if (state.isCurrentPageBookmarked) QuranTheme.bookmark else QuranTheme.mizanGold
                         )
                     }
                     IconButton(
@@ -180,6 +151,29 @@ fun QuranViewScreen(
                             imageVector = Icons.Default.MoreVert,
                             contentDescription = "More",
                             tint = QuranTheme.mizanGold
+                        )
+                    }
+                }
+
+                Column(
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .padding(horizontal = 108.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Text(
+                        text = state.title,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = QuranTheme.colors.text,
+                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                        maxLines = 1,
+                    )
+                    if (state.subtitle.isNotEmpty()) {
+                        Text(
+                            text = state.subtitle,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = QuranTheme.colors.secondaryText,
+                            maxLines = 1,
                         )
                     }
                 }

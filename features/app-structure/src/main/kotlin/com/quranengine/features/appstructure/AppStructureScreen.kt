@@ -29,6 +29,8 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.quranengine.features.advancedaudio.AdvancedAudioOptionsViewModel
 import com.quranengine.features.advancedaudio.AdvancedAudioOptionsScreen
+import com.quranengine.features.audiodownloads.AudioDownloadsScreen
+import com.quranengine.features.audiodownloads.AudioDownloadsViewModel
 import com.quranengine.features.audiobanner.AudioBannerViewModel
 import com.quranengine.features.bookmarks.BookmarksScreen
 import com.quranengine.features.bookmarks.BookmarksViewModel
@@ -181,6 +183,9 @@ fun AppStructureScreen(
                     onNavigateToReciters = {
                         navController.navigate(AppRoute.ReciterList.route)
                     },
+                    onNavigateToAudioDownloads = {
+                        navController.navigate(AppRoute.AudioDownloads.route)
+                    },
                     onNavigateToTranslations = {
                         navController.navigate(AppRoute.TranslationsList.route)
                     },
@@ -213,6 +218,18 @@ fun AppStructureScreen(
                 StandaloneReciterListScreen(
                     viewModel = viewModel,
                     onDone = { navController.popBackStack() },
+                )
+            }
+
+            composable(AppRoute.AudioDownloads.route) {
+                val viewModel: AudioDownloadsViewModel = hiltViewModel()
+                val uiState by viewModel.uiState.collectAsState()
+                AudioDownloadsScreen(
+                    uiState = uiState,
+                    onDownload = { viewModel.download(it.reciter) },
+                    onCancel = { viewModel.cancel(it.reciter) },
+                    onDelete = { viewModel.delete(it.reciter) },
+                    onBack = { navController.popBackStack() },
                 )
             }
 

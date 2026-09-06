@@ -20,6 +20,7 @@ import javax.inject.Inject
  * - `quranengine://settings`
  * - `quranengine://translations`
  * - `quranengine://reciters`
+ * - `quranengine://audio-downloads`
  */
 class DeepLinkHandler @Inject constructor(
     private val quran: Quran,
@@ -56,6 +57,7 @@ class DeepLinkHandler @Inject constructor(
                 "settings" -> AppRoute.Settings
                 "translations" -> AppRoute.TranslationsList
                 "reciters" -> AppRoute.ReciterList
+                "audio-downloads" -> AppRoute.AudioDownloads
                 else -> null
             }
         } catch (_: Exception) {

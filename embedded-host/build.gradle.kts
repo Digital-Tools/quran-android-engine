@@ -70,6 +70,7 @@ dependencies {
     api(project(":features:bookmarks"))
     api(project(":features:search"))
     api(project(":features:reciter-list"))
+    api(project(":features:audio-downloads"))
     api(project(":features:translations"))
     api(project(":features:settings"))
     api(project(":features:advanced-audio"))
