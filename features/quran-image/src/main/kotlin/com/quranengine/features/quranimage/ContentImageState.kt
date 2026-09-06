@@ -13,6 +13,7 @@ data class ContentImageState(
     val decorations: ImageDecorations = ImageDecorations(),
     val quarterName: String = "",
     val suraNames: String = "",
+    val decoratedSuraName: String = "",
     val pageNumber: String = "",
     val isLoading: Boolean = true,
     val error: Throwable? = null,

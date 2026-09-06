@@ -24,7 +24,15 @@ fun QuranPaginationView(
     modifier: Modifier = Modifier,
     pageContent: @Composable (page: Int) -> Unit,
 ) {
-    // Force RTL layout for Quran (pages go right-to-left)
+    // Only the pager itself is RTL (pages go right-to-left). Page content keeps the
+    // host direction, otherwise translation text and sura titles get mirrored too.
+    val contentLayoutDirection = LocalLayoutDirection.current
+    val page: @Composable (Int) -> Unit = { pageNumber ->
+        CompositionLocalProvider(LocalLayoutDirection provides contentLayoutDirection) {
+            pageContent(pageNumber)
+        }
+    }
+
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
         Box(
             modifier = modifier
@@ -37,7 +45,7 @@ fun QuranPaginationView(
                         pages = pages,
                         selectedPage = selectedPages.firstOrNull() ?: pages.first(),
                         onPageChanged = { onPagesChanged(listOf(it)) },
-                        pageContent = pageContent,
+                        pageContent = page,
                     )
                 }
                 PagingStrategy.DOUBLE_PAGE -> {
@@ -45,7 +53,7 @@ fun QuranPaginationView(
                         pages = pages,
                         selectedPages = selectedPages,
                         onPagesChanged = onPagesChanged,
-                        pageContent = pageContent,
+                        pageContent = page,
                     )
                 }
             }

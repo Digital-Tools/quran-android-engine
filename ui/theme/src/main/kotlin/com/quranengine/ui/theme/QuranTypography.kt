@@ -1,5 +1,6 @@
 package com.quranengine.ui.theme
 
+import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
@@ -36,15 +37,18 @@ enum class QuranFontSize {
     }
 }
 
-// Font families - these reference custom font resources that would be bundled with the app
-// For now, define placeholders that can be replaced with actual font resources
+/**
+ * The same three faces quran-ios registers in `UI/NoorFont`. The files are byte-identical
+ * copies; see NOTICE for attribution. The KFGQPC licence forbids altering the font, so these
+ * must never be subsetted.
+ */
 object QuranFontFamilies {
-    // For Quran Arabic text (e.g., "me_quran" font)
-    val quranText: FontFamily = FontFamily.Default
+    // Quran verse text, in KFGQPC HAFS Uthmanic Script.
+    val quranText: FontFamily = FontFamily(Font(R.font.uthmanic_hafs))
 
-    // For Arabic tafseer text
-    val arabicTafseer: FontFamily = FontFamily.Default
+    // Arabic tafseer / Arabic-language translations, in Kitab.
+    val arabicTafseer: FontFamily = FontFamily(Font(R.font.kitab_regular))
 
-    // For decorated sura names
-    val suraNames: FontFamily = FontFamily.Default
+    // Decorated sura names; glyphs live in the private-use area, see Sura.decoratedName().
+    val suraNames: FontFamily = FontFamily(Font(R.font.surah_names))
 }

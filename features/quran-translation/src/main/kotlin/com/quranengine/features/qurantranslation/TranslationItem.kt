@@ -28,7 +28,12 @@ sealed class TranslationItem {
     abstract val id: TranslationItemId
     abstract val highlightColor: Color?
 
-    data class PageHeader(val page: Int) : TranslationItem() {
+    data class PageHeader(
+        val page: Int,
+        val quarterName: String = "",
+        val suraNames: String = "",
+        val decoratedSuraName: String = "",
+    ) : TranslationItem() {
         override val id = TranslationItemId.PageHeader(page)
         override val highlightColor: Color? = null
     }
@@ -48,6 +53,7 @@ sealed class TranslationItem {
     data class SuraName(
         val sura: Int,
         val suraName: String,
+        val showBasmala: Boolean = true,
         override val highlightColor: Color? = null,
     ) : TranslationItem() {
         override val id = TranslationItemId.SuraName(sura)
@@ -56,6 +62,7 @@ sealed class TranslationItem {
     data class ArabicText(
         val verse: Int,
         val text: String,
+        val ayahLabel: String? = null,
         override val highlightColor: Color? = null,
     ) : TranslationItem() {
         override val id = TranslationItemId.ArabicText(verse)
@@ -85,7 +92,11 @@ sealed class TranslationItem {
         val chunkIndex: Int,
         val text: String,
         val isArabic: Boolean = false,
-        val showReadMore: Boolean = false,
+        /** Offset to cut the text at while collapsed, or null when it fits. */
+        val readMoreAt: Int? = null,
+        val quranRanges: List<IntRange> = emptyList(),
+        val footnoteRanges: List<IntRange> = emptyList(),
+        val footnotes: List<String> = emptyList(),
         override val highlightColor: Color? = null,
     ) : TranslationItem() {
         override val id = TranslationItemId.TranslationTextChunk(verse, translationId, chunkIndex)

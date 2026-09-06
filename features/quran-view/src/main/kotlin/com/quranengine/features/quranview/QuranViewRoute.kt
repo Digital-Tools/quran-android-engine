@@ -20,6 +20,7 @@ import com.quranengine.features.quranpages.PagingStrategy
 import com.quranengine.features.quranpages.QuranPaginationView
 import com.quranengine.features.qurantranslation.ContentTranslationView
 import com.quranengine.model.qurankit.AyahNumber
+import com.quranengine.model.qurankit.arrayTo
 import com.quranengine.model.qurankit.lastayahfinder.JuzBasedLastAyahFinder
 import com.quranengine.model.qurantext.QuranMode
 import com.quranengine.ui.components.DataUnavailableView
@@ -38,6 +39,7 @@ fun QuranViewRoute(
     val pageContentStates by viewModel.pageContentStates.collectAsState()
     val translationContentStates by viewModel.translationContentStates.collectAsState()
     val userMessage by viewModel.userMessage.collectAsState()
+    val audioError by audioBannerViewModel.error.collectAsState()
     val audioBannerState by audioBannerViewModel.audioBannerState.collectAsState()
     val playbackRate by audioBannerViewModel.playbackRate.collectAsState()
     val currentAyahProgress by audioBannerViewModel.currentAyahProgress.collectAsState()
@@ -47,16 +49,36 @@ fun QuranViewRoute(
         context.getSystemService(ClipboardManager::class.java)
     }
     var noteEditorAyah by remember { mutableStateOf<AyahNumber?>(null) }
+    var footnote by remember { mutableStateOf<TranslationFootnote?>(null) }
     var selectedAyahForMenu by remember { mutableStateOf<AyahNumber?>(null) }
     var selectedAyahAnchor by remember { mutableStateOf<Offset?>(null) }
+    val dismissAyahMenu = {
+        selectedAyahForMenu = null
+        selectedAyahAnchor = null
+    }
     val pages = remember(state.totalPages) { (1..state.totalPages).toList() }
+    // Translation rows only carry an in-sura verse number, so map it back through the
+    // page's own verses instead of assuming the page's first sura.
+    val pageVerses = remember(state.firstVerse, state.lastVerse) {
+        val first = state.firstVerse
+        val last = state.lastVerse
+        if (first != null && last != null && last >= first) first.arrayTo(last) else emptyList()
+    }
     val defaultPlaybackRange = state.firstVerse?.let { from ->
         from to JuzBasedLastAyahFinder().findLastAyah(from)
     }
-    val advancedAudioRange = currentPlaybackRange ?: defaultPlaybackRange
+    // A verse chosen from the ayah menu wins over the page-wide default, so the
+    // banner keeps controlling whatever is actually queued.
+    val activePlaybackRange = currentPlaybackRange ?: defaultPlaybackRange
 
     LaunchedEffect(currentAyahProgress) {
         viewModel.setReadingAyah(currentAyahProgress)
+    }
+
+    LaunchedEffect(audioError) {
+        val error = audioError ?: return@LaunchedEffect
+        viewModel.showMessage(error.localizedMessage ?: "Unable to play this verse.")
+        audioBannerViewModel.dismissError()
     }
 
     QuranViewScreen(
@@ -68,62 +90,52 @@ fun QuranViewRoute(
         onTransientMessageShown = viewModel::clearUserMessage,
         ayahMenuActions = AyahMenuActions(
             onPlayFromHere = { ayah ->
+                // Reveal the dock so download/transport state is visible immediately.
+                viewModel.setBarsVisible(true)
                 audioBannerViewModel.play(ayah, ayah)
-                selectedAyahForMenu = null
+                dismissAyahMenu()
             },
             onRepeatVerse = { ayah ->
+                viewModel.setBarsVisible(true)
                 audioBannerViewModel.play(
                     from = ayah,
                     to = ayah,
                     verseRuns = Runs.INDEFINITE,
                 )
-                selectedAyahForMenu = null
+                dismissAyahMenu()
             },
             onHighlight = { ayah ->
                 viewModel.addBookmarkForAyah(ayah)
-                selectedAyahForMenu = null
+                dismissAyahMenu()
             },
             onSelectHighlightColor = { ayah ->
                 viewModel.addBookmarkForAyah(ayah)
-                selectedAyahForMenu = null
+                dismissAyahMenu()
             },
             onAddNote = { ayah ->
                 noteEditorAyah = ayah
-                selectedAyahForMenu = null
+                dismissAyahMenu()
             },
             onTranslationTafseer = {
                 viewModel.toggleQuranMode()
-                selectedAyahForMenu = null
+                dismissAyahMenu()
             },
             onCopy = { ayah ->
                 viewModel.copyAyah(ayah) { text ->
                     clipboardManager.setPrimaryClip(ClipData.newPlainText("Quran ayah", text))
                 }
-                selectedAyahForMenu = null
+                dismissAyahMenu()
             },
             onShare = { ayah ->
                 viewModel.shareAyah(ayah)
-                selectedAyahForMenu = null
+                dismissAyahMenu()
             },
-            onBookmarkPage = { ayah ->
-                viewModel.addBookmarkForAyah(ayah)
-                selectedAyahForMenu = null
-            },
-            onToggleTranslations = {
-                viewModel.toggleQuranMode()
-                selectedAyahForMenu = null
-            },
-            onOpenPrayerTimes = {
-                onOpenPrayerSheet()
-            },
-            onManageTranslations = onNavigateToTranslations,
-            onDismiss = {
-                selectedAyahForMenu = null
-                selectedAyahAnchor = null
-            },
+            onDismiss = dismissAyahMenu,
         ),
         noteEditorAyah = noteEditorAyah,
+        footnote = footnote,
         onDismissNoteEditor = { noteEditorAyah = null },
+        onDismissFootnote = { footnote = null },
         onSaveNote = { ayah, note ->
             viewModel.saveNote(ayah, note)
             noteEditorAyah = null
@@ -133,7 +145,7 @@ fun QuranViewRoute(
         onToggleMode = viewModel::toggleQuranMode,
         onToggleBookmark = viewModel::toggleCurrentPageBookmark,
         onAudioPlayPause = {
-            defaultPlaybackRange?.let { (from, to) ->
+            activePlaybackRange?.let { (from, to) ->
                 audioBannerViewModel.togglePlayPause(from, to)
             }
         },
@@ -142,11 +154,12 @@ fun QuranViewRoute(
         onAudioStop = audioBannerViewModel::stop,
         onSetPlaybackRate = audioBannerViewModel::setPlaybackRate,
         onAudioBannerTap = {
-            advancedAudioRange?.let { (from, to) ->
+            activePlaybackRange?.let { (from, to) ->
                 onNavigateToAdvancedAudio(from, to)
             }
         },
         onOpenPrayerSheet = onOpenPrayerSheet,
+        onManageTranslations = onNavigateToTranslations,
         pageContent = {
             QuranPaginationView(
                 pagingStrategy = if (state.twoPagesEnabled) {
@@ -166,9 +179,10 @@ fun QuranViewRoute(
                             state = content,
                             modifier = Modifier,
                             selectedAyah = selectedAyahForMenu,
-                            onAyahTapped = { tappedAyah, tapInRoot ->
-                                selectedAyahForMenu = tappedAyah ?: state.firstVerse
-                                selectedAyahAnchor = tapInRoot
+                            onTap = viewModel::toggleBars,
+                            onAyahLongPressed = { ayah, pressInRoot ->
+                                selectedAyahForMenu = ayah
+                                selectedAyahAnchor = pressInRoot
                             },
                         )
                     }
@@ -184,13 +198,17 @@ fun QuranViewRoute(
                             ContentTranslationView(
                                 items = content.items,
                                 selectedVerse = selectedAyahForMenu?.ayah,
-                                onAyahTapped = { verse, tapInRoot ->
-                                    val first = state.firstVerse
-                                    if (first != null) {
-                                        selectedAyahForMenu = AyahNumber(first.sura, verse) ?: first
-                                        selectedAyahAnchor = tapInRoot
+                                onTap = viewModel::toggleBars,
+                                onAyahLongPressed = { verse, pressInRoot ->
+                                    val ayah = pageVerses.firstOrNull { it.ayah == verse }
+                                    if (ayah != null) {
+                                        selectedAyahForMenu = ayah
+                                        selectedAyahAnchor = pressInRoot
                                     }
-                                }
+                                },
+                                onFootnoteClick = { index, text ->
+                                    footnote = TranslationFootnote(index = index, text = text)
+                                },
                             )
                         }
                     }

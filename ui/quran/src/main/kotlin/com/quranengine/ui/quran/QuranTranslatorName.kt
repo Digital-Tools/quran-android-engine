@@ -6,6 +6,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.quranengine.ui.theme.QuranTheme
 
@@ -15,11 +16,12 @@ fun QuranTranslatorName(
     modifier: Modifier = Modifier,
 ) {
     Text(
-        text = name,
+        text = "- $name",
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 4.dp),
-        style = MaterialTheme.typography.labelMedium,
+            .padding(start = 16.dp, end = 16.dp, bottom = 10.dp),
+        style = MaterialTheme.typography.bodySmall,
+        textAlign = TextAlign.Start,
         color = QuranTheme.colors.secondaryText,
     )
 }

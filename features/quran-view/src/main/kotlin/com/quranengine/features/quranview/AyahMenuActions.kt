@@ -11,9 +11,5 @@ data class AyahMenuActions(
     val onTranslationTafseer: (AyahNumber) -> Unit = {},
     val onCopy: (AyahNumber) -> Unit = {},
     val onShare: (AyahNumber) -> Unit = {},
-    val onBookmarkPage: (AyahNumber) -> Unit = {},
-    val onToggleTranslations: () -> Unit = {},
-    val onManageTranslations: () -> Unit = {},
-    val onOpenPrayerTimes: () -> Unit = {},
     val onDismiss: () -> Unit = {},
 )

@@ -8,7 +8,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.quranengine.ui.theme.QuranFontFamilies
 import com.quranengine.ui.theme.QuranTheme
 
 @Composable
@@ -16,6 +21,7 @@ fun QuranPageHeader(
     quarterName: String,
     suraNames: String,
     modifier: Modifier = Modifier,
+    decoratedSuraName: String = "",
 ) {
     Row(
         modifier = modifier
@@ -24,12 +30,21 @@ fun QuranPageHeader(
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         Text(
-            text = suraNames,
+            text = quarterName,
             style = MaterialTheme.typography.labelSmall,
             color = QuranTheme.colors.secondaryText,
         )
         Text(
-            text = quarterName,
+            text = buildAnnotatedString {
+                append(suraNames)
+                if (decoratedSuraName.isNotEmpty()) {
+                    append(" ")
+                    // A single private-use glyph; only legible in the sura-names font.
+                    withStyle(SpanStyle(fontFamily = QuranFontFamilies.suraNames, fontSize = 18.sp)) {
+                        append(decoratedSuraName)
+                    }
+                }
+            },
             style = MaterialTheme.typography.labelSmall,
             color = QuranTheme.colors.secondaryText,
         )

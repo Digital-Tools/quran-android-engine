@@ -6,6 +6,8 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.quranengine.core.localization.Localizer
+import com.quranengine.core.localization.NumberFormatters
+import com.quranengine.core.localization.format
 import com.quranengine.data.sqlite.ReadOnlyDatabase
 import com.quranengine.data.wordframe.SqliteWordFramePersistence
 import com.quranengine.domain.annotationservice.LastPageService
@@ -14,6 +16,7 @@ import com.quranengine.domain.annotationservice.NoteService
 import com.quranengine.domain.annotationservice.PageBookmarkService
 import com.quranengine.domain.imageservice.ImageDataService
 import com.quranengine.domain.qurantextkit.AyahShareUseCase
+import com.quranengine.domain.qurantextkit.decoratedName
 import com.quranengine.domain.qurantextkit.englishName
 import com.quranengine.domain.qurantextkit.QuranContentStatePreferences
 import com.quranengine.domain.qurantextkit.QuranTextDataService
@@ -121,6 +124,16 @@ class QuranViewViewModel @Inject constructor(
         _state.update { current ->
             current.copy(barsVisible = !current.barsVisible)
         }
+    }
+
+    fun setBarsVisible(visible: Boolean) {
+        _state.update { current ->
+            current.copy(barsVisible = visible)
+        }
+    }
+
+    fun showMessage(message: String) {
+        _userMessage.value = message
     }
 
     fun setReadingAyah(progress: AyahPlaybackProgress?) {
@@ -423,35 +436,39 @@ class QuranViewViewModel @Inject constructor(
         val verses = page.firstVerse.arrayTo(page.lastVerse).toList()
         val verseTexts = quranTextDataService.textForVerses(verses, selectedTranslations)
         val items = buildList {
-            add(TranslationItem.PageHeader(page.pageNumber))
+            add(
+                TranslationItem.PageHeader(
+                    page = page.pageNumber,
+                    quarterName = page.localizedQuarterTitle(localizer),
+                    suraNames = page.localizedSuraTitle(localizer),
+                    decoratedSuraName = page.startSura.decoratedName(),
+                )
+            )
             verses.forEachIndexed { index, ayah ->
                 val verseText = verseTexts[ayah] ?: return@forEachIndexed
 
+                // The sura header carries the basmalah, so the verse text below must not
+                // repeat it — use `arabicText`, never the prefixed `fullArabicText`.
                 if (ayah == ayah.sura.firstVerse) {
                     add(
                         TranslationItem.SuraName(
                             sura = ayah.sura.suraNumber,
-                            suraName = ayah.sura.localizedDisplayTitle(localizer),
+                            suraName = ayah.sura.localizedDisplayTitle(localizer, withNumber = false),
+                            showBasmala = ayah.sura.startsWithBesmAllah,
                         )
                     )
-                }
-                if (index > 0) {
-                    add(TranslationItem.VerseSeparator(verse = ayah.ayah))
                 }
                 add(
                     TranslationItem.ArabicText(
                         verse = ayah.ayah,
-                        text = verseText.fullArabicText(),
+                        text = "${verseText.arabicText} ${NumberFormatters.arabic.format(ayah.ayah)}",
+                        ayahLabel = localizer.lFormat(
+                            "translation.text.ayah-number",
+                            arguments = arrayOf(ayah.sura.suraNumber, ayah.ayah),
+                        ),
                     )
                 )
                 selectedTranslations.forEachIndexed { translationIndex, translation ->
-                    add(
-                        TranslationItem.TranslatorName(
-                            verse = ayah.ayah,
-                            translationId = translation.id.toLong(),
-                            name = translation.translationName,
-                        )
-                    )
                     when (val translationText = verseText.translations[translationIndex]) {
                         is TranslationText.Reference -> {
                             add(
@@ -469,10 +486,27 @@ class QuranViewViewModel @Inject constructor(
                                     translationId = translation.id.toLong(),
                                     chunkIndex = 0,
                                     text = translationText.value.text,
+                                    quranRanges = translationText.value.quranRanges,
+                                    footnoteRanges = translationText.value.footnoteRanges,
+                                    footnotes = translationText.value.footnotes,
+                                    readMoreAt = truncationOffset(translationText.value.text),
                                 )
                             )
                         }
                     }
+                    // Only worth naming the translator when several are shown side by side.
+                    if (selectedTranslations.size > 1) {
+                        add(
+                            TranslationItem.TranslatorName(
+                                verse = ayah.ayah,
+                                translationId = translation.id.toLong(),
+                                name = translation.translationName,
+                            )
+                        )
+                    }
+                }
+                if (index < verses.lastIndex) {
+                    add(TranslationItem.VerseSeparator(verse = ayah.ayah))
                 }
             }
             add(TranslationItem.PageFooter(page.pageNumber))
@@ -521,6 +555,7 @@ class QuranViewViewModel @Inject constructor(
                         ),
                         quarterName = page.localizedQuarterTitle(localizer),
                         suraNames = page.localizedSuraTitle(localizer),
+                        decoratedSuraName = page.startSura.decoratedName(),
                         pageNumber = page.pageNumber.toString(),
                         isLoading = false,
                         wordFramesByAyah = wordFramesByAyah,
@@ -594,22 +629,27 @@ private fun normalizeVisiblePages(
     return if (twoPagesEnabled) normalized.take(2) else listOf(normalized.first())
 }
 
-private fun com.quranengine.model.qurankit.Sura.localizedDisplayTitle(localizer: Localizer): String {
-    val localized = localizedName(localizer, withNumber = true)
+/** Longest translation shown before it collapses behind "Read more", as in quran-ios. */
+private const val MAX_TRANSLATION_CHUNK = 800
+
+/** Cut on the last word boundary before the limit, or null when the text already fits. */
+private fun truncationOffset(text: String): Int? {
+    if (text.length <= MAX_TRANSLATION_CHUNK) return null
+    val lastSpace = text.lastIndexOf(' ', MAX_TRANSLATION_CHUNK)
+    return if (lastSpace > 0) lastSpace else MAX_TRANSLATION_CHUNK
+}
+
+private fun com.quranengine.model.qurankit.Sura.localizedDisplayTitle(
+    localizer: Localizer,
+    withNumber: Boolean = true,
+): String {
+    val localized = localizedName(localizer, withNumber = withNumber)
     return if (localized.contains("sura_names[")) {
-        "${suraNumber}. ${englishName()}"
+        if (withNumber) "${suraNumber}. ${englishName()}" else englishName()
     } else {
         localized
     }
 }
-
-private fun com.quranengine.model.qurantext.VerseText.fullArabicText(): String =
-    buildList {
-        addAll(arabicPrefix)
-        add(arabicText)
-        addAll(arabicSuffix)
-    }.filter { it.isNotBlank() }
-        .joinToString(separator = " ")
 
 private fun ContentImageState.withReadingHighlight(
     progress: AyahPlaybackProgress?,

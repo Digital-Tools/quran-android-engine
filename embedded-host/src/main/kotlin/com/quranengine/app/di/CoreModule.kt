@@ -8,6 +8,7 @@ import com.quranengine.core.audioplayer.QueuePlayer
 import com.quranengine.core.audioplayer.NowPlayingUpdater
 import com.quranengine.core.localization.Localizer
 import com.quranengine.core.localization.MapLocalizer
+import com.quranengine.core.localization.defaultLocalizerStrings
 import com.quranengine.core.preferences.Preferences
 import com.quranengine.core.system.DefaultEventObserver
 import com.quranengine.core.system.DefaultFileSystem
@@ -85,7 +86,7 @@ object CoreModule {
 
     @Provides
     @Singleton
-    fun provideLocalizer(): Localizer = MapLocalizer()
+    fun provideLocalizer(): Localizer = MapLocalizer(strings = defaultLocalizerStrings)
 
     // -- Model ----------------------------------------------------------------
 

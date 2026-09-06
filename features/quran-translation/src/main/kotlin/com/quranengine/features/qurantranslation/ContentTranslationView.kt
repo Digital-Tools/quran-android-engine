@@ -30,7 +30,9 @@ fun ContentTranslationView(
     modifier: Modifier = Modifier,
     scrollToItemId: TranslationItemId? = null,
     selectedVerse: Int? = null,
-    onAyahTapped: (Int, Offset?) -> Unit = { _, _ -> },
+    onTap: () -> Unit = {},
+    onAyahLongPressed: (Int, Offset?) -> Unit = { _, _ -> },
+    onFootnoteClick: (index: Int, text: String) -> Unit = { _, _ -> },
 ) {
     val listState = rememberLazyListState()
 
@@ -75,8 +77,8 @@ fun ContentTranslationView(
                         )
                     }
                     .combinedClickable(
-                        onClick = { onAyahTapped(verseNum, verseAnchor) },
-                        onLongClick = { onAyahTapped(verseNum, verseAnchor) },
+                        onClick = { onTap() },
+                        onLongClick = { onAyahLongPressed(verseNum, verseAnchor) },
                     )
             } else {
                 highlightModifier.fillMaxWidth()
@@ -85,8 +87,9 @@ fun ContentTranslationView(
                 when (item) {
                     is TranslationItem.PageHeader -> {
                         QuranPageHeader(
-                            quarterName = "",
-                            suraNames = "Page ${item.page}",
+                            quarterName = item.quarterName,
+                            suraNames = item.suraNames,
+                            decoratedSuraName = item.decoratedSuraName,
                             modifier = Modifier.padding(top = 8.dp),
                         )
                     }
@@ -94,20 +97,18 @@ fun ContentTranslationView(
                         QuranPageFooter(pageNumber = item.page.toString())
                     }
                     is TranslationItem.VerseSeparator -> {
-                        QuranVerseSeparator(
-                            modifier = Modifier.padding(horizontal = 16.dp),
-                        )
+                        QuranVerseSeparator()
                     }
                     is TranslationItem.SuraName -> {
                         QuranSuraName(
                             suraName = item.suraName,
-                            modifier = Modifier.padding(vertical = 12.dp),
+                            showBasmala = item.showBasmala,
                         )
                     }
                     is TranslationItem.ArabicText -> {
                         QuranArabicText(
                             text = item.text,
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                            ayahLabel = item.ayahLabel,
                         )
                     }
                     is TranslationItem.TranslatorName -> {
@@ -115,18 +116,23 @@ fun ContentTranslationView(
                     }
                     is TranslationItem.TranslationReferenceVerse -> {
                         Text(
-                            text = "See verse ${item.referenceVerse}",
-                            style = MaterialTheme.typography.bodySmall,
+                            text = "See ayah ${item.referenceVerse}.",
+                            style = MaterialTheme.typography.bodyMedium,
                             color = QuranTheme.colors.secondaryText,
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                            modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 10.dp),
                         )
                     }
                     is TranslationItem.TranslationTextChunk -> {
                         QuranTranslationTextChunk(
                             text = item.text,
                             isArabic = item.isArabic,
-                            showReadMore = item.showReadMore,
-                            modifier = Modifier.padding(vertical = 2.dp),
+                            readMoreAt = item.readMoreAt,
+                            quranRanges = item.quranRanges,
+                            footnoteRanges = item.footnoteRanges,
+                            onFootnoteClick = { index ->
+                                item.footnotes.getOrNull(index)?.let { onFootnoteClick(index, it) }
+                            },
+                            modifier = Modifier.padding(top = 10.dp),
                         )
                     }
                 }

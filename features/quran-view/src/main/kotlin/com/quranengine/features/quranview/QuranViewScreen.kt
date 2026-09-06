@@ -19,6 +19,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
 import com.quranengine.model.qurankit.AyahNumber
@@ -38,6 +39,7 @@ fun QuranViewScreen(
     ayahMenuAnchor: Offset? = null,
     ayahMenuActions: AyahMenuActions = AyahMenuActions(),
     noteEditorAyah: AyahNumber? = null,
+    footnote: TranslationFootnote? = null,
     transientMessage: String? = null,
     onTransientMessageShown: () -> Unit = {},
     onToggleBars: () -> Unit = {},
@@ -51,12 +53,15 @@ fun QuranViewScreen(
     onSetPlaybackRate: (Float) -> Unit = {},
     onAudioBannerTap: () -> Unit = {},
     onOpenPrayerSheet: () -> Unit = {},
+    onManageTranslations: () -> Unit = {},
     onDismissNoteEditor: () -> Unit = {},
+    onDismissFootnote: () -> Unit = {},
     onSaveNote: (AyahNumber, String) -> Unit = { _, _ -> },
     pageContent: @Composable () -> Unit = {},
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
-    var menuAyah by remember { mutableStateOf(selectedAyah) }
+    var showPageMenu by remember { mutableStateOf(false) }
+    var pageMenuAnchor by remember { mutableStateOf<Offset?>(null) }
     var showPrayerTimesSheet by remember { mutableStateOf(false) }
     val view = LocalView.current
     val isPlaying = state.audioBannerState.isPlaying
@@ -75,10 +80,6 @@ fun QuranViewScreen(
         onDispose {
             view.keepScreenOn = false
         }
-    }
-
-    LaunchedEffect(selectedAyah) {
-        menuAyah = selectedAyah
     }
 
     LaunchedEffect(transientMessage) {
@@ -167,7 +168,14 @@ fun QuranViewScreen(
                             tint = if (state.isCurrentPageBookmarked) MaterialTheme.colorScheme.error else QuranTheme.mizanGold
                         )
                     }
-                    IconButton(onClick = { menuAyah = state.firstVerse }) {
+                    IconButton(
+                        onClick = { showPageMenu = true },
+                        modifier = Modifier.onGloballyPositioned { coords ->
+                            pageMenuAnchor = coords.localToRoot(
+                                Offset(coords.size.width / 2f, coords.size.height.toFloat()),
+                            )
+                        },
+                    ) {
                         Icon(
                             imageVector = Icons.Default.MoreVert,
                             contentDescription = "More",
@@ -178,20 +186,8 @@ fun QuranViewScreen(
             }
         }
 
-        // Ayah context menu
-        val currentMenuAyah = menuAyah
-        if (currentMenuAyah != null) {
-            AyahMenuSheet(
-                ayah = currentMenuAyah,
-                quranMode = state.quranMode,
-                anchorInRoot = ayahMenuAnchor,
-                actions = ayahMenuActions.copy(
-                    onDismiss = {
-                        menuAyah = null
-                        ayahMenuActions.onDismiss()
-                    },
-                ),
-            )
+        if (footnote != null) {
+            TranslationFootnoteSheet(footnote = footnote, onDismiss = onDismissFootnote)
         }
 
         val currentNoteEditorAyah = noteEditorAyah
@@ -228,5 +224,28 @@ fun QuranViewScreen(
             onBannerTap = onAudioBannerTap,
             onSetPlaybackRate = onSetPlaybackRate,
         )
+
+        // Menus sit above the audio dock so their rows stay tappable.
+        if (selectedAyah != null) {
+            AyahMenuSheet(
+                ayah = selectedAyah,
+                anchorInRoot = ayahMenuAnchor,
+                actions = ayahMenuActions,
+            )
+        }
+
+        if (showPageMenu) {
+            PageMenuSheet(
+                pageNumber = state.currentPage,
+                isBookmarked = state.isCurrentPageBookmarked,
+                quranMode = state.quranMode,
+                anchorInRoot = pageMenuAnchor,
+                onToggleBookmark = onToggleBookmark,
+                onToggleTranslations = onToggleMode,
+                onManageTranslations = onManageTranslations,
+                onOpenPrayerTimes = onOpenPrayerSheet,
+                onDismiss = { showPageMenu = false },
+            )
+        }
     }
 }

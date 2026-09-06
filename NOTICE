@@ -22,6 +22,31 @@ Data and content attribution
   - http://tanzil.net
   - https://quran.ksu.edu.sa
 
+Bundled fonts
+-------------
+
+The font files in `ui/theme/src/main/res/font/` are byte-identical copies of the
+faces registered by `UI/NoorFont` in quran-ios. They must not be subsetted,
+altered, or otherwise modified.
+
+- `uthmanic_hafs.ttf` — "KFGQPC HAFS Uthmanic Script".
+  Copyright (c) 2010 King Fahd Glorious Quran Printing Complex (KFGQPC),
+  Al-Madinah Al-Munawwarah, Kingdom of Saudi Arabia. All rights reserved.
+  The Complex grants free copying, distribution, and use for personal,
+  commercial, and governmental purposes, provided the font is not sold,
+  modified, reverse engineered, or attributed to any party other than KFGQPC.
+  https://fonts.qurancomplex.gov.sa
+
+- `kitab_regular.ttf` — "Kitab".
+  Copyright (c) 1994-2015 SIL International; copyright (c) 2018-2019 Khaled Hosny.
+  Licensed under the SIL Open Font License, Version 1.1, with reserved font
+  names "Scheherazade" and "SIL".
+  http://scripts.sil.org/OFL
+
+- `surah_names.ttf` — decorated sura-name glyphs, internal family "icomoon".
+  Carries no copyright, license, or vendor record in its name table. Redistributed
+  as received from quran-ios.
+
 Third-party dependencies
 ------------------------
 
