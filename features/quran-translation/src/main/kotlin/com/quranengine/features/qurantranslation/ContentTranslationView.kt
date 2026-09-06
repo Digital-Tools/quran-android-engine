@@ -46,9 +46,18 @@ fun ContentTranslationView(
         }
     }
 
+    // The top bar and audio banner float over the page, so without this the header would sit
+    // behind the status bar and the footer under the navigation bar. Mirrors the safe-area plus
+    // spacing that ContentDimension.readableInsets gives the iOS list.
+    val systemBars = WindowInsets.systemBars.asPaddingValues()
+
     LazyColumn(
         state = listState,
         modifier = modifier.fillMaxSize(),
+        contentPadding = PaddingValues(
+            top = systemBars.calculateTopPadding() + 12.dp,
+            bottom = systemBars.calculateBottomPadding() + 24.dp,
+        ),
     ) {
         itemsIndexed(
             items = items,
