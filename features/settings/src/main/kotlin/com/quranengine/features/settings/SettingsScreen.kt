@@ -1,5 +1,8 @@
 package com.quranengine.features.settings
 
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -10,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.quranengine.model.quranaudio.AudioEnd
 import com.quranengine.model.qurantext.FontSize
@@ -27,11 +31,9 @@ fun SettingsScreen(
     onNavigateToTranslations: () -> Unit = {},
     onNavigateToReciters: () -> Unit = {},
     onNavigateToAudioDownloads: () -> Unit = {},
-    onShareApp: () -> Unit = {},
-    onWriteReview: () -> Unit = {},
-    onContactUs: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
     val state by viewModel.state.collectAsState()
 
     LazyColumn(
@@ -134,9 +136,9 @@ fun SettingsScreen(
                     accessory = NoorAccessory.DisclosureIndicator,
                     onClick = {
                         when (item) {
-                            AboutItem.SHARE -> onShareApp()
-                            AboutItem.REVIEW -> onWriteReview()
-                            AboutItem.CONTACT -> onContactUs()
+                            AboutItem.SHARE -> shareMizan(context)
+                            AboutItem.REVIEW -> openMizanUrl(context, MizanSettingsLinks.REVIEW)
+                            AboutItem.CONTACT -> openMizanUrl(context, MizanSettingsLinks.CONTACT)
                         }
                     },
                 )
@@ -195,3 +197,22 @@ private enum class AboutItem(val title: String) {
 }
 
 private val aboutItems = AboutItem.entries.toList()
+
+private object MizanSettingsLinks {
+    const val SHARE = "https://mizanapp.org"
+    const val REVIEW = "https://mizanapp.org"
+    const val CONTACT = "https://mizanapp.org/contact"
+}
+
+private fun shareMizan(context: Context) {
+    val send = Intent(Intent.ACTION_SEND).apply {
+        type = "text/plain"
+        putExtra(Intent.EXTRA_SUBJECT, "Mizan")
+        putExtra(Intent.EXTRA_TEXT, "Mizan\n${MizanSettingsLinks.SHARE}")
+    }
+    context.startActivity(Intent.createChooser(send, "Share App"))
+}
+
+private fun openMizanUrl(context: Context, url: String) {
+    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+}
