@@ -19,6 +19,7 @@ import com.quranengine.features.quranimage.ContentImageView
 import com.quranengine.features.quranpages.PagingStrategy
 import com.quranengine.features.quranpages.QuranPaginationView
 import com.quranengine.features.qurantranslation.ContentTranslationView
+import com.quranengine.features.qurantranslation.TranslationItemId
 import com.quranengine.model.qurankit.AyahNumber
 import com.quranengine.model.qurankit.arrayTo
 import com.quranengine.model.qurankit.lastayahfinder.JuzBasedLastAyahFinder
@@ -195,9 +196,14 @@ fun QuranViewRoute(
                                 message = content.placeholderMessage,
                             )
                         } else {
+                            val highlightedVerse = selectedAyahForMenu?.ayah
+                                ?: currentAyahProgress?.ayah?.ayah
                             ContentTranslationView(
                                 items = content.items,
-                                selectedVerse = selectedAyahForMenu?.ayah,
+                                selectedVerse = highlightedVerse,
+                                scrollToItemId = highlightedVerse?.let {
+                                    TranslationItemId.ArabicText(it)
+                                },
                                 onTap = viewModel::toggleBars,
                                 onAyahLongPressed = { verse, pressInRoot ->
                                     val ayah = pageVerses.firstOrNull { it.ayah == verse }
