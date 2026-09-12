@@ -51,12 +51,17 @@ fun QuranViewRoute(
     }
     var noteEditorAyah by remember { mutableStateOf<AyahNumber?>(null) }
     var footnote by remember { mutableStateOf<TranslationFootnote?>(null) }
-    var selectedAyahForMenu by remember { mutableStateOf<AyahNumber?>(null) }
-    var selectedAyahAnchor by remember { mutableStateOf<Offset?>(null) }
+
+    // --- Multi-verse selection state ---
+    var startAyah by remember { mutableStateOf<AyahNumber?>(null) }
+    var selectedAyahs by remember { mutableStateOf<List<AyahNumber>>(emptyList()) }
+    var selectionAnchor by remember { mutableStateOf<Offset?>(null) }
     val dismissAyahMenu = {
-        selectedAyahForMenu = null
-        selectedAyahAnchor = null
+        startAyah = null
+        selectedAyahs = emptyList()
+        selectionAnchor = null
     }
+
     val pages = remember(state.totalPages) { (1..state.totalPages).toList() }
     // Translation rows only carry an in-sura verse number, so map it back through the
     // page's own verses instead of assuming the page's first sura.
@@ -82,53 +87,71 @@ fun QuranViewRoute(
         audioBannerViewModel.dismissError()
     }
 
+    // Compute note state for the current selection
+    val noteState = if (selectedAyahs.isNotEmpty()) {
+        viewModel.noteStateForVerses(selectedAyahs)
+    } else {
+        NoteState.NO_HIGHLIGHT
+    }
+    val highlightingColor = if (selectedAyahs.isNotEmpty()) {
+        viewModel.highlightingColorForVerses(selectedAyahs)
+    } else {
+        com.quranengine.model.quranannotations.Note.Color.YELLOW
+    }
+
     QuranViewScreen(
         state = state.copy(audioBannerState = audioBannerState.copy(playbackRate = playbackRate)),
-        selectedAyah = selectedAyahForMenu,
-        ayahMenuAnchor = selectedAyahAnchor,
+        selectedAyahs = selectedAyahs,
+        ayahMenuAnchor = selectionAnchor,
         modifier = modifier,
         transientMessage = userMessage,
         onTransientMessageShown = viewModel::clearUserMessage,
+        noteState = noteState,
+        highlightingColor = highlightingColor,
         ayahMenuActions = AyahMenuActions(
-            onPlayFromHere = { ayah ->
+            onPlayFromHere = { ayahs ->
                 // Reveal the dock so download/transport state is visible immediately.
                 viewModel.setBarsVisible(true)
-                audioBannerViewModel.play(ayah, ayah)
+                audioBannerViewModel.play(ayahs.first(), ayahs.last())
                 dismissAyahMenu()
             },
-            onRepeatVerse = { ayah ->
+            onRepeatVerse = { ayahs ->
                 viewModel.setBarsVisible(true)
                 audioBannerViewModel.play(
-                    from = ayah,
-                    to = ayah,
+                    from = ayahs.first(),
+                    to = ayahs.last(),
                     verseRuns = Runs.INDEFINITE,
                 )
                 dismissAyahMenu()
             },
-            onHighlight = { ayah ->
-                viewModel.addBookmarkForAyah(ayah)
+            onHighlight = { ayahs ->
+                viewModel.highlightAyah(ayahs)
                 dismissAyahMenu()
             },
-            onSelectHighlightColor = { ayah ->
-                viewModel.addBookmarkForAyah(ayah)
+            onSelectHighlightColor = { ayahs, color ->
+                viewModel.highlightAyah(ayahs, color)
                 dismissAyahMenu()
             },
-            onAddNote = { ayah ->
-                noteEditorAyah = ayah
+            onAddNote = { ayahs ->
+                noteEditorAyah = ayahs.first()
                 dismissAyahMenu()
             },
-            onTranslationTafseer = {
+            onDeleteNote = { ayahs ->
+                viewModel.removeHighlight(ayahs)
+                dismissAyahMenu()
+            },
+            onTranslationTafseer = { _ ->
                 viewModel.toggleQuranMode()
                 dismissAyahMenu()
             },
-            onCopy = { ayah ->
-                viewModel.copyAyah(ayah) { text ->
+            onCopy = { ayahs ->
+                viewModel.copyAyah(ayahs.first()) { text ->
                     clipboardManager.setPrimaryClip(ClipData.newPlainText("Quran ayah", text))
                 }
                 dismissAyahMenu()
             },
-            onShare = { ayah ->
-                viewModel.shareAyah(ayah)
+            onShare = { ayahs ->
+                viewModel.shareAyah(ayahs.first())
                 dismissAyahMenu()
             },
             onDismiss = dismissAyahMenu,
@@ -179,11 +202,21 @@ fun QuranViewRoute(
                         ContentImageView(
                             state = content,
                             modifier = Modifier,
-                            selectedAyah = selectedAyahForMenu,
+                            selectedAyahs = selectedAyahs,
                             onTap = viewModel::toggleBars,
-                            onAyahLongPressed = { ayah, pressInRoot ->
-                                selectedAyahForMenu = ayah
-                                selectedAyahAnchor = pressInRoot
+                            onAyahSelectionStarted = { ayah, pressInRoot ->
+                                startAyah = ayah
+                                selectedAyahs = listOf(ayah)
+                                selectionAnchor = pressInRoot
+                            },
+                            onAyahSelectionChanged = { ayah ->
+                                val anchor = startAyah ?: return@ContentImageView
+                                val start = if (ayah < anchor) ayah else anchor
+                                val end = if (ayah < anchor) anchor else ayah
+                                selectedAyahs = start.arrayTo(end)
+                            },
+                            onAyahSelectionEnded = {
+                                // Menu stays open; user taps an action to dismiss
                             },
                         )
                     }
@@ -196,20 +229,23 @@ fun QuranViewRoute(
                                 message = content.placeholderMessage,
                             )
                         } else {
-                            val highlightedVerse = selectedAyahForMenu?.ayah
-                                ?: currentAyahProgress?.ayah?.ayah
+                            val highlightedVerses = selectedAyahs.map { it.ayah }.toSet()
+                                .ifEmpty {
+                                    currentAyahProgress?.ayah?.ayah?.let { setOf(it) } ?: emptySet()
+                                }
                             ContentTranslationView(
                                 items = content.items,
-                                selectedVerse = highlightedVerse,
-                                scrollToItemId = highlightedVerse?.let {
+                                selectedVerses = highlightedVerses,
+                                scrollToItemId = highlightedVerses.firstOrNull()?.let {
                                     TranslationItemId.ArabicText(it)
                                 },
                                 onTap = viewModel::toggleBars,
                                 onAyahLongPressed = { verse, pressInRoot ->
                                     val ayah = pageVerses.firstOrNull { it.ayah == verse }
                                     if (ayah != null) {
-                                        selectedAyahForMenu = ayah
-                                        selectedAyahAnchor = pressInRoot
+                                        startAyah = ayah
+                                        selectedAyahs = listOf(ayah)
+                                        selectionAnchor = pressInRoot
                                     }
                                 },
                                 onFootnoteClick = { index, text ->

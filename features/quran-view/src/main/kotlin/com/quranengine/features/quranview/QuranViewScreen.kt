@@ -21,6 +21,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
+import com.quranengine.model.quranannotations.Note
 import com.quranengine.model.qurankit.AyahNumber
 import com.quranengine.ui.audiobanner.AudioBannerView
 import com.quranengine.ui.theme.MatchSystemBarsToChrome
@@ -34,7 +35,9 @@ import com.quranengine.ui.theme.themedBackground
 fun QuranViewScreen(
     state: QuranViewState,
     modifier: Modifier = Modifier,
-    selectedAyah: AyahNumber? = null,
+    selectedAyahs: List<AyahNumber> = emptyList(),
+    noteState: NoteState = NoteState.NO_HIGHLIGHT,
+    highlightingColor: Note.Color = Note.Color.YELLOW,
     ayahMenuAnchor: Offset? = null,
     ayahMenuActions: AyahMenuActions = AyahMenuActions(),
     noteEditorAyah: AyahNumber? = null,
@@ -220,11 +223,13 @@ fun QuranViewScreen(
         )
 
         // Menus sit above the audio dock so their rows stay tappable.
-        if (selectedAyah != null) {
+        if (selectedAyahs.isNotEmpty()) {
             AyahMenuSheet(
-                ayah = selectedAyah,
+                ayahs = selectedAyahs,
                 anchorInRoot = ayahMenuAnchor,
                 actions = ayahMenuActions,
+                noteState = noteState,
+                highlightingColor = highlightingColor,
             )
         }
 

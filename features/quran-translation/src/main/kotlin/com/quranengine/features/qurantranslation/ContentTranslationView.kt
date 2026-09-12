@@ -29,7 +29,7 @@ fun ContentTranslationView(
     items: List<TranslationItem>,
     modifier: Modifier = Modifier,
     scrollToItemId: TranslationItemId? = null,
-    selectedVerse: Int? = null,
+    selectedVerses: Set<Int> = emptySet(),
     onTap: () -> Unit = {},
     onAyahLongPressed: (Int, Offset?) -> Unit = { _, _ -> },
     onFootnoteClick: (index: Int, text: String) -> Unit = { _, _ -> },
@@ -70,7 +70,7 @@ fun ContentTranslationView(
             }
 
             val verseNum = item.id.ayah
-            val isSelected = verseNum != null && verseNum == selectedVerse
+            val isSelected = verseNum != null && verseNum in selectedVerses
             val highlightModifier = if (isSelected) {
                 Modifier.background(QuranColors.wordHighlight)
             } else {

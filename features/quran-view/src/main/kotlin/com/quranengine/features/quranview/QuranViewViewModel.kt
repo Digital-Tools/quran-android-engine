@@ -35,6 +35,7 @@ import com.quranengine.model.qurangeometry.WordFrameCollection
 import com.quranengine.model.qurankit.AyahNumber
 import com.quranengine.model.qurankit.Page
 import com.quranengine.model.qurankit.Reading
+import com.quranengine.model.quranannotations.Note
 import com.quranengine.model.qurankit.arrayTo
 import com.quranengine.model.qurantext.QuranMode
 import com.quranengine.model.qurantext.TranslationText
@@ -111,6 +112,8 @@ class QuranViewViewModel @Inject constructor(
     private var bookmarkedPageNumbers: Set<Int> = emptySet()
     private var highlightedAyahProgress: AyahPlaybackProgress? = null
     private var bookmarkObservationJob: Job? = null
+    private var noteObservationJob: Job? = null
+    private var notesByVerse: Map<AyahNumber, Note> = emptyMap()
     private var lastPageUpdaterConfigured = false
 
     init {
@@ -118,6 +121,7 @@ class QuranViewViewModel @Inject constructor(
         observeReaderPreferences()
         observeReading()
         observeSelectedTranslations()
+        observeNotes()
     }
 
     fun toggleBars() {
@@ -168,6 +172,52 @@ class QuranViewViewModel @Inject constructor(
             pageNumber = ayah.page.pageNumber,
             toggle = false,
         )
+    }
+
+    /** Highlight verses with the given (or last-used) color. Matches iOS updateHighlight. */
+    fun highlightAyah(ayahs: List<AyahNumber>, color: Note.Color? = null) {
+        viewModelScope.launch {
+            try {
+                val effectiveColor = color ?: noteService.color(notesByVerse.values.toList())
+                noteService.updateHighlight(ayahs, effectiveColor, currentReading.quran)
+                _userMessage.value = if (ayahs.size == 1) {
+                    "Highlighted ${ayahs[0].sura.suraNumber}:${ayahs[0].ayah}."
+                } else {
+                    "Highlighted ${ayahs.size} verses."
+                }
+            } catch (error: Exception) {
+                _userMessage.value = error.localizedMessage ?: "Unable to highlight."
+            }
+        }
+    }
+
+    /** Remove highlight/notes from verses. Matches iOS deleteNotes. */
+    fun removeHighlight(ayahs: List<AyahNumber>) {
+        viewModelScope.launch {
+            try {
+                noteService.removeNotes(ayahs)
+                _userMessage.value = if (ayahs.size == 1) {
+                    "Removed highlight for ${ayahs[0].sura.suraNumber}:${ayahs[0].ayah}."
+                } else {
+                    "Removed highlights for ${ayahs.size} verses."
+                }
+            } catch (error: Exception) {
+                _userMessage.value = error.localizedMessage ?: "Unable to remove highlight."
+            }
+        }
+    }
+
+    /** Determine the note state for the menu. Matches iOS AyahMenuViewModel.noteState. */
+    fun noteStateForVerses(ayahs: List<AyahNumber>): NoteState {
+        val notes = ayahs.mapNotNull { notesByVerse[it] }
+        if (notes.isEmpty()) return NoteState.NO_HIGHLIGHT
+        return if (notes.any { !it.note.isNullOrEmpty() }) NoteState.NOTED else NoteState.HIGHLIGHTED
+    }
+
+    /** Get the current highlighting color for the selected verses. */
+    fun highlightingColorForVerses(ayahs: List<AyahNumber>): Note.Color {
+        val notes = ayahs.mapNotNull { notesByVerse[it] }
+        return noteService.color(notes)
     }
 
     fun shareAyah(ayah: AyahNumber) {
@@ -277,6 +327,17 @@ class QuranViewViewModel @Inject constructor(
                         isCurrentPageBookmarked = current.currentPage in bookmarkedPageNumbers,
                     )
                 }
+            }
+        }
+    }
+
+    private fun observeNotes() {
+        noteObservationJob?.cancel()
+        noteObservationJob = viewModelScope.launch {
+            noteService.notes(currentReading.quran).collect { notes ->
+                notesByVerse = notes.flatMap { note ->
+                    note.verses.map { verse -> verse to note }
+                }.toMap()
             }
         }
     }

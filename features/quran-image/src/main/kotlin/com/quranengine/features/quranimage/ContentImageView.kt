@@ -1,7 +1,7 @@
 package com.quranengine.features.quranimage
 
 import android.graphics.RectF
-import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
@@ -20,14 +20,15 @@ import com.quranengine.ui.theme.QuranColors
 import com.quranengine.model.qurankit.AyahNumber
 import com.quranengine.model.qurangeometry.WordFrame
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ContentImageView(
     state: ContentImageState,
     modifier: Modifier = Modifier,
-    selectedAyah: AyahNumber? = null,
+    selectedAyahs: List<AyahNumber> = emptyList(),
     onTap: () -> Unit = {},
-    onAyahLongPressed: (AyahNumber, Offset) -> Unit = { _, _ -> },
+    onAyahSelectionStarted: (AyahNumber, Offset) -> Unit = { _, _ -> },
+    onAyahSelectionChanged: (AyahNumber) -> Unit = {},
+    onAyahSelectionEnded: () -> Unit = {},
 ) {
     if (state.isLoading) {
         LoadingView(modifier = modifier)
@@ -39,10 +40,11 @@ fun ContentImageView(
     var viewSize by remember { mutableStateOf(IntSize.Zero) }
     var imageCoords by remember { mutableStateOf<LayoutCoordinates?>(null) }
 
-    val selectedHighlights = remember(selectedAyah, state.wordFramesByAyah) {
-        val ayah = selectedAyah ?: return@remember emptyList()
-        state.wordFramesByAyah[ayah].orEmpty().map { frame ->
-            WordHighlight(rect = RectF(frame.rect), color = QuranColors.wordHighlight)
+    val selectedHighlights = remember(selectedAyahs, state.wordFramesByAyah) {
+        selectedAyahs.flatMap { ayah ->
+            state.wordFramesByAyah[ayah].orEmpty().map { frame ->
+                WordHighlight(rect = RectF(frame.rect), color = QuranColors.wordHighlight)
+            }
         }
     }
 
@@ -64,16 +66,33 @@ fun ContentImageView(
                 .fillMaxWidth()
                 .onSizeChanged { viewSize = it }
                 .onGloballyPositioned { imageCoords = it }
+                // Tap gesture for toggling bars (runs first, non-blocking)
+                .pointerInput(Unit) {
+                    detectTapGestures(onTap = { onTap() })
+                }
+                // Long-press-then-drag for multi-verse selection
                 .pointerInput(viewSize, state.decorations.imageSize) {
-                    detectTapGestures(
-                        onTap = { onTap() },
-                        onLongPress = { offset ->
+                    detectDragGesturesAfterLongPress(
+                        onDragStart = { offset ->
                             val ayah = resolveAyahAtOffset(offset, viewSize.toSize(), state)
                             val root = imageCoords?.takeIf { it.isAttached }?.localToRoot(offset)
                             if (ayah != null && root != null) {
-                                onAyahLongPressed(ayah, root)
+                                onAyahSelectionStarted(ayah, root)
                             }
-                        }
+                        },
+                        onDrag = { change, _ ->
+                            change.consume()
+                            val ayah = resolveAyahAtOffset(
+                                change.position,
+                                viewSize.toSize(),
+                                state,
+                            )
+                            if (ayah != null) {
+                                onAyahSelectionChanged(ayah)
+                            }
+                        },
+                        onDragEnd = { onAyahSelectionEnded() },
+                        onDragCancel = { onAyahSelectionEnded() },
                     )
                 },
         ) {

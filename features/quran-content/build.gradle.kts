@@ -8,6 +8,7 @@ dependencies {
     implementation(project(":model:quran-kit"))
     implementation(project(":model:quran-text"))
     implementation(project(":model:quran-geometry"))
+    implementation(project(":model:quran-annotations"))
     implementation(project(":domain:quran-text-kit"))
     implementation(project(":domain:image-service"))
     implementation(project(":domain:reading-service"))
