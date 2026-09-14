@@ -4,7 +4,10 @@ import com.quranengine.core.system.FileSystem
 import com.quranengine.core.system.SystemBundle
 import com.quranengine.model.qurankit.Reading
 import java.io.File
+import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
@@ -13,6 +16,13 @@ class ReadingAssetsInstaller(
     private val fileSystem: FileSystem,
     private val baseDir: File,
 ) {
+
+    // The quran-view feature loads several pages concurrently (current page + neighbors),
+    // each calling ensureInstalled() for the same reading independently. Without this lock,
+    // concurrent callers race on the shared temp directory below — one caller's cleanup/move
+    // can interfere with another's in-flight copy, leaving that caller looking at a
+    // half-installed reading and throwing MissingReadingResourcesException.
+    private val installLocks = ConcurrentHashMap<Reading, Mutex>()
 
     suspend fun ensureInstalled(reading: Reading) = withContext(Dispatchers.IO) {
         val assetRoot = reading.bundledAssetsPath
@@ -26,19 +36,26 @@ class ReadingAssetsInstaller(
             return@withContext
         }
 
-        val tempRoot = File(baseDir, "readings/.${reading.localPath}.installing")
-        if (tempRoot.exists()) {
-            fileSystem.removeItem(tempRoot)
-        }
-        if (readingRoot.exists()) {
-            fileSystem.removeItem(readingRoot)
-        }
+        installLocks.getOrPut(reading) { Mutex() }.withLock {
+            // Re-check: another caller may have finished installing while we waited for the lock.
+            if (isInstalled(reading, readingRoot)) {
+                return@withContext
+            }
 
-        fileSystem.createDirectory(tempRoot, withIntermediateDirectories = true)
-        copyAssetTree(assetRoot, tempRoot)
-        File(tempRoot, INSTALL_MARKER).writeText(INSTALL_VERSION)
-        fileSystem.moveItem(tempRoot, readingRoot)
-        Timber.i("Reading assets: installed bundled assets for %s", reading.localPath)
+            val tempRoot = File(baseDir, "readings/.${reading.localPath}.installing")
+            if (tempRoot.exists()) {
+                fileSystem.removeItem(tempRoot)
+            }
+            if (readingRoot.exists()) {
+                fileSystem.removeItem(readingRoot)
+            }
+
+            fileSystem.createDirectory(tempRoot, withIntermediateDirectories = true)
+            copyAssetTree(assetRoot, tempRoot)
+            File(tempRoot, INSTALL_MARKER).writeText(INSTALL_VERSION)
+            fileSystem.moveItem(tempRoot, readingRoot)
+            Timber.i("Reading assets: installed bundled assets for %s", reading.localPath)
+        }
     }
 
     private fun isInstalled(reading: Reading, readingRoot: File): Boolean {
