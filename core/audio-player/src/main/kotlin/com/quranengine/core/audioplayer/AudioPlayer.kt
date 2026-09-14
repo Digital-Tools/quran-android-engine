@@ -150,16 +150,28 @@ internal class AudioPlayer(
     }
 
     /**
+     * Media-time remaining until the current frame's end, in seconds.
+     *
+     * Falls back to the player's total [Player.duration] when the frame has no
+     * resolvable end-time (e.g. the boundary between two files), matching the iOS
+     * `getDurationToFrameEnd` — so a timer is always scheduled and playback never
+     * silently stalls waiting for a native "playback ended" event that this class
+     * doesn't listen for.
+     */
+    private fun durationToFrameEnd(p: Player): Double {
+        val endTime = playing.frameEndTime ?: p.duration
+        return endTime - p.currentTime
+    }
+
+    /**
      * Schedule a delayed callback for when the current frame's end-time is reached.
      * The delay is computed in wall-clock time: `(mediaTimeRemaining) / playbackRate`.
      */
     private fun waitUntilFrameEnds() {
         cancelFrameTimer()
 
-        val endTime = playing.frameEndTime ?: return // no end-time → play until media ends naturally
         val p = player ?: return
-        val currentTime = p.currentTime
-        val mediaRemaining = endTime - currentTime
+        val mediaRemaining = durationToFrameEnd(p)
         if (mediaRemaining <= 0) {
             onFrameEnded()
             return
@@ -181,17 +193,35 @@ internal class AudioPlayer(
     }
 
     /**
-     * Called when the current frame's end-time has been reached.
+     * Called when the current frame's end-time is believed to have been reached.
      * Decides whether to replay the frame, advance to the next, loop the request, or stop.
      */
     private fun onFrameEnded() {
         pendingFrameEnd = null
 
+        // The Handler callback can fire a little early (dispatch jitter). If the frame
+        // genuinely hasn't ended yet, reschedule instead of advancing/repeating prematurely —
+        // port of the iOS `guard time < 0.2` check.
+        val p = player
+        if (p != null && durationToFrameEnd(p) >= 0.2) {
+            waitUntilFrameEnds()
+            return
+        }
+
         // 1. Repeat the same frame if frame-runs not exhausted.
         playing.incrementFramePlays()
+        Timber.d(
+            "onFrameEnded: file=%d frame=%d framePlays=%d/%d requestPlays=%d/%d",
+            playing.fileIndex,
+            playing.frameIndex,
+            playing.framePlays,
+            playing.request.frameRuns.maxRuns,
+            playing.requestPlays,
+            playing.request.requestRuns.maxRuns,
+        )
         if (!playing.isLastPlayForCurrentFrame()) {
-            val p = player ?: return
-            p.seek(playing.frame.startTime, rate)
+            val player = player ?: return
+            player.seek(playing.frame.startTime, rate)
             waitUntilFrameEnds()
             return
         }
@@ -207,6 +237,11 @@ internal class AudioPlayer(
 
         // All frames done — check request-level repeats.
         playing.incrementRequestPlays()
+        Timber.d(
+            "onFrameEnded: request pass complete, requestPlays=%d/%d",
+            playing.requestPlays,
+            playing.request.requestRuns.maxRuns,
+        )
         if (!playing.isLastRun()) {
             play(fileIndex = 0, frameIndex = 0, forceSeek = true)
             return
