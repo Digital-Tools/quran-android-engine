@@ -1,8 +1,10 @@
 package com.quranengine.features.quranimage
 
 import android.graphics.RectF
-import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
-import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.drag
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -19,6 +21,7 @@ import com.quranengine.ui.quran.*
 import com.quranengine.ui.theme.QuranColors
 import com.quranengine.model.qurankit.AyahNumber
 import com.quranengine.model.qurangeometry.WordFrame
+import kotlinx.coroutines.withTimeoutOrNull
 
 @Composable
 fun ContentImageView(
@@ -66,34 +69,38 @@ fun ContentImageView(
                 .fillMaxWidth()
                 .onSizeChanged { viewSize = it }
                 .onGloballyPositioned { imageCoords = it }
-                // Tap gesture for toggling bars (runs first, non-blocking)
-                .pointerInput(Unit) {
-                    detectTapGestures(onTap = { onTap() })
-                }
-                // Long-press-then-drag for multi-verse selection
+                // Tap-or-long-press-then-drag, as ONE gesture detector. Two separate
+                // pointerInput blocks each racing on the same raw touch stream (the
+                // previous approach) can double-fire and leave selection state
+                // inconsistent — see the multi-verse-selection long-press bug.
                 .pointerInput(viewSize, state.decorations.imageSize) {
-                    detectDragGesturesAfterLongPress(
-                        onDragStart = { offset ->
-                            val ayah = resolveAyahAtOffset(offset, viewSize.toSize(), state)
-                            val root = imageCoords?.takeIf { it.isAttached }?.localToRoot(offset)
+                    awaitEachGesture {
+                        val down = awaitFirstDown(requireUnconsumed = false)
+                        var cancelled = false
+                        val up = withTimeoutOrNull(viewConfiguration.longPressTimeoutMillis) {
+                            waitForUpOrCancellation().also { if (it == null) cancelled = true }
+                        }
+
+                        if (up != null) {
+                            // Released within the long-press window — a normal tap.
+                            onTap()
+                        } else if (!cancelled) {
+                            // Still down once the long-press threshold elapsed — start selection.
+                            val ayah = resolveAyahAtOffset(down.position, viewSize.toSize(), state)
+                            val root = imageCoords?.takeIf { it.isAttached }?.localToRoot(down.position)
                             if (ayah != null && root != null) {
                                 onAyahSelectionStarted(ayah, root)
                             }
-                        },
-                        onDrag = { change, _ ->
-                            change.consume()
-                            val ayah = resolveAyahAtOffset(
-                                change.position,
-                                viewSize.toSize(),
-                                state,
-                            )
-                            if (ayah != null) {
-                                onAyahSelectionChanged(ayah)
+                            drag(down.id) { change ->
+                                change.consume()
+                                val dragAyah = resolveAyahAtOffset(change.position, viewSize.toSize(), state)
+                                if (dragAyah != null) {
+                                    onAyahSelectionChanged(dragAyah)
+                                }
                             }
-                        },
-                        onDragEnd = { onAyahSelectionEnded() },
-                        onDragCancel = { onAyahSelectionEnded() },
-                    )
+                            onAyahSelectionEnded()
+                        }
+                    }
                 },
         ) {
             QuranThemedImage(
