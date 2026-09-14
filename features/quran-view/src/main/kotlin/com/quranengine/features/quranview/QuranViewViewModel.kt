@@ -43,6 +43,7 @@ import com.quranengine.model.qurantext.TranslationText
 import com.quranengine.domain.translationservice.SelectedTranslationsPreferences
 import com.quranengine.ui.quran.ImageDecorations
 import com.quranengine.ui.quran.WordHighlight
+import com.quranengine.ui.quran.toLineHighlights
 import com.quranengine.ui.theme.QuranColors
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.io.File
@@ -515,13 +516,15 @@ class QuranViewViewModel @Inject constructor(
     }
 
     private fun noteHighlightColors(): Map<AyahNumber, Color> =
-        notesByVerse.mapValues { (_, note) -> note.color.toComposeColor() }
+        notesByVerse.mapValues { (_, note) -> note.color.toComposeColor().copy(alpha = NOTE_HIGHLIGHT_ALPHA) }
 
     // TranslationItem is keyed by plain ayah-within-sura Int (see
     // TranslationItemId), not the full AyahNumber, so colors must be
     // re-keyed to match.
     private fun translationNoteColors(): Map<Int, Color> =
-        notesByVerse.entries.associate { (ayah, note) -> ayah.ayah to note.color.toComposeColor() }
+        notesByVerse.entries.associate { (ayah, note) ->
+            ayah.ayah to note.color.toComposeColor().copy(alpha = NOTE_HIGHLIGHT_ALPHA)
+        }
 
     private suspend fun loadTranslationPageContent(page: Page): TranslationPageContent {
         if (!quranContentBootstrap.ready.value) {
@@ -765,7 +768,7 @@ private fun ContentImageState.withReadingHighlight(
     }.orEmpty()
 
     val noteHighlights = noteColors.flatMap { (ayah, color) ->
-        wordFramesByAyah[ayah].orEmpty().map { frame -> WordHighlight(rect = RectF(frame.rect), color = color) }
+        wordFramesByAyah[ayah].orEmpty().toLineHighlights(color)
     }
 
     return copy(
@@ -774,6 +777,13 @@ private fun ContentImageState.withReadingHighlight(
         decorations = decorations.copy(wordHighlights = noteHighlights + readingHighlight),
     )
 }
+
+/**
+ * Alpha applied to a persisted highlight when painted on the page — full
+ * opacity (used for the menu's color swatches) would completely obscure the
+ * Arabic text or translation underneath.
+ */
+private const val NOTE_HIGHLIGHT_ALPHA = 0.35f
 
 /** Maps Note.Color to Compose colors, matching AyahMenuSheet's palette. */
 private fun Note.Color.toComposeColor(): Color = when (this) {

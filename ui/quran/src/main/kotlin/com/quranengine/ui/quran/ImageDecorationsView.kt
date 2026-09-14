@@ -16,6 +16,26 @@ data class WordHighlight(
     val color: Color = QuranColors.wordHighlight,
 )
 
+/**
+ * Merges word frames into one highlight bar per text line, instead of one
+ * box per word — matches how a text-selection highlight reads (a continuous
+ * bar across the line), rather than choppy per-word boxes.
+ */
+fun List<com.quranengine.model.qurangeometry.WordFrame>.toLineHighlights(
+    color: Color,
+): List<WordHighlight> =
+    groupBy { it.line }.values.map { lineFrames ->
+        WordHighlight(
+            rect = RectF(
+                lineFrames.minOf { it.minX }.toFloat(),
+                lineFrames.minOf { it.minY }.toFloat(),
+                lineFrames.maxOf { it.maxX }.toFloat(),
+                lineFrames.maxOf { it.maxY }.toFloat(),
+            ),
+            color = color,
+        )
+    }
+
 data class ImageDecorations(
     val imageSize: Size = Size.Zero,
     val wordHighlights: List<WordHighlight> = emptyList(),

@@ -1,6 +1,5 @@
 package com.quranengine.features.quranimage
 
-import android.graphics.RectF
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.drag
@@ -45,9 +44,7 @@ fun ContentImageView(
 
     val selectedHighlights = remember(selectedAyahs, state.wordFramesByAyah) {
         selectedAyahs.flatMap { ayah ->
-            state.wordFramesByAyah[ayah].orEmpty().map { frame ->
-                WordHighlight(rect = RectF(frame.rect), color = QuranColors.wordHighlight)
-            }
+            state.wordFramesByAyah[ayah].orEmpty().toLineHighlights(QuranColors.wordHighlight)
         }
     }
 
