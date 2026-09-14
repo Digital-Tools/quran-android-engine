@@ -10,6 +10,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.padding
@@ -92,24 +93,31 @@ fun AyahMenuSheet(
             },
             label = "AyahMenuTransition",
         ) { mode ->
-            when (mode) {
-                MenuMode.LIST -> AyahMenuList(
-                    ayahs = ayahs,
-                    actions = actions,
-                    noteState = noteState,
-                    highlightingColor = highlightingColor,
-                    onShowColorPicker = { menuMode = MenuMode.COLOR_PICKER },
-                )
-                MenuMode.COLOR_PICKER -> NoteColorPicker(
-                    selectedColor = when (noteState) {
-                        NoteState.NO_HIGHLIGHT -> null
-                        else -> highlightingColor
-                    },
-                    onColorSelected = { color ->
-                        actions.onSelectHighlightColor(ayahs, color)
-                        actions.onDismiss()
-                    },
-                )
+            // AnimatedContent does not lay its content out in a Column, so the
+            // sibling rows AyahMenuList emits would otherwise all stack at the
+            // same position instead of flowing vertically (the Android
+            // "menu items jumbled together" bug — this branch is otherwise
+            // unused on iOS, which has its own SwiftUI implementation).
+            Column {
+                when (mode) {
+                    MenuMode.LIST -> AyahMenuList(
+                        ayahs = ayahs,
+                        actions = actions,
+                        noteState = noteState,
+                        highlightingColor = highlightingColor,
+                        onShowColorPicker = { menuMode = MenuMode.COLOR_PICKER },
+                    )
+                    MenuMode.COLOR_PICKER -> NoteColorPicker(
+                        selectedColor = when (noteState) {
+                            NoteState.NO_HIGHLIGHT -> null
+                            else -> highlightingColor
+                        },
+                        onColorSelected = { color ->
+                            actions.onSelectHighlightColor(ayahs, color)
+                            actions.onDismiss()
+                        },
+                    )
+                }
             }
         }
     }
