@@ -120,7 +120,11 @@ fun QuranViewRoute(
                 audioBannerViewModel.play(
                     from = ayahs.first(),
                     to = ayahs.last(),
-                    verseRuns = Runs.INDEFINITE,
+                    // INDEFINITE listRuns repeats the whole selected range;
+                    // INDEFINITE verseRuns would instead repeat only the
+                    // first ayah's frame forever and never advance — that
+                    // was the "repeat only plays one verse" bug.
+                    listRuns = Runs.INDEFINITE,
                 )
                 dismissAyahMenu()
             },

@@ -2,6 +2,7 @@ package com.quranengine.features.quranview
 
 import android.graphics.RectF
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -109,6 +110,7 @@ class QuranViewViewModel @Inject constructor(
     val userMessage: StateFlow<String?> = _userMessage.asStateFlow()
 
     private val basePageContents = mutableMapOf<Int, PageImageContent>()
+    private val basePageTranslationContents = mutableMapOf<Int, TranslationPageContent>()
     private var bookmarkedPageNumbers: Set<Int> = emptySet()
     private var highlightedAyahProgress: AyahPlaybackProgress? = null
     private var bookmarkObservationJob: Job? = null
@@ -338,6 +340,11 @@ class QuranViewViewModel @Inject constructor(
                 notesByVerse = notes.flatMap { note ->
                     note.verses.map { verse -> verse to note }
                 }.toMap()
+                // Persisted highlights only take effect once we re-derive the
+                // already-loaded page content — the pages themselves aren't
+                // reloaded, only their highlight decorations.
+                refreshArabicHighlights()
+                refreshTranslationHighlights()
             }
         }
     }
@@ -448,7 +455,11 @@ class QuranViewViewModel @Inject constructor(
                 val content = loadImageState(reading, page)
                 basePageContents[page.pageNumber] = content
                 ContentState.Loaded(
-                    content.state.withReadingHighlight(highlightedAyahProgress, content.wordFramesByAyah)
+                    content.state.withReadingHighlight(
+                        highlightedAyahProgress,
+                        content.wordFramesByAyah,
+                        noteHighlightColors(),
+                    )
                 )
             } catch (error: Exception) {
                 ContentState.Error(error)
@@ -464,7 +475,10 @@ class QuranViewViewModel @Inject constructor(
         _translationContentStates.update { it + (page.pageNumber to ContentState.Loading) }
         viewModelScope.launch {
             val result = try {
-                ContentState.Loaded(loadTranslationPageContent(page))
+                val content = loadTranslationPageContent(page)
+                basePageTranslationContents[page.pageNumber] = content
+                val noteColors = translationNoteColors()
+                ContentState.Loaded(content.copy(items = content.items.map { it.withHighlight(noteColors) }))
             } catch (error: Exception) {
                 ContentState.Error(error)
             }
@@ -473,15 +487,41 @@ class QuranViewViewModel @Inject constructor(
     }
 
     private fun refreshArabicHighlights() {
+        val noteColors = noteHighlightColors()
         _pageContentStates.update { current ->
             current.mapValues { (pageNumber, state) ->
                 val baseContent = basePageContents[pageNumber] ?: return@mapValues state
                 ContentState.Loaded(
-                    baseContent.state.withReadingHighlight(highlightedAyahProgress, baseContent.wordFramesByAyah)
+                    baseContent.state.withReadingHighlight(
+                        highlightedAyahProgress,
+                        baseContent.wordFramesByAyah,
+                        noteColors,
+                    )
                 )
             }
         }
     }
+
+    private fun refreshTranslationHighlights() {
+        val noteColors = translationNoteColors()
+        _translationContentStates.update { current ->
+            current.mapValues { (pageNumber, state) ->
+                val base = basePageTranslationContents[pageNumber] ?: return@mapValues state
+                ContentState.Loaded(
+                    base.copy(items = base.items.map { it.withHighlight(noteColors) })
+                )
+            }
+        }
+    }
+
+    private fun noteHighlightColors(): Map<AyahNumber, Color> =
+        notesByVerse.mapValues { (_, note) -> note.color.toComposeColor() }
+
+    // TranslationItem is keyed by plain ayah-within-sura Int (see
+    // TranslationItemId), not the full AyahNumber, so colors must be
+    // re-keyed to match.
+    private fun translationNoteColors(): Map<Int, Color> =
+        notesByVerse.entries.associate { (ayah, note) -> ayah.ayah to note.color.toComposeColor() }
 
     private suspend fun loadTranslationPageContent(page: Page): TranslationPageContent {
         if (!quranContentBootstrap.ready.value) {
@@ -716,16 +756,65 @@ private fun com.quranengine.model.qurankit.Sura.localizedDisplayTitle(
 private fun ContentImageState.withReadingHighlight(
     progress: AyahPlaybackProgress?,
     wordFramesByAyah: Map<AyahNumber, List<com.quranengine.model.qurangeometry.WordFrame>>,
+    noteColors: Map<AyahNumber, Color>,
 ): ContentImageState {
-    val wordHighlights = progress?.let { current ->
+    val readingHighlight = progress?.let { current ->
         val frames = wordFramesByAyah[current.ayah].orEmpty()
         val frame = frames.wordFrameForProgress(current.progress)
         frame?.let { listOf(WordHighlight(rect = RectF(it.rect))) }
     }.orEmpty()
 
+    val noteHighlights = noteColors.flatMap { (ayah, color) ->
+        wordFramesByAyah[ayah].orEmpty().map { frame -> WordHighlight(rect = RectF(frame.rect), color = color) }
+    }
+
     return copy(
-        decorations = decorations.copy(wordHighlights = wordHighlights),
+        // Note highlights first so the reading-progress highlight (the
+        // brighter, transient one) draws on top where they might overlap.
+        decorations = decorations.copy(wordHighlights = noteHighlights + readingHighlight),
     )
+}
+
+/** Maps Note.Color to Compose colors, matching AyahMenuSheet's palette. */
+private fun Note.Color.toComposeColor(): Color = when (this) {
+    Note.Color.RED -> Color(0xFFFF6B8B)
+    Note.Color.GREEN -> Color(0xFFC1EC71)
+    Note.Color.BLUE -> Color(0xFFADD7FE)
+    Note.Color.YELLOW -> Color(0xFFFDEC63)
+    Note.Color.PURPLE -> Color(0xFFD8B1FE)
+}
+
+/** Applies a persisted highlight color to the item's associated verse, if any. */
+private fun TranslationItem.withHighlight(colors: Map<Int, Color>): TranslationItem {
+    val verse = when (this) {
+        is TranslationItem.VerseSeparator -> verse
+        is TranslationItem.ArabicText -> verse
+        is TranslationItem.TranslatorName -> verse
+        is TranslationItem.TranslationReferenceVerse -> verse
+        is TranslationItem.TranslationTextChunk -> verse
+        // A sura-name header's `id.ayah` resolves to the sura number, not a
+        // verse, so it must never be looked up in a verse-keyed color map.
+        is TranslationItem.PageHeader, is TranslationItem.PageFooter, is TranslationItem.SuraName -> null
+    } ?: return this
+
+    val color = colors[verse] ?: return if (highlightColor == null) this else clearHighlight()
+    return when (this) {
+        is TranslationItem.VerseSeparator -> copy(highlightColor = color)
+        is TranslationItem.ArabicText -> copy(highlightColor = color)
+        is TranslationItem.TranslatorName -> copy(highlightColor = color)
+        is TranslationItem.TranslationReferenceVerse -> copy(highlightColor = color)
+        is TranslationItem.TranslationTextChunk -> copy(highlightColor = color)
+        else -> this
+    }
+}
+
+private fun TranslationItem.clearHighlight(): TranslationItem = when (this) {
+    is TranslationItem.VerseSeparator -> copy(highlightColor = null)
+    is TranslationItem.ArabicText -> copy(highlightColor = null)
+    is TranslationItem.TranslatorName -> copy(highlightColor = null)
+    is TranslationItem.TranslationReferenceVerse -> copy(highlightColor = null)
+    is TranslationItem.TranslationTextChunk -> copy(highlightColor = null)
+    else -> this
 }
 
 private fun List<com.quranengine.model.qurangeometry.WordFrame>.wordFrameForProgress(
