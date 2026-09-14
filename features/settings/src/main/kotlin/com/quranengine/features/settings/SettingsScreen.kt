@@ -15,6 +15,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.quranengine.domain.readingservice.ReadingHighlightStyle
 import com.quranengine.model.quranaudio.AudioEnd
 import com.quranengine.model.qurantext.FontSize
 import com.quranengine.ui.components.AppearanceModeSelector
@@ -105,6 +106,19 @@ fun SettingsScreen(
                             AudioEnd.JUZ -> "Juz"
                             AudioEnd.PAGE -> "Page"
                             AudioEnd.QURAN -> "Quran"
+                        }
+                    },
+                )
+                NoorListItem(title = "Highlight while playing")
+                ChoicesView(
+                    items = ReadingHighlightStyle.entries.toList(),
+                    selectedItem = state.highlightStyle,
+                    onItemSelected = viewModel::setHighlightStyle,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                    label = { style ->
+                        when (style) {
+                            ReadingHighlightStyle.WORD -> "Word"
+                            ReadingHighlightStyle.LINE -> "Full line"
                         }
                     },
                 )

@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.quranengine.domain.quranaudiokit.AudioPreferences
 import com.quranengine.domain.qurantextkit.FontSizePreferences
+import com.quranengine.domain.readingservice.ReadingHighlightStyle
 import com.quranengine.domain.readingservice.ReadingPreferences
 import com.quranengine.model.quranaudio.AudioEnd
 import com.quranengine.model.qurankit.Reading
@@ -26,6 +27,7 @@ data class SettingsState(
     val translationFontSize: FontSize = FontSize.LARGE,
     val audioEnd: AudioEnd = AudioEnd.JUZ,
     val reading: Reading = Reading.HAFS_1405,
+    val highlightStyle: ReadingHighlightStyle = ReadingHighlightStyle.WORD,
 )
 
 @HiltViewModel
@@ -44,6 +46,7 @@ class SettingsViewModel @Inject constructor(
             translationFontSize = fontSizePreferences.translationFontSize,
             audioEnd = audioPreferences.audioEnd,
             reading = readingPreferences.reading,
+            highlightStyle = readingPreferences.highlightStyle,
         )
     )
     val state: StateFlow<SettingsState> = _state.asStateFlow()
@@ -74,6 +77,11 @@ class SettingsViewModel @Inject constructor(
                 _state.update { it.copy(appearanceMode = mode) }
             }
         }
+        viewModelScope.launch {
+            readingPreferences.highlightStyleFlow.collect { style ->
+                _state.update { it.copy(highlightStyle = style) }
+            }
+        }
     }
 
     fun setThemeStyle(style: ThemeStyle) {
@@ -99,5 +107,10 @@ class SettingsViewModel @Inject constructor(
 
     fun setReading(reading: Reading) {
         readingPreferences.reading = reading
+    }
+
+    fun setHighlightStyle(style: ReadingHighlightStyle) {
+        readingPreferences.highlightStyle = style
+        _state.update { it.copy(highlightStyle = style) }
     }
 }

@@ -24,6 +24,7 @@ import com.quranengine.domain.qurantextkit.QuranTextDataService
 import com.quranengine.domain.qurantextkit.localizedName
 import com.quranengine.domain.qurantextkit.localizedQuarterName
 import com.quranengine.domain.readingservice.ReadingAssetsInstaller
+import com.quranengine.domain.readingservice.ReadingHighlightStyle
 import com.quranengine.domain.readingservice.ReadingPreferences
 import com.quranengine.domain.readingservice.imageResources
 import com.quranengine.domain.readingservice.localPath
@@ -117,6 +118,7 @@ class QuranViewViewModel @Inject constructor(
     private var bookmarkObservationJob: Job? = null
     private var noteObservationJob: Job? = null
     private var notesByVerse: Map<AyahNumber, Note> = emptyMap()
+    private var highlightStyle: ReadingHighlightStyle = readingPreferences.highlightStyle
     private var lastPageUpdaterConfigured = false
 
     init {
@@ -299,6 +301,13 @@ class QuranViewViewModel @Inject constructor(
                 )
             }
         }
+
+        viewModelScope.launch {
+            readingPreferences.highlightStyleFlow.collect { style ->
+                highlightStyle = style
+                refreshArabicHighlights()
+            }
+        }
     }
 
     private fun observeReading() {
@@ -460,6 +469,7 @@ class QuranViewViewModel @Inject constructor(
                         highlightedAyahProgress,
                         content.wordFramesByAyah,
                         noteHighlightColors(),
+                        highlightStyle,
                     )
                 )
             } catch (error: Exception) {
@@ -497,6 +507,7 @@ class QuranViewViewModel @Inject constructor(
                         highlightedAyahProgress,
                         baseContent.wordFramesByAyah,
                         noteColors,
+                        highlightStyle,
                     )
                 )
             }
@@ -760,11 +771,18 @@ private fun ContentImageState.withReadingHighlight(
     progress: AyahPlaybackProgress?,
     wordFramesByAyah: Map<AyahNumber, List<com.quranengine.model.qurangeometry.WordFrame>>,
     noteColors: Map<AyahNumber, Color>,
+    highlightStyle: ReadingHighlightStyle,
 ): ContentImageState {
     val readingHighlight = progress?.let { current ->
         val frames = wordFramesByAyah[current.ayah].orEmpty()
-        val frame = frames.wordFrameForProgress(current.progress)
-        frame?.let { listOf(WordHighlight(rect = RectF(it.rect))) }
+        when (highlightStyle) {
+            // The whole currently-playing ayah, as a continuous bar per line.
+            ReadingHighlightStyle.LINE -> frames.toLineHighlights(QuranColors.wordHighlight)
+            // Just the single word the reciter is currently on.
+            ReadingHighlightStyle.WORD -> frames.wordFrameForProgress(current.progress)
+                ?.let { listOf(WordHighlight(rect = RectF(it.rect))) }
+                .orEmpty()
+        }
     }.orEmpty()
 
     val noteHighlights = noteColors.flatMap { (ayah, color) ->
