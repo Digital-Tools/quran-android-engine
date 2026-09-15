@@ -32,6 +32,7 @@ sealed class AppRoute(val route: String) {
     }
     data object ReciterList : AppRoute("reciter_list")
     data object AudioDownloads : AppRoute("audio_downloads")
+    data object MushafPicker : AppRoute("mushaf_picker")
     data object TranslationsList : AppRoute("translations")
     data class AdvancedAudio(
         val fromSura: Int,

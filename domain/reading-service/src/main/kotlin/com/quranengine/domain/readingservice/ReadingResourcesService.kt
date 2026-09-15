@@ -1,8 +1,10 @@
 package com.quranengine.domain.readingservice
 
 import com.quranengine.core.system.FileSystem
+import com.quranengine.core.system.Zipper
 import com.quranengine.core.system.fileExists
 import com.quranengine.core.system.removeItem
+import com.quranengine.core.utilities.features.attempt
 import com.quranengine.data.batchdownloader.DownloadBatchRequest
 import com.quranengine.data.batchdownloader.DownloadBatchResponse
 import com.quranengine.data.batchdownloader.DownloadManager
@@ -25,6 +27,7 @@ import java.io.File
  */
 class ReadingResourcesService(
     private val fileSystem: FileSystem,
+    private val zipper: Zipper,
     private val downloader: DownloadManager,
     private val remoteResources: ReadingRemoteResources?,
     private val readingPreferences: ReadingPreferences,
@@ -111,6 +114,30 @@ class ReadingResourcesService(
         download.awaitCompletion()
         val error = download.getError()
         if (error != null) throw error
+
+        unzip(remoteResource)
+    }
+
+    private fun unzip(remoteResource: RemoteResource) {
+        val zipFile = remoteResource.zipFile.file(baseDir)
+        try {
+            attempt(times = 3) {
+                zipper.unzipFile(
+                    zipFile = zipFile,
+                    destination = remoteResource.downloadDestination.file(baseDir),
+                    overwrite = true,
+                )
+            }
+        } finally {
+            // Delete the zip either way — success: to save space, failure: to
+            // force a fresh re-download instead of retrying a corrupt file.
+            try {
+                fileSystem.removeItem(zipFile)
+            } catch (e: Exception) {
+                Timber.w(e, "Failed to remove reading zip file: $zipFile")
+            }
+        }
+        fileSystem.writeToFile(remoteResource.successFilePath.file(baseDir), "Downloaded")
     }
 
     private suspend fun cancelDownloads(exclude: Reading) {

@@ -32,6 +32,7 @@ fun SettingsScreen(
     onNavigateToTranslations: () -> Unit = {},
     onNavigateToReciters: () -> Unit = {},
     onNavigateToAudioDownloads: () -> Unit = {},
+    onNavigateToMushafPicker: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -77,6 +78,18 @@ fun SettingsScreen(
                     label = "Translation",
                     currentSize = state.translationFontSize,
                     onSizeSelected = viewModel::setTranslationFontSize,
+                )
+            }
+        }
+
+        // Mushaf
+        item {
+            NoorBasicSection(title = "Mushaf") {
+                NoorListItem(
+                    title = "Mushaf",
+                    subtitle = "Choose which print you're reading",
+                    accessory = NoorAccessory.DisclosureIndicator,
+                    onClick = onNavigateToMushafPicker,
                 )
             }
         }

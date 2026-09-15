@@ -44,6 +44,8 @@ import com.quranengine.features.reciterlist.ReciterListViewModel
 import com.quranengine.features.reciterlist.StandaloneReciterListScreen
 import com.quranengine.features.search.SearchScreen
 import com.quranengine.features.search.SearchViewModel
+import com.quranengine.features.settings.MushafPickerScreen
+import com.quranengine.features.settings.MushafPickerViewModel
 import com.quranengine.features.settings.SettingsScreen
 import com.quranengine.features.settings.SettingsViewModel
 import com.quranengine.features.translations.TranslationsListScreen
@@ -189,6 +191,9 @@ fun AppStructureScreen(
                     onNavigateToTranslations = {
                         navController.navigate(AppRoute.TranslationsList.route)
                     },
+                    onNavigateToMushafPicker = {
+                        navController.navigate(AppRoute.MushafPicker.route)
+                    },
                 )
             }
 
@@ -229,6 +234,16 @@ fun AppStructureScreen(
                     onDownload = { viewModel.download(it.reciter) },
                     onCancel = { viewModel.cancel(it.reciter) },
                     onDelete = { viewModel.delete(it.reciter) },
+                    onBack = { navController.popBackStack() },
+                )
+            }
+
+            composable(AppRoute.MushafPicker.route) {
+                val viewModel: MushafPickerViewModel = hiltViewModel()
+                val uiState by viewModel.uiState.collectAsState()
+                MushafPickerScreen(
+                    uiState = uiState,
+                    onSelect = viewModel::select,
                     onBack = { navController.popBackStack() },
                 )
             }

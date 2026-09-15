@@ -56,7 +56,7 @@ class ReadingPreferences(private val preferences: Preferences) {
         private val DEFAULT_READING = Reading.HAFS_1405
         private val READING_KEY = PreferenceKey("quranReading", DEFAULT_READING.value)
 
-        private val DEFAULT_HIGHLIGHT_STYLE = ReadingHighlightStyle.WORD
+        private val DEFAULT_HIGHLIGHT_STYLE = ReadingHighlightStyle.LINE
         private val HIGHLIGHT_STYLE_KEY =
             PreferenceKey("readingHighlightStyle", DEFAULT_HIGHLIGHT_STYLE.ordinal)
     }

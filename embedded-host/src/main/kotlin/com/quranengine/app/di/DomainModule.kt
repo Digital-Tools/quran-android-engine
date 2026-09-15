@@ -44,8 +44,11 @@ import com.quranengine.domain.qurantextkit.SearchRecentsService
 import com.quranengine.domain.qurantextkit.SearchTerm
 import com.quranengine.domain.qurantextkit.Searcher
 import com.quranengine.domain.qurantextkit.localizedName
+import com.quranengine.domain.readingservice.MizanReadingRemoteResources
 import com.quranengine.domain.readingservice.ReadingAssetsInstaller
 import com.quranengine.domain.readingservice.ReadingPreferences
+import com.quranengine.domain.readingservice.ReadingRemoteResources
+import com.quranengine.domain.readingservice.ReadingResourcesService
 import com.quranengine.domain.readingservice.VerseTextAssetsInstaller
 import com.quranengine.domain.reciterservice.ReciterDataRetriever
 import com.quranengine.domain.reciterservice.ReciterDataSource
@@ -129,6 +132,32 @@ object DomainModule {
         @Named("baseDir") baseDir: File,
     ): ReadingAssetsInstaller =
         ReadingAssetsInstaller(systemBundle, fileSystem, baseDir)
+
+    @Provides
+    @Singleton
+    @Named("mushafHost")
+    fun provideMushafHost(): String =
+        // TODO(mizan-hosting): placeholder — no real mushaf content is hosted
+        // anywhere yet. Swap this single value once real hosting exists.
+        "https://TODO-mizan-mushaf-host.example/mushafs/"
+
+    @Provides
+    @Singleton
+    fun provideReadingRemoteResources(
+        @Named("mushafHost") mushafHost: String,
+    ): ReadingRemoteResources = MizanReadingRemoteResources(mushafHost)
+
+    @Provides
+    @Singleton
+    fun provideReadingResourcesService(
+        fileSystem: FileSystem,
+        zipper: Zipper,
+        downloadManager: DownloadManager,
+        remoteResources: ReadingRemoteResources,
+        readingPreferences: ReadingPreferences,
+        @Named("baseDir") baseDir: File,
+    ): ReadingResourcesService =
+        ReadingResourcesService(fileSystem, zipper, downloadManager, remoteResources, readingPreferences, baseDir)
 
     @Provides
     @Singleton
