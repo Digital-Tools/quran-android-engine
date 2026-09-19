@@ -22,7 +22,6 @@ import com.quranengine.features.qurantranslation.ContentTranslationView
 import com.quranengine.features.qurantranslation.TranslationItemId
 import com.quranengine.model.qurankit.AyahNumber
 import com.quranengine.model.qurankit.arrayTo
-import com.quranengine.model.qurankit.lastayahfinder.JuzBasedLastAyahFinder
 import com.quranengine.model.qurantext.QuranMode
 import com.quranengine.ui.components.DataUnavailableView
 
@@ -71,7 +70,7 @@ fun QuranViewRoute(
         if (first != null && last != null && last >= first) first.arrayTo(last) else emptyList()
     }
     val defaultPlaybackRange = state.firstVerse?.let { from ->
-        from to JuzBasedLastAyahFinder().findLastAyah(from)
+        from to audioBannerViewModel.defaultEndAyah(from)
     }
     // A verse chosen from the ayah menu wins over the page-wide default, so the
     // banner keeps controlling whatever is actually queued.
@@ -112,7 +111,13 @@ fun QuranViewRoute(
             onPlayFromHere = { ayahs ->
                 // Reveal the dock so download/transport state is visible immediately.
                 viewModel.setBarsVisible(true)
-                audioBannerViewModel.play(ayahs.first(), ayahs.last())
+                // A single long-pressed verse plays on to the end of the juz (or the
+                // user's audio-end setting); only an explicit multi-verse selection
+                // limits the range.
+                audioBannerViewModel.play(
+                    from = ayahs.first(),
+                    to = ayahs.last().takeIf { ayahs.size > 1 },
+                )
                 dismissAyahMenu()
             },
             onRepeatVerse = { ayahs ->

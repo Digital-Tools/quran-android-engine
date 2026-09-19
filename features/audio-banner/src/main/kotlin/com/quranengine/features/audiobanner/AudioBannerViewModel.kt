@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.quranengine.core.audioplayer.Runs
 import com.quranengine.core.localization.Localizer
 import com.quranengine.domain.quranaudiokit.AudioPreferences
+import com.quranengine.domain.quranaudiokit.PreferencesLastAyahFinder
 import com.quranengine.domain.quranaudiokit.QuranAudioDownloader
 import com.quranengine.domain.quranaudiokit.QuranAudioPlayerActions
 import com.quranengine.domain.quranaudiokit.QuranAudioPlayerStore
@@ -63,6 +64,8 @@ class AudioBannerViewModel @Inject constructor(
 
     private var playJob: Job? = null
 
+    private val lastAyahFinder = PreferencesLastAyahFinder(audioPreferences)
+
     private val audioPlayer
         get() = audioPlayerStore.player
 
@@ -82,13 +85,22 @@ class AudioBannerViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Where playback ends when the caller did not choose an explicit end: the
+     * user's "audio end" preference (Settings > Audio), which defaults to the end
+     * of the current juz. Mirrors iOS `AudioBannerViewModel.lastAyahFinder`.
+     */
+    fun defaultEndAyah(from: AyahNumber): AyahNumber = lastAyahFinder.findLastAyah(from)
+
+    /** Plays [from] to [to], or to [defaultEndAyah] when [to] is null. */
     fun play(
         from: AyahNumber,
-        to: AyahNumber,
+        to: AyahNumber? = null,
         verseRuns: Runs = Runs.ONE,
         listRuns: Runs = Runs.ONE,
     ) {
-        _playbackRange.value = from to to
+        val end = to ?: defaultEndAyah(from)
+        _playbackRange.value = from to end
         // A second tap while the first request is still resolving the reciter or
         // downloading would otherwise race it and start a different range.
         playJob?.cancel()
@@ -102,10 +114,10 @@ class AudioBannerViewModel @Inject constructor(
                 val reciter = resolveReciterById(reciterId) ?: return@launch
                 currentReciterName = reciter.localizedName(localizer)
 
-                val alreadyDownloaded = audioDownloader.downloaded(reciter, from, to)
+                val alreadyDownloaded = audioDownloader.downloaded(reciter, from, end)
                 if (!alreadyDownloaded) {
                     updatePlaybackState(PlaybackState.Downloading(0f))
-                    val response = audioDownloader.download(from, to, reciter)
+                    val response = audioDownloader.download(from, end, reciter)
                     viewModelScope.launch {
                         response.progressFlow.collect { progress ->
                             updatePlaybackState(PlaybackState.Downloading(progress.progress.toFloat()))
@@ -122,7 +134,7 @@ class AudioBannerViewModel @Inject constructor(
 
                 val rate = _playbackRate.value
                 updatePlaybackState(PlaybackState.Playing)
-                audioPlayer.play(reciter, rate, from, to, verseRuns, listRuns)
+                audioPlayer.play(reciter, rate, from, end, verseRuns, listRuns)
             } catch (e: CancellationException) {
                 // A newer play request took over; leave its state untouched.
                 throw e
