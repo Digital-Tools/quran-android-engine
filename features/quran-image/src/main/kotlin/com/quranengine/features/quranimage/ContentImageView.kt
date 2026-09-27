@@ -80,6 +80,9 @@ fun ContentImageView(
 
                         if (up != null) {
                             // Released within the long-press window — a normal tap.
+                            // Consume it so the reader's background `clickable`
+                            // doesn't toggle the bars a second time (net no-op).
+                            up.consume()
                             onTap()
                         } else if (!cancelled) {
                             // Still down once the long-press threshold elapsed — start selection.
