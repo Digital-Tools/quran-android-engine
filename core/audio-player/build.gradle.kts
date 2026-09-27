@@ -4,6 +4,14 @@ plugins {
 
 android {
     namespace = "com.quranengine.core.audioplayer"
+
+    // SoundTouch time-stretcher for pitch-preserving playback speed (src/main/cpp).
+    externalNativeBuild {
+        cmake {
+            path = file("src/main/cpp/CMakeLists.txt")
+            version = "3.22.1"
+        }
+    }
 }
 
 dependencies {

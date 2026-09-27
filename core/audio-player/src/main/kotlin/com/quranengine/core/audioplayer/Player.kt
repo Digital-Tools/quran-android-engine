@@ -24,7 +24,7 @@ internal class Player(
     context: Context,
     uri: Uri,
 ) {
-    private val exoPlayer: ExoPlayer = ExoPlayer.Builder(context).build().apply {
+    private val exoPlayer: ExoPlayer = playerBuilder(context).build().apply {
         setAudioAttributes(
             AudioAttributes.Builder()
                 .setUsage(C.USAGE_MEDIA)
@@ -131,4 +131,14 @@ internal class Player(
 
     /** Expose the raw ExoPlayer for callers that need direct access (e.g. frame-change callbacks). */
     val rawPlayer: ExoPlayer get() = exoPlayer
+
+    private companion object {
+        /** Uses SoundTouch for speed changes when its native library loaded, else Media3's Sonic. */
+        fun playerBuilder(context: Context): ExoPlayer.Builder =
+            if (SoundTouch.isAvailable) {
+                ExoPlayer.Builder(context, SoundTouchRenderersFactory(context))
+            } else {
+                ExoPlayer.Builder(context)
+            }
+    }
 }

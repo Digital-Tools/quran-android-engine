@@ -54,6 +54,16 @@ Build-time and runtime dependencies pulled through Gradle remain available under
 their own licenses. Redistributors are responsible for preserving the notices
 and terms that apply to those dependencies in their own distributions.
 
+Vendored native code
+--------------------
+
+- SoundTouch 2.3.3 (https://codeberg.org/soundtouch/soundtouch), used for
+  pitch-preserving playback speed, is vendored unmodified in
+  `core/audio-player/src/main/cpp/soundtouch/` under the GNU Lesser General
+  Public License v2.1 (`COPYING.TXT` there). It is built as its own shared
+  library, `libsoundtouch.so`, and is not covered by this repository's
+  Apache-2.0 license.
+
 Trademarks
 ----------
 
