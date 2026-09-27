@@ -52,8 +52,8 @@ class AdvancedAudioOptionsViewModel @Inject constructor(
 
     val fromVerse = MutableStateFlow(initialStart)
     val toVerse = MutableStateFlow(initialEnd)
-    val verseRuns = MutableStateFlow(Runs.ONE)
-    val listRuns = MutableStateFlow(Runs.ONE)
+    val verseRuns = MutableStateFlow(audioPreferences.verseRuns)
+    val listRuns = MutableStateFlow(audioPreferences.listRuns)
     val playbackRate = MutableStateFlow(audioPreferences.playbackRate)
 
     val suras: List<Sura> = quran.suras
@@ -140,10 +140,12 @@ class AdvancedAudioOptionsViewModel @Inject constructor(
     }
 
     fun setVerseRuns(runs: Runs) {
+        audioPreferences.verseRuns = runs
         verseRuns.value = runs
     }
 
     fun setListRuns(runs: Runs) {
+        audioPreferences.listRuns = runs
         listRuns.value = runs
     }
 

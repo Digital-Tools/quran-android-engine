@@ -92,12 +92,15 @@ class AudioBannerViewModel @Inject constructor(
      */
     fun defaultEndAyah(from: AyahNumber): AyahNumber = lastAyahFinder.findLastAyah(from)
 
-    /** Plays [from] to [to], or to [defaultEndAyah] when [to] is null. */
+    /**
+     * Plays [from] to [to], or to [defaultEndAyah] when [to] is null. Repeat counts
+     * default to the user's saved Advanced Audio choices.
+     */
     fun play(
         from: AyahNumber,
         to: AyahNumber? = null,
-        verseRuns: Runs = Runs.ONE,
-        listRuns: Runs = Runs.ONE,
+        verseRuns: Runs = audioPreferences.verseRuns,
+        listRuns: Runs = audioPreferences.listRuns,
     ) {
         val end = to ?: defaultEndAyah(from)
         _playbackRange.value = from to end

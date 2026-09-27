@@ -1,6 +1,5 @@
 package com.quranengine.embeddedhost
 
-import com.quranengine.core.audioplayer.Runs
 import com.quranengine.data.annotation.persistence.LastPagePersistence
 import com.quranengine.domain.quranaudiokit.AudioPreferences
 import com.quranengine.domain.quranaudiokit.PreferencesLastAyahFinder
@@ -125,8 +124,8 @@ class QuranPlaybackCoordinator @Inject constructor(
                 rate = audioPreferences.playbackRate,
                 from = startAyah,
                 to = endAyah,
-                verseRuns = Runs.ONE,
-                listRuns = Runs.ONE,
+                verseRuns = audioPreferences.verseRuns,
+                listRuns = audioPreferences.listRuns,
             )
             notifyState()
         } catch (e: Exception) {
