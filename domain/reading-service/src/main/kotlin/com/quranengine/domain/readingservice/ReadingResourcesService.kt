@@ -49,6 +49,11 @@ class ReadingResourcesService(
      * downloading resources as needed.
      */
     suspend fun startLoadingResources() = coroutineScope {
+        // A reading chosen before it was marked unavailable (e.g. one on the
+        // placeholder host) can never load; fall back to one that can.
+        if (!ReadingAvailability.isAvailable(readingPreferences.reading, remoteResources)) {
+            readingPreferences.reading = ReadingAvailability.firstAvailable(remoteResources)
+        }
         readingPreferences.readingFlow.collectLatest { reading ->
             readingJob?.cancel()
             readingJob = launch { loadResource(reading) }
