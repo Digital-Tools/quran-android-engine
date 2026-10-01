@@ -34,12 +34,10 @@ class AudioPreferences(preferences: Preferences) {
         private val VERSE_RUNS_KEY = PreferenceKey("audioVerseRuns", Runs.ONE.maxRuns)
         private val LIST_RUNS_KEY = PreferenceKey("audioListRuns", Runs.ONE.maxRuns)
 
-        // Stored as the repeat count (matches iOS), not the ordinal, so reordering
-        // the enum can't change a saved choice.
-        private fun runsTransformer() = PreferenceTransformer.enumTransformer<Int, Runs>(
-            defaultValue = { Runs.ONE },
-            valueOf = { raw -> Runs.entries.firstOrNull { it.maxRuns == raw } },
-            toRaw = { it.maxRuns },
+        // Stored as the repeat count (matches iOS), so custom counts round-trip.
+        private fun runsTransformer() = PreferenceTransformer<Int, Runs>(
+            rawToValue = Runs::of,
+            valueToRaw = { it.maxRuns },
         )
     }
 }

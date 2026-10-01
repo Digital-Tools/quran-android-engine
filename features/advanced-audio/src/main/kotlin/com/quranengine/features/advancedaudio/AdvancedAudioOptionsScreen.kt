@@ -13,8 +13,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -23,6 +25,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
@@ -37,6 +40,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
@@ -287,6 +292,7 @@ fun AdvancedAudioOptionsScreen(
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
                         label = ::runsLabel,
                     )
+                    CustomRunsRow(runs = verseRuns, onRunsChanged = viewModel::setVerseRuns)
                 }
             }
 
@@ -300,6 +306,7 @@ fun AdvancedAudioOptionsScreen(
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
                         label = ::runsLabel,
                     )
+                    CustomRunsRow(runs = listRuns, onRunsChanged = viewModel::setListRuns)
                 }
             }
 
@@ -365,12 +372,53 @@ private fun QuranDropdownSelector(
 
 private val runsOptions = listOf(Runs.ONE, Runs.TWO, Runs.THREE, Runs.INDEFINITE)
 
-private fun runsLabel(runs: Runs): String = when (runs) {
-    Runs.ONE -> "1x"
-    Runs.TWO -> "2x"
-    Runs.THREE -> "3x"
-    Runs.FOUR -> "4x"
-    Runs.INDEFINITE -> "Loop"
+private fun runsLabel(runs: Runs): String =
+    if (runs == Runs.INDEFINITE) "Loop" else "${runs.maxRuns}x"
+
+/**
+ * Any repeat count from 1 to [Runs.MAX_CUSTOM], beyond the preset choices.
+ * Starts from the current count (1 when looping), so presets are shortcuts.
+ */
+@Composable
+private fun CustomRunsRow(runs: Runs, onRunsChanged: (Runs) -> Unit) {
+    val count = if (runs == Runs.INDEFINITE) null else runs.maxRuns
+    // Local text so the field can be cleared while typing a new number.
+    var text by remember(count) { mutableStateOf(count?.toString().orEmpty()) }
+    fun commit(value: Int) = onRunsChanged(Runs.of(value.coerceIn(1, Runs.MAX_CUSTOM)))
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 16.dp, end = 8.dp, bottom = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = "Custom",
+            style = MaterialTheme.typography.bodyLarge,
+            color = QuranTheme.colors.text,
+            modifier = Modifier.weight(1f),
+        )
+        TextButton(onClick = { commit((count ?: 2) - 1) }, enabled = (count ?: 1) > 1) {
+            Text("−", style = MaterialTheme.typography.titleLarge)
+        }
+        OutlinedTextField(
+            value = text,
+            onValueChange = { input ->
+                val digits = input.filter(Char::isDigit).take(3)
+                text = digits
+                digits.toIntOrNull()?.takeIf { it > 0 }?.let(::commit)
+            },
+            placeholder = { Text("∞") },
+            suffix = { Text("x") },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            textStyle = MaterialTheme.typography.bodyLarge.copy(textAlign = TextAlign.Center),
+            modifier = Modifier.width(88.dp),
+        )
+        TextButton(onClick = { commit((count ?: 0) + 1) }, enabled = (count ?: 0) < Runs.MAX_CUSTOM) {
+            Text("+", style = MaterialTheme.typography.titleLarge)
+        }
+    }
 }
 
 private fun formatPlaybackRate(rate: Float): String = "${rate}x"
