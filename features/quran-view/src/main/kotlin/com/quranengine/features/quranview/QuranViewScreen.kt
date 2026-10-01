@@ -39,6 +39,9 @@ fun QuranViewScreen(
     noteState: NoteState = NoteState.NO_HIGHLIGHT,
     highlightingColor: Note.Color = Note.Color.YELLOW,
     ayahMenuAnchor: Offset? = null,
+    // False while the finger is still dragging out a multi-verse selection,
+    // so the menu doesn't cover the page before the range is chosen.
+    showAyahMenu: Boolean = true,
     ayahMenuActions: AyahMenuActions = AyahMenuActions(),
     noteEditorAyah: AyahNumber? = null,
     footnote: TranslationFootnote? = null,
@@ -223,7 +226,7 @@ fun QuranViewScreen(
         )
 
         // Menus sit above the audio dock so their rows stay tappable.
-        if (selectedAyahs.isNotEmpty()) {
+        if (showAyahMenu && selectedAyahs.isNotEmpty()) {
             AyahMenuSheet(
                 ayahs = selectedAyahs,
                 anchorInRoot = ayahMenuAnchor,

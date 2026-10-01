@@ -55,8 +55,10 @@ fun QuranViewRoute(
     var startAyah by remember { mutableStateOf<AyahNumber?>(null) }
     var selectedAyahs by remember { mutableStateOf<List<AyahNumber>>(emptyList()) }
     var selectionAnchor by remember { mutableStateOf<Offset?>(null) }
+    var isDraggingSelection by remember { mutableStateOf(false) }
     val dismissAyahMenu = {
         startAyah = null
+        isDraggingSelection = false
         selectedAyahs = emptyList()
         selectionAnchor = null
     }
@@ -102,6 +104,7 @@ fun QuranViewRoute(
         state = state.copy(audioBannerState = audioBannerState.copy(playbackRate = playbackRate)),
         selectedAyahs = selectedAyahs,
         ayahMenuAnchor = selectionAnchor,
+        showAyahMenu = !isDraggingSelection,
         modifier = modifier,
         transientMessage = userMessage,
         onTransientMessageShown = viewModel::clearUserMessage,
@@ -217,6 +220,7 @@ fun QuranViewRoute(
                                 startAyah = ayah
                                 selectedAyahs = listOf(ayah)
                                 selectionAnchor = pressInRoot
+                                isDraggingSelection = true
                             },
                             onAyahSelectionChanged = { ayah ->
                                 val anchor = startAyah ?: return@ContentImageView
@@ -225,7 +229,9 @@ fun QuranViewRoute(
                                 selectedAyahs = start.arrayTo(end)
                             },
                             onAyahSelectionEnded = {
-                                // Menu stays open; user taps an action to dismiss
+                                // Show the menu once the finger lifts; it then stays
+                                // open until the user taps an action.
+                                isDraggingSelection = false
                             },
                         )
                     }
