@@ -25,7 +25,7 @@ class ReciterPreferences(private val preferences: Preferences) {
 
     companion object {
         private val LAST_SELECTED_RECITER_ID =
-            PreferenceKey(key = "LastSelectedQariId", defaultValue = 41)
+            PreferenceKey(key = "LastSelectedQariId", defaultValue = 78) // Abu Bakr Ash-Shatri, Mizan's default
         private val RECENT_RECITER_IDS =
             PreferenceKey(key = "recentRecitersIdsKey", defaultValue = "")
     }
