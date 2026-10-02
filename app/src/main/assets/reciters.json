@@ -37,15 +37,6 @@
   },
   {
     "category": "arabic",
-    "url": "https://download.quranicaudio.com/quran/abdullaah_3awwaad_al-juhaynee/",
-    "id": 103,
-    "databaseName": "abdullah_juhany",
-    "path": "abdullah_juhany",
-    "name": "qari_juhany_gapless",
-    "hasGaplessAlternative": false
-  },
-  {
-    "category": "arabic",
     "url": "https://download.quranicaudio.com/quran/abdullaah_basfar/archive/",
     "id": 104,
     "databaseName": "abdullah_basfar",
@@ -261,15 +252,6 @@
     "hasGaplessAlternative": false
   },
   {
-    "category": "arabic",
-    "url": "https://download.quranicaudio.com/quran/ibrahim_al_akhdar/",
-    "id": 128,
-    "databaseName": "ibrahim_alakhdar",
-    "path": "ibrahim_alakhdar",
-    "name": "qari_ibrahim_alakhdar_gapless",
-    "hasGaplessAlternative": false
-  },
-  {
     "category": "english",
     "url": "https://download.quranicaudio.com/quran/ibrahim_walk/",
     "id": 129,
@@ -309,7 +291,7 @@
     "category": "arabic",
     "url": "https://download.quranicaudio.com/quran/maher_256/",
     "id": 9,
-    "databaseName": "muaiqly_kfgqpc",
+    "databaseName": "maher_al_muaiqly",
     "path": "muaiqly_kfgqpc",
     "name": "qari_muaiqly_gapless",
     "hasGaplessAlternative": false
@@ -393,15 +375,6 @@
     "databaseName": "muhammad_ayyoub",
     "path": "muhammad_ayyoub",
     "name": "qari_ayyoub_gapless",
-    "hasGaplessAlternative": false
-  },
-  {
-    "category": "arabic",
-    "url": "https://download.quranicaudio.com/quran/nabil_rifa3i/reencode/",
-    "id": 140,
-    "databaseName": "nabil_rifa3i",
-    "path": "nabil_rifa3i",
-    "name": "qari_nabil_rifa3i_gapless",
     "hasGaplessAlternative": false
   },
   {
