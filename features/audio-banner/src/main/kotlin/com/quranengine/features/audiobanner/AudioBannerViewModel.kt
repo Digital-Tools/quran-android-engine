@@ -137,7 +137,11 @@ class AudioBannerViewModel @Inject constructor(
 
                 val rate = _playbackRate.value
                 updatePlaybackState(PlaybackState.Playing)
-                audioPlayer.play(reciter, rate, from, end, verseRuns, listRuns)
+                audioPlayer.play(
+                    reciter, rate, from, end, verseRuns, listRuns,
+                    verseDelay = audioPreferences.verseDelay,
+                    repetitionDelay = audioPreferences.repetitionDelay,
+                )
             } catch (e: CancellationException) {
                 // A newer play request took over; leave its state untouched.
                 throw e

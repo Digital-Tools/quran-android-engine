@@ -126,6 +126,8 @@ class QuranPlaybackCoordinator @Inject constructor(
                 to = endAyah,
                 verseRuns = audioPreferences.verseRuns,
                 listRuns = audioPreferences.listRuns,
+                verseDelay = audioPreferences.verseDelay,
+                repetitionDelay = audioPreferences.repetitionDelay,
             )
             notifyState()
         } catch (e: Exception) {

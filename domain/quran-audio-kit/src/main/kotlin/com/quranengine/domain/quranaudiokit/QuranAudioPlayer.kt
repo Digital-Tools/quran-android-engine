@@ -2,7 +2,9 @@ package com.quranengine.domain.quranaudiokit
 
 import com.quranengine.core.audioplayer.NowPlayingUpdater
 import com.quranengine.core.audioplayer.QueuePlayerActions
+import com.quranengine.core.audioplayer.RepetitionDelay
 import com.quranengine.core.audioplayer.Runs
+import com.quranengine.core.audioplayer.VerseDelay
 import com.quranengine.domain.reciterservice.AudioUnzipper
 import com.quranengine.model.quranaudio.AudioType
 import com.quranengine.model.quranaudio.Reciter
@@ -71,6 +73,8 @@ class QuranAudioPlayer(
         to: AyahNumber,
         verseRuns: Runs,
         listRuns: Runs,
+        verseDelay: VerseDelay = VerseDelay.NONE,
+        repetitionDelay: RepetitionDelay = RepetitionDelay.NONE,
     ) {
         Timber.i(
             "Playing startAyah=%s, to=%s, reciter=%s, verseRuns=%s, listRuns=%s",
@@ -80,7 +84,10 @@ class QuranAudioPlayer(
 
         val builder = getAudioRequestBuilder(reciter)
         val audioRequest = builder.buildRequest(reciter, from, to, frameRuns = verseRuns, requestRuns = listRuns)
-        val request = audioRequest.getRequest()
+        val request = audioRequest.getRequest().copy(
+            verseDelay = verseDelay,
+            repetitionDelay = repetitionDelay,
+        )
         willPlay(request)
         this.audioRequest = audioRequest
         player.actions = newPlayerActions()

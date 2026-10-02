@@ -3,7 +3,9 @@ package com.quranengine.features.advancedaudio
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.quranengine.core.audioplayer.RepetitionDelay
 import com.quranengine.core.audioplayer.Runs
+import com.quranengine.core.audioplayer.VerseDelay
 import com.quranengine.core.localization.Localizer
 import com.quranengine.domain.quranaudiokit.AudioPreferences
 import com.quranengine.domain.reciterservice.ReciterDataRetriever
@@ -54,6 +56,8 @@ class AdvancedAudioOptionsViewModel @Inject constructor(
     val toVerse = MutableStateFlow(initialEnd)
     val verseRuns = MutableStateFlow(audioPreferences.verseRuns)
     val listRuns = MutableStateFlow(audioPreferences.listRuns)
+    val verseDelay = MutableStateFlow(audioPreferences.verseDelay)
+    val repetitionDelay = MutableStateFlow(audioPreferences.repetitionDelay)
     val playbackRate = MutableStateFlow(audioPreferences.playbackRate)
 
     val suras: List<Sura> = quran.suras
@@ -147,6 +151,16 @@ class AdvancedAudioOptionsViewModel @Inject constructor(
     fun setListRuns(runs: Runs) {
         audioPreferences.listRuns = runs
         listRuns.value = runs
+    }
+
+    fun setVerseDelay(delay: VerseDelay) {
+        audioPreferences.verseDelay = delay
+        verseDelay.value = delay
+    }
+
+    fun setRepetitionDelay(delay: RepetitionDelay) {
+        audioPreferences.repetitionDelay = delay
+        repetitionDelay.value = delay
     }
 
     fun setPlaybackRate(rate: Float) {

@@ -2,10 +2,12 @@ package com.quranengine.features.advancedaudio
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,47 +15,54 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.quranengine.core.audioplayer.RepetitionDelay
 import com.quranengine.core.audioplayer.Runs
+import com.quranengine.core.audioplayer.VerseDelay
 import com.quranengine.domain.qurantextkit.englishName
 import com.quranengine.ui.components.ChoicesView
 import com.quranengine.ui.components.NoorAccessory
 import com.quranengine.ui.components.NoorBasicSection
 import com.quranengine.ui.components.NoorListItem
 import com.quranengine.ui.theme.QuranTheme
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -68,6 +77,8 @@ fun AdvancedAudioOptionsScreen(
     val toVerse by viewModel.toVerse.collectAsState()
     val verseRuns by viewModel.verseRuns.collectAsState()
     val listRuns by viewModel.listRuns.collectAsState()
+    val verseDelay by viewModel.verseDelay.collectAsState()
+    val repetitionDelay by viewModel.repetitionDelay.collectAsState()
     val playbackRate by viewModel.playbackRate.collectAsState()
     val suras = viewModel.suras
 
@@ -282,31 +293,35 @@ fun AdvancedAudioOptionsScreen(
                 }
             }
 
-            // Verse repetitions
+            // Play each verse: repeat count + pause after each verse
             item {
-                NoorBasicSection(title = "Verse Repetitions") {
-                    ChoicesView(
-                        items = runsOptions,
-                        selectedItem = verseRuns,
-                        onItemSelected = viewModel::setVerseRuns,
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-                        label = ::runsLabel,
+                NoorBasicSection(title = "Play each verse") {
+                    RepeatCountRow(runs = verseRuns, onRunsChanged = viewModel::setVerseRuns)
+                    PauseChoices(
+                        title = "Pause After Each Verse",
+                        description = "Choose how long to pause after each verse. 1× waits " +
+                            "about as long as the verse took to play, giving you time to " +
+                            "repeat or memorize before continuing.",
+                        items = VerseDelay.entries,
+                        selected = verseDelay,
+                        onSelected = viewModel::setVerseDelay,
+                        label = ::verseDelayLabel,
                     )
-                    CustomRunsRow(runs = verseRuns, onRunsChanged = viewModel::setVerseRuns)
                 }
             }
 
-            // List repetitions
+            // Play set of verses: repeat count + pause between repetitions
             item {
-                NoorBasicSection(title = "List Repetitions") {
-                    ChoicesView(
-                        items = runsOptions,
-                        selectedItem = listRuns,
-                        onItemSelected = viewModel::setListRuns,
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-                        label = ::runsLabel,
+                NoorBasicSection(title = "Play set of verses") {
+                    RepeatCountRow(runs = listRuns, onRunsChanged = viewModel::setListRuns)
+                    PauseChoices(
+                        title = "Pause Between Repetitions (seconds)",
+                        description = "Sets how long to pause before the next repetition starts.",
+                        items = RepetitionDelay.entries,
+                        selected = repetitionDelay,
+                        onSelected = viewModel::setRepetitionDelay,
+                        label = ::repetitionDelayLabel,
                     )
-                    CustomRunsRow(runs = listRuns, onRunsChanged = viewModel::setListRuns)
                 }
             }
 
@@ -370,54 +385,163 @@ private fun QuranDropdownSelector(
     }
 }
 
-private val runsOptions = listOf(Runs.ONE, Runs.TWO, Runs.THREE, Runs.INDEFINITE)
-
 private fun runsLabel(runs: Runs): String =
-    if (runs == Runs.INDEFINITE) "Loop" else "${runs.maxRuns}x"
+    if (runs == Runs.INDEFINITE) "Loop" else "${runs.maxRuns}×"
 
-/**
- * Any repeat count from 1 to [Runs.MAX_CUSTOM], beyond the preset choices.
- * Starts from the current count (1 when looping), so presets are shortcuts.
- */
+private fun verseDelayLabel(delay: VerseDelay): String =
+    if (delay == VerseDelay.NONE) "Off" else "${formatMultiplier(delay.multiplier)}×"
+
+private fun repetitionDelayLabel(delay: RepetitionDelay): String =
+    if (delay == RepetitionDelay.NONE) "Off" else "${delay.seconds.toInt()}s"
+
+private fun formatMultiplier(value: Double): String =
+    if (value == value.toInt().toDouble()) value.toInt().toString() else value.toString().removePrefix("0")
+        .let { if (it.startsWith(".")) "0$it" else it }
+
+/** Loop first, then 1× through 100×, like iOS. */
+private val wheelRuns: List<Runs> = listOf(Runs.INDEFINITE) + (1..100).map(Runs::of)
+
+/** "Repeat Count" row showing the choice; tapping expands an inline wheel. */
 @Composable
-private fun CustomRunsRow(runs: Runs, onRunsChanged: (Runs) -> Unit) {
-    val count = if (runs == Runs.INDEFINITE) null else runs.maxRuns
-    // Local text so the field can be cleared while typing a new number.
-    var text by remember(count) { mutableStateOf(count?.toString().orEmpty()) }
-    fun commit(value: Int) = onRunsChanged(Runs.of(value.coerceIn(1, Runs.MAX_CUSTOM)))
+private fun RepeatCountRow(runs: Runs, onRunsChanged: (Runs) -> Unit) {
+    var expanded by rememberSaveable { mutableStateOf(false) }
+    val accent = if (expanded) QuranTheme.mizanGold else QuranTheme.colors.secondaryText
+    Column {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { expanded = !expanded }
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = "Repeat Count",
+                style = MaterialTheme.typography.bodyLarge,
+                color = QuranTheme.colors.text,
+                modifier = Modifier.weight(1f),
+            )
+            Text(
+                text = if (runs == Runs.INDEFINITE) "Loop ∞" else runsLabel(runs),
+                style = MaterialTheme.typography.bodyLarge,
+                color = accent,
+            )
+            Icon(
+                imageVector = Icons.Filled.KeyboardArrowDown,
+                contentDescription = null,
+                tint = accent,
+                modifier = Modifier
+                    .padding(start = 4.dp)
+                    .rotate(if (expanded) 180f else 0f),
+            )
+        }
+        if (expanded) {
+            RunsWheel(selected = runs, onSelected = onRunsChanged)
+        }
+    }
+}
 
-    Row(
+/** A snapping wheel of [wheelRuns]; the centered row is the selection. */
+@Composable
+private fun RunsWheel(selected: Runs, onSelected: (Runs) -> Unit) {
+    val itemHeight = 40.dp
+    val visibleItems = 5
+    val initialIndex = wheelRuns.indexOf(selected).coerceAtLeast(0)
+    val listState = rememberLazyListState(initialFirstVisibleItemIndex = initialIndex)
+    val itemHeightPx = with(LocalDensity.current) { itemHeight.toPx() }
+    val scope = rememberCoroutineScope()
+
+    // Index of the row in the middle slot (top padding is two rows).
+    val centeredIndex by remember {
+        derivedStateOf {
+            val offsetRows = if (listState.firstVisibleItemScrollOffset > itemHeightPx / 2) 1 else 0
+            (listState.firstVisibleItemIndex + offsetRows).coerceIn(0, wheelRuns.lastIndex)
+        }
+    }
+    LaunchedEffect(listState.isScrollInProgress) {
+        if (!listState.isScrollInProgress) {
+            val choice = wheelRuns[centeredIndex]
+            if (choice != selected) onSelected(choice)
+        }
+    }
+
+    Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(start = 16.dp, end = 8.dp, bottom = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
+            .height(itemHeight * visibleItems),
+        contentAlignment = Alignment.Center,
     ) {
+        Box(
+            modifier = Modifier
+                .padding(horizontal = 16.dp)
+                .fillMaxWidth()
+                .height(itemHeight)
+                .clip(RoundedCornerShape(10.dp))
+                .background(QuranTheme.colors.secondaryBackground),
+        )
+        LazyColumn(
+            state = listState,
+            flingBehavior = rememberSnapFlingBehavior(listState),
+            contentPadding = PaddingValues(vertical = itemHeight * (visibleItems / 2)),
+            modifier = Modifier.fillMaxSize(),
+        ) {
+            itemsIndexed(wheelRuns) { index, option ->
+                val distance = kotlin.math.abs(index - centeredIndex)
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(itemHeight)
+                        .clickable { scope.launch { listState.animateScrollToItem(index) } },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text = if (option == Runs.INDEFINITE) "Loop ∞" else runsLabel(option),
+                        style = if (distance == 0) {
+                            MaterialTheme.typography.titleLarge
+                        } else {
+                            MaterialTheme.typography.bodyLarge
+                        },
+                        color = QuranTheme.colors.text.copy(
+                            alpha = when (distance) {
+                                0 -> 1f
+                                1 -> 0.45f
+                                else -> 0.2f
+                            },
+                        ),
+                    )
+                }
+            }
+        }
+    }
+}
+
+/** A pause option as segmented choices with a title and an explanation. */
+@Composable
+private fun <T> PauseChoices(
+    title: String,
+    description: String,
+    items: List<T>,
+    selected: T,
+    onSelected: (T) -> Unit,
+    label: (T) -> String,
+) {
+    Column(modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 12.dp)) {
         Text(
-            text = "Custom",
-            style = MaterialTheme.typography.bodyLarge,
-            color = QuranTheme.colors.text,
-            modifier = Modifier.weight(1f),
+            text = title,
+            style = MaterialTheme.typography.bodyMedium,
+            color = QuranTheme.colors.secondaryText,
         )
-        TextButton(onClick = { commit((count ?: 2) - 1) }, enabled = (count ?: 1) > 1) {
-            Text("−", style = MaterialTheme.typography.titleLarge)
-        }
-        OutlinedTextField(
-            value = text,
-            onValueChange = { input ->
-                val digits = input.filter(Char::isDigit).take(3)
-                text = digits
-                digits.toIntOrNull()?.takeIf { it > 0 }?.let(::commit)
-            },
-            placeholder = { Text("∞") },
-            suffix = { Text("x") },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            textStyle = MaterialTheme.typography.bodyLarge.copy(textAlign = TextAlign.Center),
-            modifier = Modifier.width(88.dp),
+        ChoicesView(
+            items = items,
+            selectedItem = selected,
+            onItemSelected = onSelected,
+            modifier = Modifier.padding(vertical = 8.dp),
+            label = label,
         )
-        TextButton(onClick = { commit((count ?: 0) + 1) }, enabled = (count ?: 0) < Runs.MAX_CUSTOM) {
-            Text("+", style = MaterialTheme.typography.titleLarge)
-        }
+        Text(
+            text = description,
+            style = MaterialTheme.typography.bodySmall,
+            color = QuranTheme.colors.secondaryText,
+        )
     }
 }
 

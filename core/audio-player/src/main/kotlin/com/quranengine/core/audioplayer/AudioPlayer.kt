@@ -33,6 +33,15 @@ internal class AudioPlayer(
     private var pendingFrameEnd: Runnable? = null
     private var pendingProgressUpdate: Runnable? = null
 
+    // A pause after a verse (VerseDelay / RepetitionDelay): the player is paused
+    // and [afterDelay] runs when [pendingDelay] fires.
+    private var pendingDelay: Runnable? = null
+    private var afterDelay: (() -> Unit)? = null
+
+    // True while waiting out a delay, so our own pause isn't reported as the
+    // user pausing (port of the iOS `isDelaying`).
+    private var isDelaying = false
+
     // ---- Public controls ----
 
     fun startPlaying() {
@@ -40,18 +49,28 @@ internal class AudioPlayer(
     }
 
     fun resume() {
+        // Paused during a between-verse pause: skip what's left of it.
+        afterDelay?.let { action ->
+            afterDelay = null
+            action()
+            return
+        }
         player?.play(rate) ?: return
         waitUntilFrameEnds()
         scheduleProgressUpdates()
     }
 
     fun pause() {
+        // Keep [afterDelay] so resume() continues to the next verse.
+        cancelDelayTimer()
+        isDelaying = false
         cancelFrameTimer()
         cancelProgressUpdates()
         player?.pause()
     }
 
     fun stop() {
+        cancelDelay()
         cancelFrameTimer()
         cancelProgressUpdates()
         player?.stop()
@@ -71,6 +90,7 @@ internal class AudioPlayer(
     }
 
     fun stepForward() {
+        cancelDelay()
         cancelFrameTimer()
         playing.resetFramePlays()
 
@@ -84,6 +104,7 @@ internal class AudioPlayer(
     }
 
     fun stepBackward() {
+        cancelDelay()
         cancelFrameTimer()
         playing.resetFramePlays()
 
@@ -119,6 +140,7 @@ internal class AudioPlayer(
      * for the new URI. Otherwise we seek within the existing player.
      */
     private fun play(fileIndex: Int, frameIndex: Int, forceSeek: Boolean) {
+        cancelDelay()
         cancelFrameTimer()
         cancelProgressUpdates()
 
@@ -133,7 +155,8 @@ internal class AudioPlayer(
             player?.stop()
             val newPlayer = Player(context, file.uri)
             newPlayer.onRateChanged = { newRate ->
-                actions?.playbackRateChanged?.invoke(newRate)
+                // Ignore the pause we trigger ourselves while waiting out a delay.
+                if (!isDelaying) actions?.playbackRateChanged?.invoke(newRate)
             }
             player = newPlayer
             // Seek to the frame start-time and begin playback.
@@ -208,6 +231,9 @@ internal class AudioPlayer(
             return
         }
 
+        // Pause before whatever plays next, scaled by the verse that just ended.
+        val delay = verseDelaySeconds()
+
         // 1. Repeat the same frame if frame-runs not exhausted.
         playing.incrementFramePlays()
         Timber.d(
@@ -220,9 +246,12 @@ internal class AudioPlayer(
             playing.request.requestRuns.maxRuns,
         )
         if (!playing.isLastPlayForCurrentFrame()) {
-            val player = player ?: return
-            player.seek(playing.frame.startTime, rate)
-            waitUntilFrameEnds()
+            playAfterDelay(delay) {
+                val player = player ?: return@playAfterDelay
+                player.seek(playing.frame.startTime, rate)
+                waitUntilFrameEnds()
+                scheduleProgressUpdates()
+            }
             return
         }
 
@@ -231,7 +260,9 @@ internal class AudioPlayer(
 
         val next = playing.nextFrame()
         if (next != null) {
-            play(fileIndex = next.first, frameIndex = next.second, forceSeek = true)
+            playAfterDelay(delay) {
+                play(fileIndex = next.first, frameIndex = next.second, forceSeek = true)
+            }
             return
         }
 
@@ -243,13 +274,62 @@ internal class AudioPlayer(
             playing.request.requestRuns.maxRuns,
         )
         if (!playing.isLastRun()) {
-            play(fileIndex = 0, frameIndex = 0, forceSeek = true)
+            // The verse pause plus the fixed pause between repetitions.
+            playAfterDelay(delay + playing.request.repetitionDelay.seconds) {
+                play(fileIndex = 0, frameIndex = 0, forceSeek = true)
+            }
             return
         }
 
         // Truly finished.
         stop()
         actions?.playbackEnded?.invoke()
+    }
+
+    /**
+     * Wall-clock pause after the frame that just ended: its recited length
+     * (media time / rate) times the [VerseDelay] multiplier. 0 when off.
+     */
+    private fun verseDelaySeconds(): Double {
+        val multiplier = playing.request.verseDelay.multiplier
+        if (multiplier <= 0) return 0.0
+        val p = player ?: return 0.0
+        val frameEnd = playing.frameEndTime ?: p.duration
+        val recited = (frameEnd - playing.frame.startTime).coerceAtLeast(0.0)
+        val effectiveRate = if (rate > 0f) rate else 1f
+        return recited / effectiveRate * multiplier
+    }
+
+    /** Runs [action] after pausing [seconds]; immediately when there is no pause. */
+    private fun playAfterDelay(seconds: Double, action: () -> Unit) {
+        if (seconds <= 0) {
+            action()
+            return
+        }
+        cancelProgressUpdates()
+        isDelaying = true
+        player?.pause()
+        afterDelay = action
+        val runnable = Runnable {
+            pendingDelay = null
+            isDelaying = false
+            val next = afterDelay
+            afterDelay = null
+            next?.invoke()
+        }
+        pendingDelay = runnable
+        handler.postDelayed(runnable, (seconds * 1_000).toLong())
+    }
+
+    private fun cancelDelayTimer() {
+        pendingDelay?.let { handler.removeCallbacks(it) }
+        pendingDelay = null
+    }
+
+    private fun cancelDelay() {
+        cancelDelayTimer()
+        afterDelay = null
+        isDelaying = false
     }
 
     private fun cancelFrameTimer() {

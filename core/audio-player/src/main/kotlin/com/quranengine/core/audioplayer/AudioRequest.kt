@@ -31,10 +31,14 @@ data class AudioFile(
  * @param endTime     Optional global end-time (seconds) for the last frame of the last file.
  * @param frameRuns   How many times each individual frame should repeat.
  * @param requestRuns How many times the entire request should repeat.
+ * @param verseDelay  Pause after each verse, scaled by the verse's length.
+ * @param repetitionDelay Extra pause before the whole request repeats.
  */
 data class AudioRequest(
     val files: List<AudioFile>,
     val endTime: Double?,
     val frameRuns: Runs,
     val requestRuns: Runs,
+    val verseDelay: VerseDelay = VerseDelay.NONE,
+    val repetitionDelay: RepetitionDelay = RepetitionDelay.NONE,
 )
