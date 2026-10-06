@@ -53,7 +53,7 @@ import java.time.format.FormatStyle
 @Composable
 fun NotesScreen(
     viewModel: NotesViewModel,
-    onBack: () -> Unit,
+    onBack: (() -> Unit)? = null,
     onNavigateToAyah: (AyahNumber) -> Unit,
 ) {
     val notes by viewModel.notes.collectAsState()
@@ -78,7 +78,7 @@ fun NotesScreen(
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    if (onBack != null) IconButton(onClick = onBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back",

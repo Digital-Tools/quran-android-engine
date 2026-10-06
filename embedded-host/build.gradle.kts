@@ -68,6 +68,7 @@ dependencies {
     api(project(":features:quran-translation"))
     api(project(":features:audio-banner"))
     api(project(":features:bookmarks"))
+    api(project(":features:notes"))
     api(project(":features:search"))
     api(project(":features:reciter-list"))
     api(project(":features:audio-downloads"))

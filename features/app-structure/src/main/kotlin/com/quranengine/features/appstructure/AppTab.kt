@@ -3,6 +3,7 @@ package com.quranengine.features.appstructure
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.outlined.StickyNote2
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -16,6 +17,11 @@ enum class AppTab(
         route = AppRoute.Home.route,
         title = "Home",
         icon = Icons.Default.Home,
+    ),
+    NOTES(
+        route = AppRoute.Notes.route,
+        title = "Notes",
+        icon = Icons.Outlined.StickyNote2,
     ),
     BOOKMARKS(
         route = AppRoute.Bookmarks.route,

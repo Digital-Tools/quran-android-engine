@@ -52,7 +52,7 @@ import java.time.format.FormatStyle
 fun BookmarksScreen(
     viewModel: BookmarksViewModel,
     onNavigateToPage: (PageBookmark) -> Unit,
-    onNavigateToNotes: () -> Unit = {},
+    onNavigateToNotes: (() -> Unit)? = null,
 ) {
     val bookmarks by viewModel.bookmarks.collectAsState()
     val error by viewModel.error.collectAsState()
@@ -76,12 +76,14 @@ fun BookmarksScreen(
                     )
                 },
                 actions = {
-                    IconButton(onClick = onNavigateToNotes) {
-                        Icon(
-                            imageVector = Icons.Outlined.StickyNote2,
-                            contentDescription = "Notes",
-                            tint = QuranTheme.colors.secondaryText,
-                        )
+                    if (onNavigateToNotes != null) {
+                        IconButton(onClick = onNavigateToNotes) {
+                            Icon(
+                                imageVector = Icons.Outlined.StickyNote2,
+                                contentDescription = "Notes",
+                                tint = QuranTheme.colors.secondaryText,
+                            )
+                        }
                     }
                     if (bookmarks.isNotEmpty()) {
                         IconButton(onClick = { viewModel.deleteAllBookmarks() }) {

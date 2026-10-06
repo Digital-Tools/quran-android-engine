@@ -140,9 +140,6 @@ fun AppStructureScreen(
                     onNavigateToPage = { bookmark ->
                         navController.navigate(AppRoute.QuranView(bookmark.page.pageNumber).route)
                     },
-                    onNavigateToNotes = {
-                        navController.navigate(AppRoute.Notes.route)
-                    },
                 )
             }
 
@@ -150,7 +147,6 @@ fun AppStructureScreen(
                 val viewModel: NotesViewModel = hiltViewModel()
                 NotesScreen(
                     viewModel = viewModel,
-                    onBack = { navController.popBackStack() },
                     onNavigateToAyah = { ayah ->
                         navController.navigateToAyah(ayah)
                     },

@@ -88,6 +88,7 @@ fun NavController.navigateFromDeepLink(handler: DeepLinkHandler, uriString: Stri
     when (route) {
         AppRoute.Home -> navigateToTab(route.route)
         AppRoute.Bookmarks -> navigateToTab(route.route)
+        AppRoute.Notes -> navigateToTab(route.route)
         is AppRoute.Search -> navigate(route.route) {
             popUpTo(graph.findStartDestination().id) {
                 saveState = true

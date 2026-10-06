@@ -17,6 +17,7 @@ import javax.inject.Inject
  * - `quranengine://search`
  * - `quranengine://search?q={query}`
  * - `quranengine://bookmarks`
+ * - `quranengine://notes`
  * - `quranengine://settings`
  * - `quranengine://translations`
  * - `quranengine://reciters`
@@ -54,6 +55,7 @@ class DeepLinkHandler @Inject constructor(
                         ?: parseQuery(uri.rawQuery)[AppRoute.Search.QUERY_ARG]
                 )
                 "bookmarks" -> AppRoute.Bookmarks
+                "notes" -> AppRoute.Notes
                 "settings" -> AppRoute.Settings
                 "translations" -> AppRoute.TranslationsList
                 "reciters" -> AppRoute.ReciterList
