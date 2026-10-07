@@ -7,8 +7,8 @@ import com.quranengine.core.audioplayer.AudioRequest
 import com.quranengine.core.audioplayer.PlayerItemInfo
 import com.quranengine.core.audioplayer.Runs
 import com.quranengine.core.localization.Localizer
-import com.quranengine.core.localization.Table
 import com.quranengine.domain.audiotimingservice.ReciterTimingRetriever
+import com.quranengine.domain.qurantextkit.playerTitle
 import com.quranengine.domain.reciterservice.localizedName
 import com.quranengine.model.quranaudio.AudioType
 import com.quranengine.model.quranaudio.Reciter
@@ -32,7 +32,7 @@ internal class GaplessAudioRequest(
     override fun getPlayerInfo(fileIndex: Int): PlayerItemInfo {
         val sura = ayahs[fileIndex][0].sura
         return PlayerItemInfo(
-            title = localizer.l("sura_${sura.suraNumber}", table = Table.SURAS),
+            title = sura.playerTitle(localizer),
             artist = reciter.localizedName(localizer),
         )
     }

@@ -233,7 +233,7 @@ internal class AudioPlayer(
             return
         }
 
-        advanceAfterFrame()
+        advanceAfterFrame(fileEnded = p?.hasEnded == true)
     }
 
     /**
@@ -245,10 +245,10 @@ internal class AudioPlayer(
     private fun playerEnded(ended: Player) {
         if (ended !== player || isDelaying) return
         cancelFrameTimer()
-        advanceAfterFrame()
+        advanceAfterFrame(fileEnded = true)
     }
 
-    private fun advanceAfterFrame() {
+    private fun advanceAfterFrame(fileEnded: Boolean) {
 
         // Pause before whatever plays next, scaled by the verse that just ended.
         val delay = verseDelaySeconds()
@@ -277,7 +277,10 @@ internal class AudioPlayer(
         // Frame runs exhausted — move to next frame.
         playing.resetFramePlays()
 
-        val next = playing.nextFrame()
+        // Once the file has run out, the frames left in it start after its audio and
+        // have nothing to play (the timings run past the file): go on with the next
+        // file instead of waiting out each silent verse.
+        val next = if (fileEnded) playing.firstFrameOfNextFile() else playing.nextFrame()
         if (next != null) {
             playAfterDelay(delay) {
                 play(fileIndex = next.first, frameIndex = next.second, forceSeek = true)

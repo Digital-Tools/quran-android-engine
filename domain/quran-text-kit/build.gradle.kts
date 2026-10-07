@@ -14,6 +14,9 @@ dependencies {
     implementation(libs.core.ktx)
     implementation(libs.coroutines.core)
     implementation(libs.timber)
+
+    testImplementation(libs.junit)
+    testImplementation(libs.truth)
 }
 
 android {

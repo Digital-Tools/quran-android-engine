@@ -5,6 +5,7 @@ import android.media.AudioAttributes
 import android.media.AudioFocusRequest
 import android.media.AudioManager
 import android.os.Build
+import androidx.media3.common.C
 import androidx.media3.exoplayer.ExoPlayer
 import timber.log.Timber
 
@@ -74,9 +75,15 @@ class QueuePlayer(private val context: Context) {
         stop()
         requestAudioFocus()
         PlaybackService.start(context)
-        PlaybackService.Controls.onTogglePause = { togglePause() }
-        PlaybackService.Controls.onStop = { stop() }
+        PlaybackService.Controls.apply {
+            onPlay = { resume() }
+            onPause = { pause() }
+            onNext = { stepForward() }
+            onPrevious = { stepBackward() }
+            onStop = { stopFromControls() }
+        }
 
+        speed = rate
         val player = AudioPlayer(context, request, rate)
         player.actions = actions?.let { withServiceUpdates(it) }
         audioPlayer = player
@@ -119,20 +126,42 @@ class QueuePlayer(private val context: Context) {
     // ---- Foreground service ----
 
     private var paused = false
+    private var speed = 1f
 
-    private fun togglePause() {
-        if (paused) resume() else pause()
+    /** The player of the file now playing, for the lock screen's progress bar. */
+    private var currentFile: ExoPlayer? = null
+
+    /**
+     * Stop pressed on the lock screen, in the notification or on a headset. [stop] does
+     * not report the end (the app's own Stop button updates its screen itself), so the
+     * app is told here, or its player would still show a recitation that has stopped.
+     */
+    private fun stopFromControls() {
+        val listener = actions
+        stop()
+        listener?.playbackEnded?.invoke()
     }
 
     private fun stopService() {
-        PlaybackService.Controls.onTogglePause = null
-        PlaybackService.Controls.onStop = null
+        PlaybackService.Controls.clear()
+        currentFile = null
         PlaybackService.stop(context)
     }
 
+    private fun publishPlayback() {
+        val file = currentFile
+        PlaybackService.updatePlayback(
+            isPaused = paused,
+            newPositionMs = file?.currentPosition ?: -1,
+            newDurationMs = file?.duration?.takeIf { it != C.TIME_UNSET } ?: -1,
+            newSpeed = speed,
+        )
+    }
+
     /**
-     * Keeps the foreground service in step with playback: its notification follows
-     * pause and resume, and it goes away when the request finishes by itself.
+     * Keeps the foreground service in step with playback: the lock screen follows
+     * pause and resume, each new verse updates its position, and it goes away when
+     * the request finishes by itself.
      */
     private fun withServiceUpdates(callbacks: QueuePlayerActions): QueuePlayerActions =
         callbacks.copy(
@@ -142,8 +171,14 @@ class QueuePlayer(private val context: Context) {
             },
             playbackRateChanged = { rate ->
                 paused = rate <= 0f
-                PlaybackService.updatePaused(paused)
+                if (rate > 0f) speed = rate
+                publishPlayback()
                 callbacks.playbackRateChanged(rate)
+            },
+            audioFrameChanged = { fileIndex, frameIndex, exoPlayer ->
+                currentFile = exoPlayer
+                publishPlayback()
+                callbacks.audioFrameChanged(fileIndex, frameIndex, exoPlayer)
             },
         )
 

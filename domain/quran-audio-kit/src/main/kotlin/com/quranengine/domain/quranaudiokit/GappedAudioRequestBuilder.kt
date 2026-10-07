@@ -7,7 +7,7 @@ import com.quranengine.core.audioplayer.AudioRequest
 import com.quranengine.core.audioplayer.PlayerItemInfo
 import com.quranengine.core.audioplayer.Runs
 import com.quranengine.core.localization.Localizer
-import com.quranengine.core.localization.Table
+import com.quranengine.domain.qurantextkit.playerTitle
 import com.quranengine.domain.reciterservice.localizedName
 import com.quranengine.model.quranaudio.AudioType
 import com.quranengine.model.quranaudio.Reciter
@@ -32,7 +32,7 @@ internal class GappedAudioRequest(
     override fun getPlayerInfo(fileIndex: Int): PlayerItemInfo {
         val ayah = ayahs[fileIndex]
         return PlayerItemInfo(
-            title = localizer.l("sura_${ayah.sura.suraNumber}", table = Table.SURAS),
+            title = ayah.sura.playerTitle(localizer),
             artist = reciter.localizedName(localizer),
         )
     }

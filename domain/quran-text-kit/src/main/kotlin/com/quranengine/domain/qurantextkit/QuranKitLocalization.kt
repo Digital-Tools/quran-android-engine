@@ -134,6 +134,16 @@ fun Sura.localizedName(
 fun Sura.englishName(): String = ENGLISH_SURA_NAMES[suraNumber - 1]
 
 /**
+ * The sura's name for the media player (lock screen and notification): the localized
+ * name when the sura names are loaded, otherwise "Surah" and the English
+ * transliteration, for example "Surah Ṭā-Hā".
+ */
+fun Sura.playerTitle(localizer: Localizer): String {
+    val localized = localizedName(localizer)
+    return if (localized.startsWith("sura_names[")) "Surah ${englishName()}" else localized
+}
+
+/**
  * The sura's name as a single decorated glyph, to be rendered in `QuranFontFamilies.suraNames`.
  * The glyphs sit in the Unicode private-use area, so the code points carry no meaning outside
  * that font. Table copied from `Sura.arabicSuraName` in quran-ios.

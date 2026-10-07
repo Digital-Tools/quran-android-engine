@@ -96,6 +96,10 @@ internal class AudioPlaying(
         return null
     }
 
+    /** The first frame of the next file, or `null` in the last file. */
+    fun firstFrameOfNextFile(): Pair<Int, Int>? =
+        if (fileIndex < request.files.size - 1) (fileIndex + 1) to 0 else null
+
     /**
      * Returns the (fileIndex, frameIndex) of the next frame, or `null` if already at the end.
      */
