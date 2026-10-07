@@ -54,6 +54,7 @@ class NowPlayingUpdater(private val session: MediaSession) {
         title = info.title
         artist = info.artist
         artworkUri = info.artworkUri
+        PlaybackService.updateInfo(info.title, info.artist)
         applyMetadata()
     }
 

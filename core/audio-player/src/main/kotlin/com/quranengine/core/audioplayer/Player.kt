@@ -50,6 +50,13 @@ internal class Player(
      */
     var onError: ((Exception) -> Unit)? = null
 
+    /**
+     * Invoked when the audio file has played to its very end. The frame timer in
+     * [AudioPlayer] can't be relied on for this: a finished player never reaches
+     * a frame end that lies past the end of the file.
+     */
+    var onEnded: (() -> Unit)? = null
+
     init {
         val mediaItem = MediaItem.fromUri(uri)
         exoPlayer.setMediaItem(mediaItem)
@@ -58,6 +65,12 @@ internal class Player(
         exoPlayer.addListener(object : androidx.media3.common.Player.Listener {
             override fun onPlaybackParametersChanged(playbackParameters: PlaybackParameters) {
                 onRateChanged?.invoke(playbackParameters.speed)
+            }
+
+            override fun onPlaybackStateChanged(playbackState: Int) {
+                if (playbackState == androidx.media3.common.Player.STATE_ENDED) {
+                    onEnded?.invoke()
+                }
             }
 
             override fun onIsPlayingChanged(isPlaying: Boolean) {
@@ -83,6 +96,10 @@ internal class Player(
             val durationMs = exoPlayer.duration
             return if (durationMs == androidx.media3.common.C.TIME_UNSET) 0.0 else durationMs / 1_000.0
         }
+
+    /** Whether the file has played to its end. */
+    val hasEnded: Boolean
+        get() = exoPlayer.playbackState == androidx.media3.common.Player.STATE_ENDED
 
     /** Whether the player is currently playing (rate > 0). */
     val isPlaying: Boolean

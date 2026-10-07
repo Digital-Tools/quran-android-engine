@@ -73,9 +73,12 @@ class QueuePlayer(private val context: Context) {
     fun play(request: AudioRequest, rate: Float = 1f) {
         stop()
         requestAudioFocus()
+        PlaybackService.start(context)
+        PlaybackService.Controls.onTogglePause = { togglePause() }
+        PlaybackService.Controls.onStop = { stop() }
 
         val player = AudioPlayer(context, request, rate)
-        player.actions = actions
+        player.actions = actions?.let { withServiceUpdates(it) }
         audioPlayer = player
         player.startPlaying()
     }
@@ -95,6 +98,7 @@ class QueuePlayer(private val context: Context) {
         audioPlayer?.stop()
         audioPlayer = null
         abandonAudioFocus()
+        stopService()
     }
 
     /** Change the playback speed. */
@@ -111,6 +115,37 @@ class QueuePlayer(private val context: Context) {
     fun stepBackward() {
         audioPlayer?.stepBackward()
     }
+
+    // ---- Foreground service ----
+
+    private var paused = false
+
+    private fun togglePause() {
+        if (paused) resume() else pause()
+    }
+
+    private fun stopService() {
+        PlaybackService.Controls.onTogglePause = null
+        PlaybackService.Controls.onStop = null
+        PlaybackService.stop(context)
+    }
+
+    /**
+     * Keeps the foreground service in step with playback: its notification follows
+     * pause and resume, and it goes away when the request finishes by itself.
+     */
+    private fun withServiceUpdates(callbacks: QueuePlayerActions): QueuePlayerActions =
+        callbacks.copy(
+            playbackEnded = {
+                stopService()
+                callbacks.playbackEnded()
+            },
+            playbackRateChanged = { rate ->
+                paused = rate <= 0f
+                PlaybackService.updatePaused(paused)
+                callbacks.playbackRateChanged(rate)
+            },
+        )
 
     // ---- Audio focus ----
 

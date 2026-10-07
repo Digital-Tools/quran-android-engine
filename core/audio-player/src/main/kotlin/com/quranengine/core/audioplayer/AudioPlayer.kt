@@ -158,6 +158,7 @@ internal class AudioPlayer(
                 // Ignore the pause we trigger ourselves while waiting out a delay.
                 if (!isDelaying) actions?.playbackRateChanged?.invoke(newRate)
             }
+            newPlayer.onEnded = { playerEnded(newPlayer) }
             player = newPlayer
             // Seek to the frame start-time and begin playback.
             newPlayer.seek(frame.startTime, rate)
@@ -224,12 +225,30 @@ internal class AudioPlayer(
 
         // The Handler callback can fire a little early (dispatch jitter). If the frame
         // genuinely hasn't ended yet, reschedule instead of advancing/repeating prematurely —
-        // port of the iOS `guard time < 0.2` check.
+        // port of the iOS `guard time < 0.2` check. A file that has played to its end
+        // never gets closer to a frame time that lies beyond it, so it counts as ended.
         val p = player
-        if (p != null && durationToFrameEnd(p) >= 0.2) {
+        if (p != null && !p.hasEnded && durationToFrameEnd(p) >= 0.2) {
             waitUntilFrameEnds()
             return
         }
+
+        advanceAfterFrame()
+    }
+
+    /**
+     * The file ran out of audio before the frame timer fired (a timing database can
+     * run slightly past the real end of its audio). Without this, the timer kept
+     * rescheduling itself against a finished player and playback stopped for good
+     * at the end of the surah instead of going on to the next one.
+     */
+    private fun playerEnded(ended: Player) {
+        if (ended !== player || isDelaying) return
+        cancelFrameTimer()
+        advanceAfterFrame()
+    }
+
+    private fun advanceAfterFrame() {
 
         // Pause before whatever plays next, scaled by the verse that just ended.
         val delay = verseDelaySeconds()
