@@ -17,6 +17,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -335,7 +336,17 @@ private fun AppBottomBar(navController: NavHostController) {
                         contentDescription = tab.title,
                     )
                 },
-                label = { Text(text = tab.title) },
+                // Like the iOS tab bar: one line at the normal size, cut
+                // with "…" when it doesn't fit ("Bookmarks" used to wrap
+                // its last letters onto a second line).
+                label = {
+                    Text(
+                        text = tab.title,
+                        maxLines = 1,
+                        softWrap = false,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                },
                 colors = NavigationBarItemDefaults.colors(
                     selectedIconColor = QuranTheme.mizanGold,
                     selectedTextColor = QuranTheme.mizanGold,
