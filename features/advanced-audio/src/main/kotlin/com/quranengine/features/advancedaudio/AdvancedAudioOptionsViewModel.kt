@@ -16,6 +16,7 @@ import com.quranengine.model.qurankit.AyahNumber
 import com.quranengine.model.qurankit.Quran
 import com.quranengine.model.qurankit.Sura
 import com.quranengine.model.qurankit.lastayahfinder.JuzBasedLastAyahFinder
+import com.quranengine.model.qurankit.lastayahfinder.LastAyahFinder
 import com.quranengine.model.qurankit.lastayahfinder.PageBasedLastAyahFinder
 import com.quranengine.model.qurankit.lastayahfinder.QuranBasedLastAyahFinder
 import com.quranengine.model.qurankit.lastayahfinder.SuraBasedLastAyahFinder
@@ -25,7 +26,6 @@ import kotlin.math.roundToInt
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 @HiltViewModel
@@ -54,6 +54,9 @@ class AdvancedAudioOptionsViewModel @Inject constructor(
 
     val fromVerse = MutableStateFlow(initialStart)
     val toVerse = MutableStateFlow(initialEnd)
+
+    /** The End at segment; picking a To ayah by hand makes it Custom. */
+    val endAt = MutableStateFlow(deduceEndAt(initialStart, initialEnd))
     val verseRuns = MutableStateFlow(audioPreferences.verseRuns)
     val listRuns = MutableStateFlow(audioPreferences.listRuns)
     val verseDelay = MutableStateFlow(audioPreferences.verseDelay)
@@ -80,10 +83,15 @@ class AdvancedAudioOptionsViewModel @Inject constructor(
         }
     }
 
+    /** From the wheel: any ayah of the Quran. */
+    fun selectFrom(ayah: AyahNumber) = updateFromVerse(ayah)
+
+    /** From the wheel: To can't go before From. */
+    fun selectTo(ayah: AyahNumber) = updateToVerse(ayah)
+
     fun selectFromSura(suraNumber: Int) {
         val s = Sura(quran, suraNumber) ?: return
-        val ayahNumber = AyahNumber(s, 1) ?: return
-        updateFromVerse(ayahNumber)
+        updateFromVerse(fromVerse.value.selecting(s, minimum = null))
     }
 
     fun selectFromAyah(ayahNumber: Int) {
@@ -94,8 +102,7 @@ class AdvancedAudioOptionsViewModel @Inject constructor(
 
     fun selectToSura(suraNumber: Int) {
         val s = Sura(quran, suraNumber) ?: return
-        val ayahNumber = AyahNumber(s, 1) ?: return
-        updateToVerse(ayahNumber)
+        updateToVerse(toVerse.value.selecting(s, minimum = fromVerse.value))
     }
 
     fun selectToAyah(ayahNumber: Int) {
@@ -107,24 +114,9 @@ class AdvancedAudioOptionsViewModel @Inject constructor(
     fun localizedName(reciter: Reciter): String =
         reciter.localizedName(localizer)
 
-    fun setLastVerseToEndOfPage() {
-        val finder = PageBasedLastAyahFinder()
-        toVerse.update { finder.findLastAyah(fromVerse.value) }
-    }
-
-    fun setLastVerseToEndOfSura() {
-        val finder = SuraBasedLastAyahFinder()
-        toVerse.update { finder.findLastAyah(fromVerse.value) }
-    }
-
-    fun setLastVerseToEndOfJuz() {
-        val finder = JuzBasedLastAyahFinder()
-        toVerse.update { finder.findLastAyah(fromVerse.value) }
-    }
-
-    fun setLastVerseToEndOfQuran() {
-        val finder = QuranBasedLastAyahFinder()
-        toVerse.update { finder.findLastAyah(fromVerse.value) }
+    fun setEndAt(choice: EndAtChoice) {
+        endAt.value = choice
+        applyEndAt()
     }
 
     fun stepFromBackward() {
@@ -190,14 +182,61 @@ class AdvancedAudioOptionsViewModel @Inject constructor(
 
     private fun updateFromVerse(ayah: AyahNumber) {
         fromVerse.value = ayah
-        if (toVerse.value < ayah) {
-            toVerse.value = ayah
+        if (endAt.value == EndAtChoice.CUSTOM) {
+            if (toVerse.value < ayah) toVerse.value = ayah
+        } else {
+            applyEndAt()
         }
     }
 
     private fun updateToVerse(ayah: AyahNumber) {
         toVerse.value = if (ayah < fromVerse.value) fromVerse.value else ayah
+        endAt.value = EndAtChoice.CUSTOM
     }
+
+    private fun applyEndAt() {
+        val finder = endAt.value.lastAyahFinder ?: return
+        toVerse.value = finder.findLastAyah(fromVerse.value)
+    }
+}
+
+/** The End at segments, in the order iOS shows them. */
+enum class EndAtChoice(val label: String) {
+    CUSTOM("Custom"),
+    PAGE("Page"),
+    SURA("Surah"),
+    JUZ("Juz'"),
+    QURAN("Quran"),
+    ;
+
+    val lastAyahFinder: LastAyahFinder?
+        get() = when (this) {
+            CUSTOM -> null
+            PAGE -> PageBasedLastAyahFinder()
+            SURA -> SuraBasedLastAyahFinder()
+            JUZ -> JuzBasedLastAyahFinder()
+            QURAN -> QuranBasedLastAyahFinder()
+        }
+}
+
+/**
+ * An end ayah can match several boundaries (the end of Al-Fatihah also ends
+ * page 1); like iOS, prefer surah, then juz, page and Quran.
+ */
+internal fun deduceEndAt(start: AyahNumber, end: AyahNumber): EndAtChoice =
+    listOf(EndAtChoice.SURA, EndAtChoice.JUZ, EndAtChoice.PAGE, EndAtChoice.QURAN)
+        .firstOrNull { it.lastAyahFinder?.findLastAyah(start) == end }
+        ?: EndAtChoice.CUSTOM
+
+/**
+ * Moving the wheel to [sura] keeps this ayah number where [sura] has it
+ * (clamped to its last ayah, and not before [minimum]) instead of jumping
+ * back to ayah 1. Same as AyahWheelPickerModel.selecting on iOS.
+ */
+internal fun AyahNumber.selecting(sura: Sura, minimum: AyahNumber?): AyahNumber {
+    val first = if (minimum != null && minimum.sura == sura) minimum.ayah else 1
+    val ayah = ayah.coerceIn(first, sura.lastVerse.ayah)
+    return AyahNumber(sura, ayah)!!
 }
 
 private fun SavedStateHandle.ayahArgument(

@@ -6,30 +6,24 @@ import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.CenterAlignedTopAppBar
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -62,6 +56,23 @@ import com.quranengine.ui.components.NoorAccessory
 import com.quranengine.ui.components.NoorBasicSection
 import com.quranengine.ui.components.NoorListItem
 import com.quranengine.ui.theme.QuranTheme
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material3.IconButton
+import androidx.compose.runtime.key
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
+import com.quranengine.domain.qurantextkit.arabicSuraName
+import com.quranengine.model.qurankit.AyahNumber
+import com.quranengine.model.qurankit.Sura
+import com.quranengine.ui.components.NoorDivider
+import com.quranengine.ui.theme.QuranFontFamilies
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -80,7 +91,7 @@ fun AdvancedAudioOptionsScreen(
     val verseDelay by viewModel.verseDelay.collectAsState()
     val repetitionDelay by viewModel.repetitionDelay.collectAsState()
     val playbackRate by viewModel.playbackRate.collectAsState()
-    val suras = viewModel.suras
+    val endAt by viewModel.endAt.collectAsState()
 
     DisposableEffect(lifecycleOwner, viewModel) {
         val observer = LifecycleEventObserver { _, event ->
@@ -95,18 +106,22 @@ fun AdvancedAudioOptionsScreen(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("Advanced Audio") },
+                title = {},
                 navigationIcon = {
                     TextButton(onClick = viewModel::dismiss) {
-                        Text("Cancel")
+                        Text("Cancel", color = QuranTheme.mizanGold)
                     }
                 },
                 actions = {
-                    TextButton(
+                    IconButton(
                         onClick = viewModel::play,
                         enabled = reciter != null,
                     ) {
-                        Text("Play")
+                        Icon(
+                            imageVector = Icons.Filled.PlayArrow,
+                            contentDescription = "Play",
+                            tint = QuranTheme.mizanGold,
+                        )
                     }
                 },
             )
@@ -120,175 +135,90 @@ fun AdvancedAudioOptionsScreen(
                 .padding(vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp),
         ) {
-            // Reciter section
+            // Reciter
             item {
-                NoorBasicSection(title = "Reciter") {
+                NoorBasicSection {
                     NoorListItem(
                         title = reciter?.let(viewModel::localizedName) ?: "Loading reciter...",
-                        subtitle = "Tap to change reciter",
                         accessory = NoorAccessory.DisclosureIndicator,
                         onClick = onNavigateToReciterList,
                     )
                 }
             }
 
-            // Quick end-point buttons
+            // One card, as on iOS: From and To open a surah + ayah wheel in
+            // place, on the current selection; then End at.
             item {
-                NoorBasicSection(title = "Play To End Of") {
+                NoorBasicSection(title = "Playback ayah range") {
+                    var expanded by rememberSaveable { mutableStateOf<String?>(null) }
+                    BoundaryRow(
+                        title = "From",
+                        verse = fromVerse,
+                        isExpanded = expanded == "from",
+                        onClick = { expanded = if (expanded == "from") null else "from" },
+                    )
+                    if (expanded == "from") {
+                        AyahWheelPicker(
+                            selection = fromVerse,
+                            minimum = null,
+                            onSelection = viewModel::selectFrom,
+                        )
+                    }
+                    NoorDivider()
+                    BoundaryRow(
+                        title = "To",
+                        verse = toVerse,
+                        isExpanded = expanded == "to",
+                        onClick = { expanded = if (expanded == "to") null else "to" },
+                    )
+                    if (expanded == "to") {
+                        AyahWheelPicker(
+                            selection = toVerse,
+                            minimum = fromVerse,
+                            onSelection = viewModel::selectTo,
+                        )
+                    }
+                    NoorDivider()
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text = "End at",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = QuranTheme.colors.secondaryText,
+                            modifier = Modifier.padding(end = 10.dp),
+                        )
+                        ChoicesView(
+                            items = EndAtChoice.entries,
+                            selectedItem = endAt,
+                            onItemSelected = viewModel::setEndAt,
+                            modifier = Modifier.weight(1f),
+                            label = EndAtChoice::label,
+                        )
+                    }
+                }
+            }
+
+            // Playback speed: the same choices as the audio bar's speed chip.
+            item {
+                NoorBasicSection(title = "Playback Speed") {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState())
                             .padding(horizontal = 16.dp, vertical = 12.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
-                        TextButton(onClick = viewModel::setLastVerseToEndOfPage) {
-                            Text("Page")
+                        PlaybackRates.forEach { rate ->
+                            ChoicePill(
+                                label = formatPlaybackRate(rate),
+                                selected = rate == playbackRate,
+                                onClick = { viewModel.setPlaybackRate(rate) },
+                            )
                         }
-                        TextButton(onClick = viewModel::setLastVerseToEndOfSura) {
-                            Text("Sura")
-                        }
-                        TextButton(onClick = viewModel::setLastVerseToEndOfJuz) {
-                            Text("Juz")
-                        }
-                        TextButton(onClick = viewModel::setLastVerseToEndOfQuran) {
-                            Text("Quran")
-                        }
-                    }
-                }
-            }
-
-            // From verse
-            item {
-                NoorBasicSection(title = "From") {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 12.dp),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    ) {
-                        var fromSuraExpanded by remember { mutableStateOf(false) }
-                        var fromAyahExpanded by remember { mutableStateOf(false) }
-
-                        QuranDropdownSelector(
-                            label = "Sura",
-                            valueText = "${fromVerse.sura.suraNumber}. ${fromVerse.sura.englishName()}",
-                            expanded = fromSuraExpanded,
-                            onExpandedChange = { fromSuraExpanded = it },
-                            onDismissRequest = { fromSuraExpanded = false },
-                            modifier = Modifier.weight(3f),
-                        ) {
-                            suras.forEach { sura ->
-                                DropdownMenuItem(
-                                    text = { Text("${sura.suraNumber}. ${sura.englishName()}", color = QuranTheme.colors.text) },
-                                    onClick = {
-                                        viewModel.selectFromSura(sura.suraNumber)
-                                        fromSuraExpanded = false
-                                    }
-                                )
-                            }
-                        }
-
-                        QuranDropdownSelector(
-                            label = "Ayah",
-                            valueText = fromVerse.ayah.toString(),
-                            expanded = fromAyahExpanded,
-                            onExpandedChange = { fromAyahExpanded = it },
-                            onDismissRequest = { fromAyahExpanded = false },
-                            modifier = Modifier.weight(1.5f),
-                        ) {
-                            (1..fromVerse.sura.lastVerse.ayah).forEach { ayahNum ->
-                                DropdownMenuItem(
-                                    text = { Text(ayahNum.toString(), color = QuranTheme.colors.text) },
-                                    onClick = {
-                                        viewModel.selectFromAyah(ayahNum)
-                                        fromAyahExpanded = false
-                                    }
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-
-            // To verse
-            item {
-                NoorBasicSection(title = "To") {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 12.dp),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    ) {
-                        var toSuraExpanded by remember { mutableStateOf(false) }
-                        var toAyahExpanded by remember { mutableStateOf(false) }
-
-                        val availableToSuras = suras.filter { it.suraNumber >= fromVerse.sura.suraNumber }
-
-                        QuranDropdownSelector(
-                            label = "Sura",
-                            valueText = "${toVerse.sura.suraNumber}. ${toVerse.sura.englishName()}",
-                            expanded = toSuraExpanded,
-                            onExpandedChange = { toSuraExpanded = it },
-                            onDismissRequest = { toSuraExpanded = false },
-                            modifier = Modifier.weight(3f),
-                        ) {
-                            availableToSuras.forEach { sura ->
-                                DropdownMenuItem(
-                                    text = { Text("${sura.suraNumber}. ${sura.englishName()}", color = QuranTheme.colors.text) },
-                                    onClick = {
-                                        viewModel.selectToSura(sura.suraNumber)
-                                        toSuraExpanded = false
-                                    }
-                                )
-                            }
-                        }
-
-                        val availableToAyahs = if (toVerse.sura == fromVerse.sura) {
-                            fromVerse.ayah..toVerse.sura.lastVerse.ayah
-                        } else {
-                            1..toVerse.sura.lastVerse.ayah
-                        }
-
-                        QuranDropdownSelector(
-                            label = "Ayah",
-                            valueText = toVerse.ayah.toString(),
-                            expanded = toAyahExpanded,
-                            onExpandedChange = { toAyahExpanded = it },
-                            onDismissRequest = { toAyahExpanded = false },
-                            modifier = Modifier.weight(1.5f),
-                        ) {
-                            availableToAyahs.forEach { ayahNum ->
-                                DropdownMenuItem(
-                                    text = { Text(ayahNum.toString(), color = QuranTheme.colors.text) },
-                                    onClick = {
-                                        viewModel.selectToAyah(ayahNum)
-                                        toAyahExpanded = false
-                                    }
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Playback speed
-            item {
-                NoorBasicSection(title = "Playback Speed") {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 12.dp),
-                    ) {
-                        Text(
-                            text = formatPlaybackRate(playbackRate),
-                            style = MaterialTheme.typography.bodyLarge,
-                        )
-                        Slider(
-                            value = playbackRate,
-                            onValueChange = viewModel::setPlaybackRate,
-                            valueRange = 0.5f..2f,
-                            steps = 5,
-                        )
                     }
                 }
             }
@@ -330,59 +260,143 @@ fun AdvancedAudioOptionsScreen(
     }
 }
 
+/** "Az-Zukhruf <surah name glyph> · 43:1" */
 @Composable
-private fun QuranDropdownSelector(
-    label: String,
-    valueText: String,
-    expanded: Boolean,
-    onExpandedChange: (Boolean) -> Unit,
-    onDismissRequest: () -> Unit,
-    modifier: Modifier = Modifier,
-    content: @Composable ColumnScope.() -> Unit,
+private fun BoundaryRow(
+    title: String,
+    verse: AyahNumber,
+    isExpanded: Boolean,
+    onClick: () -> Unit,
 ) {
-    Column(modifier = modifier) {
+    val accent = if (isExpanded) QuranTheme.mizanGold else QuranTheme.colors.secondaryText
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
         Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall,
-            color = QuranTheme.colors.secondaryText,
-            modifier = Modifier.padding(bottom = 4.dp)
+            text = title,
+            style = MaterialTheme.typography.bodyLarge,
+            color = QuranTheme.colors.text,
         )
-        Box {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(QuranTheme.colors.background)
-                    .clickable { onExpandedChange(true) }
-                    .padding(horizontal = 12.dp, vertical = 10.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
+        Spacer(modifier = Modifier.weight(1f).padding(horizontal = 8.dp))
+        Text(
+            text = suraLabel(verse.sura, suffix = " · ${verse.sura.suraNumber}:${verse.ayah}"),
+            style = MaterialTheme.typography.bodyLarge,
+            color = accent,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(3f, fill = false),
+        )
+        Icon(
+            imageVector = Icons.Filled.KeyboardArrowDown,
+            contentDescription = if (isExpanded) "Close" else "Choose",
+            tint = accent,
+            modifier = Modifier
+                .padding(start = 4.dp)
+                .rotate(if (isExpanded) 180f else 0f),
+        )
+    }
+}
+
+/** A surah name with its calligraphy glyph. */
+private fun suraLabel(sura: Sura, prefix: String = "", suffix: String = ""): AnnotatedString =
+    buildAnnotatedString {
+        append(prefix)
+        append(sura.englishName())
+        append(" ")
+        withStyle(SpanStyle(fontFamily = QuranFontFamilies.suraNames)) {
+            append(sura.arabicSuraName())
+        }
+        append(suffix)
+    }
+
+/**
+ * Surah wheel and ayah wheel side by side, opening on [selection]. A To
+ * picker passes From as [minimum] so it can't go before it.
+ */
+@Composable
+private fun AyahWheelPicker(
+    selection: AyahNumber,
+    minimum: AyahNumber?,
+    onSelection: (AyahNumber) -> Unit,
+) {
+    val quran = selection.quran
+    val suras = remember(quran, minimum?.sura?.suraNumber) {
+        quran.suras.filter { minimum == null || it.suraNumber >= minimum.sura.suraNumber }
+    }
+    val firstAyah = if (minimum != null && minimum.sura == selection.sura) minimum.ayah else 1
+    val ayahs = (firstAyah..selection.sura.lastVerse.ayah).toList()
+    Row(modifier = Modifier.fillMaxWidth()) {
+        WheelPicker(
+            items = suras,
+            selected = selection.sura,
+            onSelected = { sura -> onSelection(selection.selecting(sura, minimum)) },
+            modifier = Modifier.weight(1f),
+        ) { sura, emphasis ->
+            Text(
+                text = suraLabel(sura, prefix = "${sura.suraNumber} · "),
+                style = if (emphasis == 0) MaterialTheme.typography.titleMedium else MaterialTheme.typography.bodyLarge,
+                color = QuranTheme.colors.text.copy(alpha = wheelAlpha(emphasis)),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        Box(
+            modifier = Modifier
+                .padding(vertical = 12.dp)
+                .width(1.dp)
+                .height(WheelItemHeight * (WheelVisibleItems - 1))
+                .background(QuranTheme.colors.secondaryText.copy(alpha = 0.25f)),
+        )
+        // A new surah has a new list of ayahs: start a fresh wheel on the
+        // selected ayah instead of keeping the old scroll offset.
+        key(selection.sura.suraNumber, firstAyah) {
+            WheelPicker(
+                items = ayahs,
+                selected = selection.ayah,
+                onSelected = { ayah -> AyahNumber(selection.sura, ayah)?.let(onSelection) },
+                modifier = Modifier.width(132.dp),
+            ) { ayah, emphasis ->
                 Text(
-                    text = valueText,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = QuranTheme.colors.text,
+                    text = "Ayah $ayah",
+                    style = if (emphasis == 0) MaterialTheme.typography.titleLarge else MaterialTheme.typography.bodyLarge,
+                    color = QuranTheme.colors.text.copy(alpha = wheelAlpha(emphasis)),
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f, fill = false)
+                    softWrap = false,
                 )
-                Icon(
-                    imageVector = Icons.Default.ArrowDropDown,
-                    contentDescription = null,
-                    tint = QuranTheme.colors.secondaryText,
-                )
-            }
-            DropdownMenu(
-                expanded = expanded,
-                onDismissRequest = onDismissRequest,
-                modifier = Modifier
-                    .background(QuranTheme.colors.secondaryBackground)
-                    .heightIn(max = 280.dp)
-            ) {
-                content()
             }
         }
     }
+}
+
+private val PlaybackRates = listOf(0.5f, 0.75f, 1.0f, 1.25f, 1.5f, 1.75f, 2.0f)
+
+private fun formatPlaybackRate(rate: Float): String {
+    val text = if (rate == rate.toLong().toFloat()) {
+        rate.toLong().toString()
+    } else {
+        rate.toString().trimEnd('0').trimEnd('.')
+    }
+    return "$text×"
+}
+
+@Composable
+private fun ChoicePill(label: String, selected: Boolean, onClick: () -> Unit) {
+    Text(
+        text = label,
+        style = MaterialTheme.typography.bodyMedium,
+        color = if (selected) Color.White else QuranTheme.colors.text,
+        modifier = Modifier
+            .clip(CircleShape)
+            .background(
+                if (selected) QuranTheme.mizanGold.copy(alpha = 0.85f) else QuranTheme.colors.background,
+            )
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+    )
 }
 
 private fun runsLabel(runs: Runs): String =
@@ -443,71 +457,90 @@ private fun RepeatCountRow(runs: Runs, onRunsChanged: (Runs) -> Unit) {
 /** A snapping wheel of [wheelRuns]; the centered row is the selection. */
 @Composable
 private fun RunsWheel(selected: Runs, onSelected: (Runs) -> Unit) {
-    val itemHeight = 40.dp
-    val visibleItems = 5
-    val initialIndex = wheelRuns.indexOf(selected).coerceAtLeast(0)
-    val listState = rememberLazyListState(initialFirstVisibleItemIndex = initialIndex)
-    val itemHeightPx = with(LocalDensity.current) { itemHeight.toPx() }
+    WheelPicker(items = wheelRuns, selected = selected, onSelected = onSelected) { option, emphasis ->
+        Text(
+            text = if (option == Runs.INDEFINITE) "Loop ∞" else runsLabel(option),
+            style = if (emphasis == 0) MaterialTheme.typography.titleLarge else MaterialTheme.typography.bodyLarge,
+            color = QuranTheme.colors.text.copy(alpha = wheelAlpha(emphasis)),
+        )
+    }
+}
+
+private val WheelItemHeight = 40.dp
+private const val WheelVisibleItems = 5
+
+private fun wheelAlpha(distance: Int): Float = when (distance) {
+    0 -> 1f
+    1 -> 0.45f
+    else -> 0.2f
+}
+
+/**
+ * A snapping wheel like the iOS picker: the centered row is the selection,
+ * it opens on [selected] and follows it when it changes from outside (for
+ * example End at moving To). [item] gets the row's distance from the
+ * center for its styling.
+ */
+@Composable
+private fun <T> WheelPicker(
+    items: List<T>,
+    selected: T,
+    onSelected: (T) -> Unit,
+    modifier: Modifier = Modifier.fillMaxWidth(),
+    item: @Composable (item: T, distance: Int) -> Unit,
+) {
+    val selectedIndex = items.indexOf(selected).coerceAtLeast(0)
+    val listState = rememberLazyListState(initialFirstVisibleItemIndex = selectedIndex)
+    val itemHeightPx = with(LocalDensity.current) { WheelItemHeight.toPx() }
     val scope = rememberCoroutineScope()
 
     // Index of the row in the middle slot (top padding is two rows).
-    val centeredIndex by remember {
+    val centeredIndex by remember(items) {
         derivedStateOf {
             val offsetRows = if (listState.firstVisibleItemScrollOffset > itemHeightPx / 2) 1 else 0
-            (listState.firstVisibleItemIndex + offsetRows).coerceIn(0, wheelRuns.lastIndex)
+            (listState.firstVisibleItemIndex + offsetRows).coerceIn(0, items.lastIndex)
         }
     }
     LaunchedEffect(listState.isScrollInProgress) {
-        if (!listState.isScrollInProgress) {
-            val choice = wheelRuns[centeredIndex]
+        if (!listState.isScrollInProgress && items.isNotEmpty()) {
+            val choice = items[centeredIndex]
             if (choice != selected) onSelected(choice)
+        }
+    }
+    LaunchedEffect(selectedIndex) {
+        if (!listState.isScrollInProgress && centeredIndex != selectedIndex) {
+            listState.scrollToItem(selectedIndex)
         }
     }
 
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(itemHeight * visibleItems),
+        modifier = modifier.height(WheelItemHeight * WheelVisibleItems),
         contentAlignment = Alignment.Center,
     ) {
         Box(
             modifier = Modifier
-                .padding(horizontal = 16.dp)
+                .padding(horizontal = 12.dp)
                 .fillMaxWidth()
-                .height(itemHeight)
+                .height(WheelItemHeight)
                 .clip(RoundedCornerShape(10.dp))
-                .background(QuranTheme.colors.secondaryBackground),
+                .background(QuranTheme.colors.background),
         )
         LazyColumn(
             state = listState,
             flingBehavior = rememberSnapFlingBehavior(listState),
-            contentPadding = PaddingValues(vertical = itemHeight * (visibleItems / 2)),
+            contentPadding = PaddingValues(vertical = WheelItemHeight * (WheelVisibleItems / 2)),
             modifier = Modifier.fillMaxSize(),
         ) {
-            itemsIndexed(wheelRuns) { index, option ->
-                val distance = kotlin.math.abs(index - centeredIndex)
+            itemsIndexed(items) { index, option ->
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(itemHeight)
-                        .clickable { scope.launch { listState.animateScrollToItem(index) } },
+                        .height(WheelItemHeight)
+                        .clickable { scope.launch { listState.animateScrollToItem(index) } }
+                        .padding(horizontal = 16.dp),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Text(
-                        text = if (option == Runs.INDEFINITE) "Loop ∞" else runsLabel(option),
-                        style = if (distance == 0) {
-                            MaterialTheme.typography.titleLarge
-                        } else {
-                            MaterialTheme.typography.bodyLarge
-                        },
-                        color = QuranTheme.colors.text.copy(
-                            alpha = when (distance) {
-                                0 -> 1f
-                                1 -> 0.45f
-                                else -> 0.2f
-                            },
-                        ),
-                    )
+                    item(option, kotlin.math.abs(index - centeredIndex))
                 }
             }
         }
@@ -545,4 +578,3 @@ private fun <T> PauseChoices(
     }
 }
 
-private fun formatPlaybackRate(rate: Float): String = "${rate}x"
