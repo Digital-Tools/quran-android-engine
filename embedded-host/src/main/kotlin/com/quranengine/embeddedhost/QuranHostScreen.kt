@@ -3,12 +3,12 @@ package com.quranengine.embeddedhost
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -55,22 +55,32 @@ fun QuranHostScreen(
             )
 
             if (showCloseButton && onClose != null && isHomeRoute) {
-                Surface(
+                // 48dp slot, the height of the home TabRow right under the
+                // status bar, so the X centres on the "Suras" / "Juz" labels.
+                // The circle is smaller than the slot so it clears the tab
+                // indicator; the slot keeps the full touch target.
+                Box(
                     modifier = Modifier
                         .align(Alignment.TopStart)
                         .statusBarsPadding()
-                        .padding(horizontal = 12.dp, vertical = 8.dp),
-                    shape = CircleShape,
-                    color = QuranTheme.colors.secondaryBackground.copy(alpha = 0.92f),
-                    contentColor = QuranTheme.mizanGold,
+                        .padding(start = 12.dp)
+                        .size(48.dp),
+                    contentAlignment = Alignment.Center,
                 ) {
-                    IconButton(
+                    Surface(
                         onClick = onClose,
+                        modifier = Modifier.size(36.dp),
+                        shape = CircleShape,
+                        color = QuranTheme.colors.secondaryBackground.copy(alpha = 0.92f),
+                        contentColor = QuranTheme.mizanGold,
                     ) {
-                        Icon(
-                            imageVector = Icons.Rounded.Close,
-                            contentDescription = "Close",
-                        )
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                imageVector = Icons.Rounded.Close,
+                                contentDescription = "Close",
+                                modifier = Modifier.size(20.dp),
+                            )
+                        }
                     }
                 }
             }
