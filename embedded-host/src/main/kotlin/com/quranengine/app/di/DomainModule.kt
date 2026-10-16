@@ -43,7 +43,9 @@ import com.quranengine.domain.qurantextkit.QuranContentStatePreferences
 import com.quranengine.domain.qurantextkit.SearchRecentsService
 import com.quranengine.domain.qurantextkit.SearchTerm
 import com.quranengine.domain.qurantextkit.Searcher
+import com.quranengine.domain.qurantextkit.englishName
 import com.quranengine.domain.qurantextkit.localizedName
+import com.quranengine.domain.qurantextkit.plainArabicName
 import com.quranengine.domain.readingservice.MizanReadingRemoteResources
 import com.quranengine.domain.readingservice.ReadingAssetsInstaller
 import com.quranengine.domain.readingservice.ReadingPreferences
@@ -556,8 +558,15 @@ object DomainModule {
                     "en", null -> com.quranengine.core.localization.Language.ENGLISH.takeIf { language == "en" }
                     else -> null
                 }
-                quran.suras.first { it.suraNumber == suraNumber }
-                    .localizedName(localizer, withPrefix = withPrefix, language = localizedLanguage)
+                val sura = quran.suras.first { it.suraNumber == suraNumber }
+                val localized = sura.localizedName(localizer, withPrefix = withPrefix, language = localizedLanguage)
+                // The engine ships no sura-name table, so the lookup echoes its key
+                // ("sura_names[17]", "quran_sura_title") and Search never matched a name.
+                when {
+                    !localized.startsWith("sura_names[") && !localized.startsWith("quran_sura_title") -> localized
+                    language == "ar" -> sura.plainArabicName()
+                    else -> sura.englishName()
+                }
             },
             localizedJuzName = { juzNumber ->
                 quran.juzs.first { it.juzNumber == juzNumber }.localizedName(localizer)

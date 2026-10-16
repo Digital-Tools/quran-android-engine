@@ -12,6 +12,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 /**
  * Installs bundled Arabic verse text and translation databases once per process,
  * then exposes [ready] so reader screens can reload after bootstrap completes.
+ * Translations that are not bundled are downloaded afterwards ([downloadsSettled]).
  */
 class QuranContentBootstrap(
     private val verseTextAssetsInstaller: VerseTextAssetsInstaller,
@@ -20,6 +21,10 @@ class QuranContentBootstrap(
 ) {
     private val _ready = MutableStateFlow(false)
     val ready: StateFlow<Boolean> = _ready.asStateFlow()
+
+    /** Flips once the download-only translations (Ibn Kathir) have been tried. */
+    private val _downloadsSettled = MutableStateFlow(false)
+    val downloadsSettled: StateFlow<Boolean> = _downloadsSettled.asStateFlow()
 
     private val started = AtomicBoolean(false)
 
@@ -34,6 +39,14 @@ class QuranContentBootstrap(
                 Timber.e(error, "QuranContentBootstrap failed")
             } finally {
                 _ready.value = true
+            }
+
+            try {
+                translationAssetsInstaller.ensureDownloadOnlyInstalled()
+            } catch (error: Exception) {
+                Timber.e(error, "QuranContentBootstrap download-only translations failed")
+            } finally {
+                _downloadsSettled.value = true
             }
         }
     }

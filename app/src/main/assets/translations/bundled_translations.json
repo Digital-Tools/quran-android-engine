@@ -27,32 +27,6 @@
       "currentVersion": 20
     },
     {
-      "id": 3,
-      "displayName": "French Translation",
-      "translator": "Muhammad Hamidullah",
-      "languageCode": "fr",
-      "fileUrl": "https://android.quran.com/data/getTranslation.php?id=3&ext=zip",
-      "fileName": "quran.fr.db",
-      "saveTo": "databases",
-      "downloadType": "translation",
-      "last_modified": "2025-03-02 13:28:58",
-      "minimumVersion": 2,
-      "currentVersion": 6
-    },
-    {
-      "id": 29,
-      "displayName": "Portuguese Translation",
-      "translator": "Samir El Hayek",
-      "languageCode": "pt",
-      "fileUrl": "https://android.quran.com/data/getTranslation.php?id=29&ext=zip",
-      "fileName": "quran.pt.db",
-      "saveTo": "databases",
-      "downloadType": "translation",
-      "last_modified": "2023-01-17 21:17:11",
-      "minimumVersion": 2,
-      "currentVersion": 2
-    },
-    {
       "id": 19,
       "displayName": "Swahili Translation",
       "translator": "Ali Muhsin Al-Barwani",
@@ -64,6 +38,19 @@
       "last_modified": "2023-01-17 21:17:11",
       "minimumVersion": 2,
       "currentVersion": 2
+    },
+    {
+      "id": 58,
+      "displayName": "Arabic Ibn Kathir Tafseer",
+      "languageCode": "ar",
+      "fileUrl": "https://android.quran.com/data/getTranslation.php?id=58&ext=zip",
+      "fileName": "quran.ar.ibnkathir.db",
+      "saveTo": "databases",
+      "downloadType": "translation",
+      "last_modified": "2026-09-08 04:50:39",
+      "minimumVersion": 5,
+      "currentVersion": 17,
+      "translatorForeign": "تفسير ابن كثير"
     }
   ]
 }

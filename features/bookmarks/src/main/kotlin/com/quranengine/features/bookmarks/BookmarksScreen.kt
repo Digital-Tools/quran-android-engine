@@ -1,5 +1,6 @@
 package com.quranengine.features.bookmarks
 
+import android.text.format.DateUtils
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.BookmarkBorder
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DeleteSweep
@@ -37,15 +39,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.quranengine.domain.qurantextkit.englishName
+import com.quranengine.domain.qurantextkit.plainArabicName
 import com.quranengine.model.quranannotations.PageBookmark
 import com.quranengine.ui.components.DataUnavailableView
 import com.quranengine.ui.components.NoorAccessory
 import com.quranengine.ui.components.NoorListItem
 import com.quranengine.ui.components.NoorSection
 import com.quranengine.ui.theme.QuranTheme
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-import java.time.format.FormatStyle
+import java.time.Instant
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -185,17 +187,26 @@ private fun SwipeToDeleteBookmarkItem(
         enableDismissFromStartToEnd = false,
         modifier = Modifier.fillMaxWidth(),
     ) {
-        val dateFormatter = remember {
-            DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
-                .withZone(ZoneId.systemDefault())
-        }
-
+        val sura = bookmark.page.startSura
         NoorListItem(
-            title = "Page ${bookmark.page.pageNumber}",
-            subtitle = bookmark.page.startSura.let { "Sura ${it.suraNumber}" },
-            rightSubtitle = dateFormatter.format(bookmark.creationDate),
-            accessory = NoorAccessory.DisclosureIndicator,
+            title = "${sura.englishName()}  ${sura.plainArabicName()}",
+            subtitle = "Juz ${bookmark.page.startJuz.juzNumber} · ${relativeTime(bookmark.creationDate)}",
+            accessory = NoorAccessory.TextAccessory("Page ${bookmark.page.pageNumber}"),
+            image = {
+                Icon(
+                    imageVector = Icons.Default.Bookmark,
+                    contentDescription = null,
+                    tint = QuranTheme.bookmark,
+                )
+            },
             onClick = onClick,
         )
     }
+}
+
+/** "Just now", "5 minutes ago", "Yesterday", or the date for older bookmarks, like iOS `timeAgo()`. */
+private fun relativeTime(instant: Instant): String {
+    val now = System.currentTimeMillis()
+    if (now - instant.toEpochMilli() < DateUtils.MINUTE_IN_MILLIS) return "Just now"
+    return DateUtils.getRelativeTimeSpanString(instant.toEpochMilli(), now, DateUtils.MINUTE_IN_MILLIS).toString()
 }

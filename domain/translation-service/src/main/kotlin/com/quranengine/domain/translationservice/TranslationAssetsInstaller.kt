@@ -31,29 +31,20 @@ class TranslationAssetsInstaller(
     private val baseDir: File,
 ) {
 
+    /**
+     * Installs the manifest entries that ship a ZIP in the assets. Entries without
+     * one (large tafseers) are left to [ensureDownloadOnlyInstalled], so the reader
+     * does not wait on a big download before it is ready.
+     */
     suspend fun ensureInstalled() = withContext(Dispatchers.IO) {
-        val manifestPath = "translations/bundled_translations.json"
-        val jsonStream = systemBundle.openAsset(manifestPath) ?: run {
-            Timber.i("TranslationAssets: manifest not found at %s", manifestPath)
-            return@withContext
-        }
-
-        val bundledTranslations = try {
-            JSONTranslationsParser().parse(jsonStream.use { it.readBytes() })
-        } catch (e: Exception) {
-            Timber.e(e, "TranslationAssets: failed to parse manifest")
-            return@withContext
-        }
+        val manifest = readManifest() ?: return@withContext
+        removeRetiredTranslations()
 
         // Load existing registrations once — avoid redundant DB round trips per loop iteration.
         val alreadyRegistered = persistence.retrieveAll().associateBy { it.fileName }
+        val translationsDir = ensureTranslationsDir()
 
-        val translationsDir = File(baseDir, "translations")
-        if (!translationsDir.exists()) {
-            fileSystem.createDirectory(translationsDir, withIntermediateDirectories = true)
-        }
-
-        for (translation in bundledTranslations) {
+        for (translation in manifest.filter { hasBundledZip(it) }) {
             installIfNeeded(
                 translation = translation,
                 alreadyRegistered = alreadyRegistered,
@@ -62,7 +53,75 @@ class TranslationAssetsInstaller(
             )
         }
 
-        ensureDefaultEnglishSelected(bundledTranslations, alreadyRegistered, translationsDir)
+        ensureDefaultEnglishSelected(manifest, alreadyRegistered, translationsDir)
+    }
+
+    /**
+     * Downloads the manifest entries that have no bundled ZIP. Runs after
+     * [ensureInstalled]; a failed download (offline) is retried on the next launch.
+     */
+    suspend fun ensureDownloadOnlyInstalled() = withContext(Dispatchers.IO) {
+        val manifest = readManifest() ?: return@withContext
+        val alreadyRegistered = persistence.retrieveAll().associateBy { it.fileName }
+        val translationsDir = ensureTranslationsDir()
+
+        for (translation in manifest.filterNot { hasBundledZip(it) }) {
+            installIfNeeded(
+                translation = translation,
+                alreadyRegistered = alreadyRegistered,
+                translationsDir = translationsDir,
+                allowNetworkDownload = true,
+            )
+        }
+    }
+
+    private fun readManifest(): List<Translation>? {
+        val manifestPath = "translations/bundled_translations.json"
+        val jsonStream = systemBundle.openAsset(manifestPath) ?: run {
+            Timber.i("TranslationAssets: manifest not found at %s", manifestPath)
+            return null
+        }
+        return try {
+            JSONTranslationsParser().parse(jsonStream.use { it.readBytes() })
+        } catch (e: Exception) {
+            Timber.e(e, "TranslationAssets: failed to parse manifest")
+            null
+        }
+    }
+
+    private fun ensureTranslationsDir(): File {
+        val translationsDir = File(baseDir, "translations")
+        if (!translationsDir.exists()) {
+            fileSystem.createDirectory(translationsDir, withIntermediateDirectories = true)
+        }
+        return translationsDir
+    }
+
+    private fun hasBundledZip(translation: Translation): Boolean =
+        systemBundle.openAsset(bundledZipPath(translation))?.use { true } ?: false
+
+    private fun bundledZipPath(translation: Translation): String =
+        "translations/" + translation.fileName.substringBeforeLast('.') + ".zip"
+
+    /**
+     * Older builds installed French and Portuguese on first launch. Remove them once;
+     * a marker file keeps a later download of the same translation from being deleted.
+     */
+    private suspend fun removeRetiredTranslations() {
+        val marker = File(baseDir, RETIRED_MARKER)
+        if (marker.exists()) return
+
+        persistence.retrieveAll()
+            .filter { it.id in RETIRED_TRANSLATION_IDS }
+            .forEach { translation ->
+                selectedTranslationsPreferences.deselect(translation.id)
+                removeInvalidTranslationArtifacts(translation)
+                persistence.remove(translation)
+                Timber.i("TranslationAssets: removed retired %s", translation.fileName)
+            }
+
+        ensureTranslationsDir()
+        marker.createNewFile()
     }
 
     private suspend fun ensureDefaultEnglishSelected(
@@ -145,8 +204,7 @@ class TranslationAssetsInstaller(
     private fun extractBundledZip(translation: Translation, translationsDir: File) {
         // The bundled asset ZIP name matches the un-zipped file's base name + ".zip".
         // e.g. `quran.ensi.zip` for `quran.ensi.db`.
-        val zipBaseName = translation.fileName.substringBeforeLast('.') + ".zip"
-        val assetZipPath = "translations/$zipBaseName"
+        val assetZipPath = bundledZipPath(translation)
 
         val zipInputStream = systemBundle.openAsset(assetZipPath)
         if (zipInputStream == null) {
@@ -232,6 +290,9 @@ class TranslationAssetsInstaller(
 
     companion object {
         private const val ENGLISH_TRANSLATION_ID = 98
+        // French (Hamidullah) and Portuguese (El Hayek), bundled until 2026-10.
+        private val RETIRED_TRANSLATION_IDS = setOf(3, 29)
+        private const val RETIRED_MARKER = "translations/.retired-fr-pt"
         private const val MIN_VALID_DB_BYTES = 10_000L
         private val SQLITE_HEADER = "SQLite format 3\u0000".toByteArray()
     }

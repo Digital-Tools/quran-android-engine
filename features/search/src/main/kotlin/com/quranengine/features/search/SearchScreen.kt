@@ -293,7 +293,7 @@ private fun ResultsContent(
                 Spacer(modifier = Modifier.height(12.dp))
             }
             item {
-                NoorBasicSection(title = group.source.name) {
+                NoorBasicSection(title = group.source.sectionTitle()) {
                     group.items.forEachIndexed { index, result ->
                         SearchResultItem(
                             result = result,
@@ -309,6 +309,11 @@ private fun ResultsContent(
 
         item { Spacer(modifier = Modifier.height(16.dp)) }
     }
+}
+
+private fun SearchResults.Source.sectionTitle(): String = when (this) {
+    is SearchResults.Source.Quran -> name
+    is SearchResults.Source.TranslationSource -> translation.displayName
 }
 
 @Composable
@@ -391,7 +396,7 @@ private fun SearchResultItem(
         )
         Spacer(modifier = Modifier.height(4.dp))
         Text(
-            text = "${result.ayah.sura.suraNumber}:${result.ayah.ayah}",
+            text = "${result.ayah.sura.englishName()} ${result.ayah.sura.suraNumber}:${result.ayah.ayah}",
             style = MaterialTheme.typography.bodySmall,
             color = QuranTheme.colors.secondaryText,
         )

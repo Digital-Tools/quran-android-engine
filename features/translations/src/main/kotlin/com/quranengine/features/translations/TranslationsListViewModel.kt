@@ -151,6 +151,8 @@ class TranslationsListViewModel @Inject constructor(
         viewModelScope.launch {
             quranContentBootstrap.ready.first { it }
             reloadLocal()
+            quranContentBootstrap.downloadsSettled.first { it }
+            reloadLocal()
         }
     }
 

@@ -12,7 +12,7 @@ class TranslationSearcher(
 ) : Searcher {
 
     override suspend fun autocomplete(term: SearchTerm, quran: Quran): List<String> {
-        val translations = getDownloadedTranslations()
+        val translations = getDownloadedTranslations(term)
         for (translation in translations) {
             val persistence = versePersistenceBuilder(translation)
             val persistenceSearcher = PersistenceSearcher(
@@ -26,7 +26,7 @@ class TranslationSearcher(
     }
 
     override suspend fun search(term: SearchTerm, quran: Quran): List<SearchResults> {
-        val translations = getDownloadedTranslations()
+        val translations = getDownloadedTranslations(term)
         return translations.flatMap { translation ->
             val persistence = versePersistenceBuilder(translation)
             val persistenceSearcher = PersistenceSearcher(
@@ -37,7 +37,19 @@ class TranslationSearcher(
         }
     }
 
-    private suspend fun getDownloadedTranslations(): List<Translation> {
-        return localTranslationRetriever.getLocalTranslations().filter { it.isDownloaded }
+    /**
+     * Only translations written in the query's script can match it: a Latin query
+     * skips the Arabic tafseers (Ibn Kathir alone is tens of MB to scan), and an
+     * Arabic query skips the Latin-script translations.
+     */
+    private suspend fun getDownloadedTranslations(term: SearchTerm): List<Translation> {
+        val arabicQuery = term.compactQuery.containsArabic()
+        return localTranslationRetriever.getLocalTranslations().filter {
+            it.isDownloaded && (it.languageCode == ARABIC_LANGUAGE_CODE) == arabicQuery
+        }
+    }
+
+    private companion object {
+        const val ARABIC_LANGUAGE_CODE = "ar"
     }
 }
