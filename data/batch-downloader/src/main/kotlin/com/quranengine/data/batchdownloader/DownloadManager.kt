@@ -14,6 +14,7 @@ import okhttp3.Request
 import okhttp3.Response
 import timber.log.Timber
 import java.io.File
+import java.io.FileOutputStream
 import java.io.IOException
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -77,8 +78,14 @@ class DownloadManager(
 
     private fun startOkHttpDownload(request: DownloadRequest): Pair<Int, Call> {
         val taskId = taskIdCounter.incrementAndGet()
+        // Bytes kept from an earlier try (lost connection, app closed): ask
+        // the server for the rest only. The 125 MB mushaf on a patchy
+        // connection would otherwise start from zero each time.
+        val partial = request.destination.appendingPathExtension("part").file(baseDir)
+        val offset = if (partial.isFile) partial.length() else 0L
         val httpRequest = Request.Builder()
             .url(request.url)
+            .apply { if (offset > 0) header("Range", "bytes=$offset-") }
             .build()
 
         val call = okHttpClient.newCall(httpRequest)
@@ -90,6 +97,10 @@ class DownloadManager(
             override fun onResponse(call: Call, response: Response) {
                 scope.launch {
                     response.use { resp ->
+                        if (resp.code == 416) {
+                            // The kept bytes don't fit the file any more.
+                            partial.delete()
+                        }
                         if (!resp.isSuccessful) {
                             callbacks.onDownloadFailed(
                                 taskId,
@@ -98,15 +109,19 @@ class DownloadManager(
                             return@launch
                         }
 
-                        val tempFile = File(baseDir, ".download_tmp_$taskId")
+                        // 206: the server sends the rest; 200: it sent all of it.
+                        val resuming = offset > 0 && resp.code == 206
                         try {
                             val body = resp.body ?: throw IOException("Empty response body")
-                            val totalBytes = body.contentLength()
-                            var bytesWritten = 0L
+                            val start = if (resuming) offset else 0L
+                            val length = body.contentLength()
+                            val totalBytes = if (length < 0) -1L else start + length
+                            var bytesWritten = start
 
+                            partial.parentFile?.mkdirs()
                             body.byteStream().use { input ->
-                                tempFile.outputStream().use { output ->
-                                    val buffer = ByteArray(8192)
+                                FileOutputStream(partial, resuming).use { output ->
+                                    val buffer = ByteArray(64 * 1024)
                                     var read: Int
                                     while (input.read(buffer).also { read = it } != -1) {
                                         output.write(buffer, 0, read)
@@ -116,9 +131,9 @@ class DownloadManager(
                                 }
                             }
 
-                            callbacks.onDownloadComplete(taskId, tempFile)
+                            callbacks.onDownloadComplete(taskId, partial)
                         } catch (e: Exception) {
-                            tempFile.delete()
+                            // The bytes so far stay for the next try.
                             callbacks.onDownloadFailed(taskId, e)
                         }
                     }

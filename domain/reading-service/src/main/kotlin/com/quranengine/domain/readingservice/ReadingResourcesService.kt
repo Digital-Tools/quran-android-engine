@@ -16,9 +16,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.io.File
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Manages downloading reading resources.
@@ -43,12 +45,17 @@ class ReadingResourcesService(
     val status: StateFlow<ResourceStatus?> = _status.asStateFlow()
 
     private var readingJob: Job? = null
+    private val started = AtomicBoolean(false)
 
     /**
      * Call from a [CoroutineScope] to begin observing the selected reading preference and
      * downloading resources as needed.
      */
     suspend fun startLoadingResources() = coroutineScope {
+        // Started once per process: by the host app at launch (so the pages
+        // download before the reader is first opened) and again by the
+        // reader. A second loader would delete the first one's download.
+        if (!started.compareAndSet(false, true)) return@coroutineScope
         // A reading chosen before it was marked unavailable (e.g. one on the
         // placeholder host) can never load; fall back to one that can.
         if (!ReadingAvailability.isAvailable(readingPreferences.reading, remoteResources)) {
@@ -87,7 +94,7 @@ class ReadingResourcesService(
             return
         }
 
-        removeDownloadedResource(reading)
+        clearForDownload(remoteResource)
 
         try {
             download(reading, remoteResource)
@@ -112,11 +119,19 @@ class ReadingResourcesService(
             downloader.download(DownloadBatchRequest(requests = listOf(request)))
         }
 
-        download.progressFlow.collect { progress ->
-            send(ResourceStatus.Downloading(progress.progress), reading)
+        // progressFlow never completes: report it beside the wait, then stop.
+        coroutineScope {
+            val progress = launch {
+                download.progressFlow.collect { progress ->
+                    send(ResourceStatus.Downloading(progress.progress), reading)
+                }
+            }
+            try {
+                download.awaitCompletion()
+            } finally {
+                progress.cancel()
+            }
         }
-
-        download.awaitCompletion()
         val error = download.getError()
         if (error != null) throw error
 
@@ -129,7 +144,7 @@ class ReadingResourcesService(
             attempt(times = 3) {
                 zipper.unzipFile(
                     zipFile = zipFile,
-                    destination = remoteResource.downloadDestination.file(baseDir),
+                    destination = remoteResource.extractDestination.file(baseDir),
                     overwrite = true,
                 )
             }
@@ -175,6 +190,27 @@ class ReadingResourcesService(
             fileSystem.removeItem(resource.downloadDestination, baseDir)
         } catch (_: Exception) {
             // Ignore – the directory may not exist.
+        }
+    }
+
+    /**
+     * Waits until [reading]'s pages are on the phone (they may still be
+     * downloading); throws the download's error if it failed.
+     */
+    suspend fun awaitReady(reading: Reading) {
+        val resource = remoteResources?.resource(reading) ?: return
+        if (fileSystem.fileExists(resource.successFilePath, baseDir)) return
+        when (val result = status.first { it is ResourceStatus.Ready || it is ResourceStatus.Error }) {
+            is ResourceStatus.Error -> throw result.error
+            else -> Unit
+        }
+    }
+
+    /** Removes a half-unzipped reading, keeping a part-downloaded zip to resume. */
+    private fun clearForDownload(resource: RemoteResource) {
+        val directory = resource.downloadDestination.file(baseDir)
+        directory.listFiles()?.forEach { child ->
+            if (!child.name.endsWith(".part")) child.deleteRecursively()
         }
     }
 

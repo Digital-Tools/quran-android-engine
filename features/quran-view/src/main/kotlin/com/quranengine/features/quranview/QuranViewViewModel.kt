@@ -24,6 +24,7 @@ import com.quranengine.domain.qurantextkit.QuranTextDataService
 import com.quranengine.domain.qurantextkit.localizedName
 import com.quranengine.domain.qurantextkit.localizedQuarterName
 import com.quranengine.domain.readingservice.ReadingAssetsInstaller
+import com.quranengine.domain.readingservice.ReadingResourcesService
 import com.quranengine.domain.readingservice.ReadingHighlightStyle
 import com.quranengine.domain.readingservice.ReadingPreferences
 import com.quranengine.domain.readingservice.imageResources
@@ -80,6 +81,7 @@ class QuranViewViewModel @Inject constructor(
     private val lastPageService: LastPageService,
     private val lastPageUpdater: LastPageUpdater,
     private val readingAssetsInstaller: ReadingAssetsInstaller,
+    private val readingResourcesService: ReadingResourcesService,
     private val quranContentBootstrap: QuranContentBootstrap,
     @Named("baseDir") private val baseDir: File,
 ) : ViewModel() {
@@ -111,6 +113,10 @@ class QuranViewViewModel @Inject constructor(
     private val _userMessage = MutableStateFlow<String?>(null)
     val userMessage: StateFlow<String?> = _userMessage.asStateFlow()
 
+    /** The mushaf pages' download (first launch, or a newly picked mushaf). */
+    val readingDownload: StateFlow<ReadingResourcesService.ResourceStatus?> =
+        readingResourcesService.status
+
     private val basePageContents = mutableMapOf<Int, PageImageContent>()
     private val basePageTranslationContents = mutableMapOf<Int, TranslationPageContent>()
     private var bookmarkedPageNumbers: Set<Int> = emptySet()
@@ -123,6 +129,7 @@ class QuranViewViewModel @Inject constructor(
 
     init {
         observeBootstrap()
+        observeReadingDownload()
         observeReaderPreferences()
         observeReading()
         observeSelectedTranslations()
@@ -368,6 +375,24 @@ class QuranViewViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    /** Pages that failed while the download failed load again once it is done. */
+    private fun observeReadingDownload() {
+        viewModelScope.launch {
+            readingResourcesService.status.collect { status ->
+                if (status !is ReadingResourcesService.ResourceStatus.Ready) return@collect
+                val failed = _pageContentStates.value.filterValues { it is ContentState.Error }.keys
+                if (failed.isEmpty()) return@collect
+                _pageContentStates.update { it - failed }
+                refreshReader(_state.value.visiblePages, updateLastPage = false)
+            }
+        }
+    }
+
+    /** Tries the mushaf download again after it failed. */
+    fun retryReadingDownload() {
+        viewModelScope.launch { readingResourcesService.retry() }
     }
 
     private fun observeBootstrap() {
@@ -634,6 +659,8 @@ class QuranViewViewModel @Inject constructor(
     private suspend fun loadImageState(reading: Reading, page: Page): PageImageContent =
         withContext(Dispatchers.IO) {
             readingAssetsInstaller.ensureInstalled(reading)
+            // Downloaded mushafs: wait for the pages (a spinner meanwhile).
+            readingResourcesService.awaitReady(reading)
 
             val resources = reading.imageResources
             val readingRoot = File(baseDir, "readings/${reading.localPath}")

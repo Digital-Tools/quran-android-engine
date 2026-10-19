@@ -2,6 +2,8 @@ package com.quranengine.features.quranview
 
 import android.content.ClipData
 import android.content.ClipboardManager
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -9,6 +11,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalContext
@@ -39,6 +42,7 @@ fun QuranViewRoute(
     val pageContentStates by viewModel.pageContentStates.collectAsState()
     val translationContentStates by viewModel.translationContentStates.collectAsState()
     val userMessage by viewModel.userMessage.collectAsState()
+    val readingDownload by viewModel.readingDownload.collectAsState()
     val audioError by audioBannerViewModel.error.collectAsState()
     val audioBannerState by audioBannerViewModel.audioBannerState.collectAsState()
     val playbackRate by audioBannerViewModel.playbackRate.collectAsState()
@@ -197,79 +201,86 @@ fun QuranViewRoute(
         onOpenPrayerSheet = onOpenPrayerSheet,
         onManageTranslations = onNavigateToTranslations,
         pageContent = {
-            QuranPaginationView(
-                pagingStrategy = if (state.twoPagesEnabled) {
-                    PagingStrategy.DOUBLE_PAGE
-                } else {
-                    PagingStrategy.SINGLE_PAGE
-                },
-                pages = pages,
-                selectedPages = state.visiblePages,
-                onPagesChanged = viewModel::setVisiblePages,
-                modifier = Modifier,
-            ) { page ->
-                if (state.quranMode == QuranMode.ARABIC) {
-                    val contentState = pageContentStates[page] ?: com.quranengine.features.qurancontent.ContentState.Loading
-                    ContentPageView(state = contentState) { content ->
-                        ContentImageView(
-                            state = content,
-                            modifier = Modifier,
-                            selectedAyahs = selectedAyahs,
-                            onTap = viewModel::toggleBars,
-                            onAyahSelectionStarted = { ayah, pressInRoot ->
-                                startAyah = ayah
-                                selectedAyahs = listOf(ayah)
-                                selectionAnchor = pressInRoot
-                                isDraggingSelection = true
-                            },
-                            onAyahSelectionChanged = { ayah ->
-                                val anchor = startAyah ?: return@ContentImageView
-                                val start = if (ayah < anchor) ayah else anchor
-                                val end = if (ayah < anchor) anchor else ayah
-                                selectedAyahs = start.arrayTo(end)
-                            },
-                            onAyahSelectionEnded = {
-                                // Show the menu once the finger lifts; it then stays
-                                // open until the user taps an action.
-                                isDraggingSelection = false
-                            },
-                        )
-                    }
-                } else {
-                    val contentState = translationContentStates[page] ?: com.quranengine.features.qurancontent.ContentState.Loading
-                    ContentPageView(state = contentState) { content ->
-                        if (content.placeholderTitle != null) {
-                            DataUnavailableView(
-                                title = content.placeholderTitle,
-                                message = content.placeholderMessage,
-                            )
-                        } else {
-                            val highlightedVerses = selectedAyahs.map { it.ayah }.toSet()
-                                .ifEmpty {
-                                    currentAyahProgress?.ayah?.ayah?.let { setOf(it) } ?: emptySet()
-                                }
-                            ContentTranslationView(
-                                items = content.items,
-                                selectedVerses = highlightedVerses,
-                                scrollToItemId = highlightedVerses.firstOrNull()?.let {
-                                    TranslationItemId.ArabicText(it)
-                                },
+            Box(modifier = Modifier.fillMaxSize()) {
+                QuranPaginationView(
+                    pagingStrategy = if (state.twoPagesEnabled) {
+                        PagingStrategy.DOUBLE_PAGE
+                    } else {
+                        PagingStrategy.SINGLE_PAGE
+                    },
+                    pages = pages,
+                    selectedPages = state.visiblePages,
+                    onPagesChanged = viewModel::setVisiblePages,
+                    modifier = Modifier,
+                ) { page ->
+                    if (state.quranMode == QuranMode.ARABIC) {
+                        val contentState = pageContentStates[page] ?: com.quranengine.features.qurancontent.ContentState.Loading
+                        ContentPageView(state = contentState) { content ->
+                            ContentImageView(
+                                state = content,
+                                modifier = Modifier,
+                                selectedAyahs = selectedAyahs,
                                 onTap = viewModel::toggleBars,
-                                onAyahLongPressed = { verse, pressInRoot ->
-                                    val ayah = pageVerses.firstOrNull { it.ayah == verse }
-                                    if (ayah != null) {
-                                        startAyah = ayah
-                                        selectedAyahs = listOf(ayah)
-                                        selectionAnchor = pressInRoot
-                                    }
+                                onAyahSelectionStarted = { ayah, pressInRoot ->
+                                    startAyah = ayah
+                                    selectedAyahs = listOf(ayah)
+                                    selectionAnchor = pressInRoot
+                                    isDraggingSelection = true
                                 },
-                                onFootnoteClick = { index, text ->
-                                    footnote = TranslationFootnote(index = index, text = text)
+                                onAyahSelectionChanged = { ayah ->
+                                    val anchor = startAyah ?: return@ContentImageView
+                                    val start = if (ayah < anchor) ayah else anchor
+                                    val end = if (ayah < anchor) anchor else ayah
+                                    selectedAyahs = start.arrayTo(end)
+                                },
+                                onAyahSelectionEnded = {
+                                    // Show the menu once the finger lifts; it then stays
+                                    // open until the user taps an action.
+                                    isDraggingSelection = false
                                 },
                             )
                         }
+                    } else {
+                        val contentState = translationContentStates[page] ?: com.quranengine.features.qurancontent.ContentState.Loading
+                        ContentPageView(state = contentState) { content ->
+                            if (content.placeholderTitle != null) {
+                                DataUnavailableView(
+                                    title = content.placeholderTitle,
+                                    message = content.placeholderMessage,
+                                )
+                            } else {
+                                val highlightedVerses = selectedAyahs.map { it.ayah }.toSet()
+                                    .ifEmpty {
+                                        currentAyahProgress?.ayah?.ayah?.let { setOf(it) } ?: emptySet()
+                                    }
+                                ContentTranslationView(
+                                    items = content.items,
+                                    selectedVerses = highlightedVerses,
+                                    scrollToItemId = highlightedVerses.firstOrNull()?.let {
+                                        TranslationItemId.ArabicText(it)
+                                    },
+                                    onTap = viewModel::toggleBars,
+                                    onAyahLongPressed = { verse, pressInRoot ->
+                                        val ayah = pageVerses.firstOrNull { it.ayah == verse }
+                                        if (ayah != null) {
+                                            startAyah = ayah
+                                            selectedAyahs = listOf(ayah)
+                                            selectionAnchor = pressInRoot
+                                        }
+                                    },
+                                    onFootnoteClick = { index, text ->
+                                        footnote = TranslationFootnote(index = index, text = text)
+                                    },
+                                )
+                            }
+                        }
                     }
                 }
+                ReadingDownloadCard(
+                    status = readingDownload,
+                    onRetry = viewModel::retryReadingDownload,
+                    modifier = Modifier.align(Alignment.Center),
+                )
             }
         },
     )

@@ -31,7 +31,8 @@ class QuranHostActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         quranContentBootstrap.start()
-        lifecycleScope.launch { readingResourcesService.startLoadingResources() }
+        // Usually already started by the host app at launch; started once.
+        QuranContentPrefetch.start(this)
         // Transparent scrims so mushaf chrome can paint into status / nav bars.
         enableEdgeToEdge(
             statusBarStyle = SystemBarStyle.auto(

@@ -34,13 +34,26 @@ data class RemoteResource(
     val successFilePath: RelativeFilePath
         get() = downloadDestination.appendingPathComponent("success-v$version.txt")
 
+    /**
+     * Where the zip is unzipped: a folder named after it, as on iOS
+     * (`images_1920.zip` holds `width_1920/` and `databases/`, and lands in
+     * `readings/<reading>/images_1920/`, where [Reading.imageResources] looks).
+     */
+    val extractDestination: RelativeFilePath
+        get() = downloadDestination.appendingPathComponent(
+            url.substringAfterLast('/').substringBeforeLast('.'),
+            isDirectory = true,
+        )
+
     fun matches(batch: DownloadBatchResponse): Boolean {
         val request = batch.requests.singleOrNull() ?: return false
         return matches(request)
     }
 
+    // The request saves the zip, not the folder: comparing with the folder
+    // never matched, so a download resumed after a restart ran twice.
     fun matches(request: DownloadRequest): Boolean =
-        request.destination == downloadDestination
+        request.destination == zipFile
 
     companion object {
         private val READINGS_PATH = RelativeFilePath("readings", isDirectory = true)

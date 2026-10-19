@@ -139,9 +139,8 @@ object DomainModule {
     @Singleton
     @Named("mushafHost")
     fun provideMushafHost(): String =
-        // TODO(mizan-hosting): placeholder — no real mushaf content is hosted
-        // anywhere yet. Swap this single value once real hosting exists.
-        "https://TODO-mizan-mushaf-host.example/mushafs/"
+        // The Mizan content CDN (Cloudflare R2, mizan-app scripts/cdn/).
+        "https://mizan-cdn.gahitwen.workers.dev/"
 
     @Provides
     @Singleton
